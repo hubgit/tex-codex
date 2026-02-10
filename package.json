@@ -1,0 +1,11 @@
+{
+  "name": "etex-typescript-migration",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:probe": "fpc -v0 -O- -o./scripts/probe_math ./scripts/probe_math.pas",
+    "test": "npm run build:probe && npm run build && node --test test/*.test.js"
+  }
+}
