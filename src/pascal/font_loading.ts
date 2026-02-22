@@ -1,3 +1,4 @@
+import type { TeXStateSlice } from "./state_slices";
 const LIG_KERN_WRAP = 256 * 128;
 
 function packSignedWord(b0: number, b1: number, b2: number, b3: number): number {
@@ -33,20 +34,20 @@ function storeQqqq(
   b3: number,
   state: ReadFontInfoState,
 ): void {
-  state.fontInfoB0[index] = b0;
-  state.fontInfoB1[index] = b1;
-  state.fontInfoB2[index] = b2;
-  state.fontInfoB3[index] = b3;
-  state.fontInfoInt[index] = packSignedWord(b0, b1, b2, b3);
+  state.fontInfo[index].qqqq.b0 = b0;
+  state.fontInfo[index].qqqq.b1 = b1;
+  state.fontInfo[index].qqqq.b2 = b2;
+  state.fontInfo[index].qqqq.b3 = b3;
+  state.fontInfo[index].int = packSignedWord(b0, b1, b2, b3);
 }
 
 function storeIntWord(index: number, value: number, state: ReadFontInfoState): void {
-  state.fontInfoInt[index] = value;
+  state.fontInfo[index].int = value;
   const [b0, b1, b2, b3] = unpackSignedWord(value);
-  state.fontInfoB0[index] = b0;
-  state.fontInfoB1[index] = b1;
-  state.fontInfoB2[index] = b2;
-  state.fontInfoB3[index] = b3;
+  state.fontInfo[index].qqqq.b0 = b0;
+  state.fontInfo[index].qqqq.b1 = b1;
+  state.fontInfo[index].qqqq.b2 = b2;
+  state.fontInfo[index].qqqq.b3 = b3;
 }
 
 function printFontLoadContext(
@@ -75,51 +76,8 @@ function printFontLoadContext(
   }
 }
 
-export interface ReadFontInfoState {
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  eqtbInt: number[];
+export interface ReadFontInfoState extends TeXStateSlice<"interaction" | "helpPtr" | "helpLine" | "eqtb" | "fontPtr" | "fontMax" | "fmemPtr" | "fontMemSize" | "charBase" | "widthBase" | "heightBase" | "depthBase" | "italicBase" | "ligKernBase" | "kernBase" | "extenBase" | "paramBase" | "fontInfo" | "fontInfo" | "fontInfo" | "fontInfo" | "fontInfo" | "fontCheck" | "fontCheck" | "fontCheck" | "fontCheck" | "fontDsize" | "fontSize" | "fontParams" | "fontName" | "fontArea" | "fontBc" | "fontEc" | "fontGlue" | "hyphenChar" | "skewChar" | "bcharLabel" | "fontBchar" | "fontFalseBchar">{
 
-  fontPtr: number;
-  fontMax: number;
-  fmemPtr: number;
-  fontMemSize: number;
-
-  charBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  depthBase: number[];
-  italicBase: number[];
-  ligKernBase: number[];
-  kernBase: number[];
-  extenBase: number[];
-  paramBase: number[];
-
-  fontInfoInt: number[];
-  fontInfoB0: number[];
-  fontInfoB1: number[];
-  fontInfoB2: number[];
-  fontInfoB3: number[];
-
-  fontCheckB0: number[];
-  fontCheckB1: number[];
-  fontCheckB2: number[];
-  fontCheckB3: number[];
-
-  fontDsize: number[];
-  fontSize: number[];
-  fontParams: number[];
-  fontName: number[];
-  fontArea: number[];
-  fontBc: number[];
-  fontEc: number[];
-  fontGlue: number[];
-  hyphenChar: number[];
-  skewChar: number[];
-  bcharLabel: number[];
-  fontBchar: number[];
-  fontFalseBchar: number[];
 }
 
 export interface ReadFontInfoOps {
@@ -256,10 +214,10 @@ export function readFontInfo(
 
     {
       const [a, b, c, d] = readQqqq();
-      state.fontCheckB0[f] = a;
-      state.fontCheckB1[f] = b;
-      state.fontCheckB2[f] = c;
-      state.fontCheckB3[f] = d;
+      state.fontCheck[f].b0 = a;
+      state.fontCheck[f].b1 = b;
+      state.fontCheck[f].b2 = c;
+      state.fontCheck[f].b3 = d;
     }
 
     let z = readCheckedHalfword();
@@ -316,10 +274,10 @@ export function readFontInfo(
         }
         while (d < k + bc - state.fmemPtr) {
           const qIndex = state.charBase[f] + d;
-          if ((state.fontInfoB2[qIndex] % 4) !== 2) {
+          if ((state.fontInfo[qIndex].qqqq.b2 % 4) !== 2) {
             break;
           }
-          d = state.fontInfoB3[qIndex];
+          d = state.fontInfo[qIndex].qqqq.b3;
         }
         if (d === k + bc - state.fmemPtr) {
           fail();
@@ -350,16 +308,16 @@ export function readFontInfo(
       }
     }
 
-    if (state.fontInfoInt[state.widthBase[f]] !== 0) {
+    if (state.fontInfo[state.widthBase[f]].int !== 0) {
       fail();
     }
-    if (state.fontInfoInt[state.heightBase[f]] !== 0) {
+    if (state.fontInfo[state.heightBase[f]].int !== 0) {
       fail();
     }
-    if (state.fontInfoInt[state.depthBase[f]] !== 0) {
+    if (state.fontInfo[state.depthBase[f]].int !== 0) {
       fail();
     }
-    if (state.fontInfoInt[state.italicBase[f]] !== 0) {
+    if (state.fontInfo[state.italicBase[f]].int !== 0) {
       fail();
     }
 
@@ -370,7 +328,7 @@ export function readFontInfo(
       if (x < bc || x > ec) {
         fail();
       }
-      if (!(state.fontInfoB0[state.charBase[f] + x] > 0)) {
+      if (!(state.fontInfo[state.charBase[f] + x].qqqq.b0 > 0)) {
         fail();
       }
     };
@@ -483,8 +441,8 @@ export function readFontInfo(
     }
 
     state.fontParams[f] = np >= 7 ? np : 7;
-    state.hyphenChar[f] = state.eqtbInt[5314];
-    state.skewChar[f] = state.eqtbInt[5315];
+    state.hyphenChar[f] = state.eqtb[5314].int;
+    state.skewChar[f] = state.eqtb[5315].int;
     if (bchLabel < nl) {
       state.bcharLabel[f] = bchLabel + state.ligKernBase[f];
     } else {
@@ -494,7 +452,7 @@ export function readFontInfo(
     state.fontFalseBchar[f] = bchar;
 
     if (bchar <= ec && bchar >= bc) {
-      if (state.fontInfoB0[state.charBase[f] + bchar] > 0) {
+      if (state.fontInfo[state.charBase[f] + bchar].qqqq.b0 > 0) {
         state.fontFalseBchar[f] = 256;
       }
     }

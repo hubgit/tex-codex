@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -34,17 +35,19 @@ test("pseudoClose matches Pascal probe trace", () => {
     ] = c;
 
     const state = {
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
       pseudoFiles,
       avail,
+      mem: memoryWordsFromComponents({
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[pseudoFiles] = pseudoFilesRh;
-    state.memLh[pseudoFiles] = pseudoFilesLh;
-    state.memRh[q1] = q1Next;
-    state.memLh[q1] = q1Size;
-    state.memRh[q2] = q2Next;
-    state.memLh[q2] = q2Size;
+    state.mem[pseudoFiles].hh.rh = pseudoFilesRh;
+    state.mem[pseudoFiles].hh.lh = pseudoFilesLh;
+    state.mem[q1].hh.rh = q1Next;
+    state.mem[q1].hh.lh = q1Size;
+    state.mem[q2].hh.rh = q2Next;
+    state.mem[q2].hh.lh = q2Size;
     const calls = [];
 
     pseudoClose(state, {
@@ -53,7 +56,7 @@ test("pseudoClose matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `${calls.join("")} PF${state.pseudoFiles} AV${state.avail} RH${pseudoFiles}=${state.memRh[pseudoFiles]}`;
+    const actual = `${calls.join("")} PF${state.pseudoFiles} AV${state.avail} RH${pseudoFiles}=${state.mem[pseudoFiles].hh.rh}`;
     const expected = runProbeText("PSEUDO_CLOSE_TRACE", c);
     assert.equal(actual, expected, `PSEUDO_CLOSE_TRACE mismatch for ${c.join(",")}`);
   }
@@ -88,12 +91,6 @@ test("pseudoInput matches Pascal probe trace", () => {
     ] = c;
 
     const state = {
-      memLh: new Array(3000).fill(0),
-      memRh: new Array(3000).fill(0),
-      memB0: new Array(3000).fill(0),
-      memB1: new Array(3000).fill(0),
-      memB2: new Array(3000).fill(0),
-      memB3: new Array(3000).fill(0),
       pseudoFiles,
       first,
       last: first,
@@ -101,20 +98,30 @@ test("pseudoInput matches Pascal probe trace", () => {
       formatIdent,
       buffer: new Array(3000).fill(0),
       maxBufStack,
-      curInputLocField: 0,
-      curInputLimitField: 0,
+      curInput: {
+        locField: 0,
+        limitField: 0,
+      },
+      mem: memoryWordsFromComponents({
+        b0: new Array(3000).fill(0),
+        b1: new Array(3000).fill(0),
+        b2: new Array(3000).fill(0),
+        b3: new Array(3000).fill(0),
+        lh: new Array(3000).fill(0),
+        rh: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[pseudoFiles] = pHead;
-    state.memLh[pHead] = sz;
-    state.memRh[pHead] = pNext;
-    state.memB0[pHead + 1] = w1b0;
-    state.memB1[pHead + 1] = w1b1;
-    state.memB2[pHead + 1] = w1b2;
-    state.memB3[pHead + 1] = w1b3;
-    state.memB0[pHead + 2] = w2b0;
-    state.memB1[pHead + 2] = w2b1;
-    state.memB2[pHead + 2] = w2b2;
-    state.memB3[pHead + 2] = w2b3;
+    state.mem[pseudoFiles].hh.lh = pHead;
+    state.mem[pHead].hh.lh = sz;
+    state.mem[pHead].hh.rh = pNext;
+    state.mem[pHead + 1].hh.b0 = w1b0;
+    state.mem[pHead + 1].hh.b1 = w1b1;
+    state.mem[pHead + 1].qqqq.b2 = w1b2;
+    state.mem[pHead + 1].qqqq.b3 = w1b3;
+    state.mem[pHead + 2].hh.b0 = w2b0;
+    state.mem[pHead + 2].hh.b1 = w2b1;
+    state.mem[pHead + 2].qqqq.b2 = w2b2;
+    state.mem[pHead + 2].qqqq.b3 = w2b3;
 
     let overflowCalls = 0;
     let bex = 0;
@@ -132,7 +139,7 @@ test("pseudoInput matches Pascal probe trace", () => {
     });
 
     const bufText = state.buffer.slice(state.first, state.last).join(",");
-    const actual = `R=${result ? 1 : 0};LAST=${state.last};MAX=${state.maxBufStack};LOC=${state.curInputLocField};LIMIT=${state.curInputLimitField};LH=${state.memLh[pseudoFiles]};OVC=${overflowCalls};BEX=${bex};FN=${freeCall};BUF=${bufText}`;
+    const actual = `R=${result ? 1 : 0};LAST=${state.last};MAX=${state.maxBufStack};LOC=${state.curInput.locField};LIMIT=${state.curInput.limitField};LH=${state.mem[pseudoFiles].hh.lh};OVC=${overflowCalls};BEX=${bex};FN=${freeCall};BUF=${bufText}`;
     const expected = runProbeText("PSEUDO_INPUT_TRACE", c);
     assert.equal(actual, expected, `PSEUDO_INPUT_TRACE mismatch for ${c.join(",")}`);
   }

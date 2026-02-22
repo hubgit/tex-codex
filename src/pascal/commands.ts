@@ -1,8 +1,18 @@
-export interface InsertDollarSignState {
-  interaction: number;
-  curTok: number;
-  helpPtr: number;
-  helpLine: number[];
+import { round } from "./arithmetic";
+import type {
+  TeXStateSlice,
+  EqtbIntSlice,
+  MemB23Slice,
+  MemGrSlice,
+  MemWordCoreSlice,
+  MemWordViewsSlice,
+  NestModeSlice,
+  NestPgSlice,
+  NestTailSlice,
+  SaveStackIntSlice,
+} from "./state_slices";
+
+export interface InsertDollarSignState extends TeXStateSlice<"interaction" | "curTok" | "helpPtr" | "helpLine">{
 }
 
 export interface InsertDollarSignOps {
@@ -26,10 +36,7 @@ export function insertDollarSign(
   ops.insError();
 }
 
-export interface PrintMeaningState {
-  curCmd: number;
-  curChr: number;
-  curMark: number[];
+export interface PrintMeaningState extends TeXStateSlice<"curCmd" | "curChr" | "curMark">{
 }
 
 export interface PrintMeaningOps {
@@ -55,11 +62,7 @@ export function printMeaning(
   }
 }
 
-export interface YouCantState {
-  interaction: number;
-  curCmd: number;
-  curChr: number;
-  modeField: number;
+export interface YouCantState extends TeXStateSlice<"interaction" | "curCmd" | "curChr" | "curList">{
 }
 
 export interface YouCantOps {
@@ -74,12 +77,10 @@ export function youCant(state: YouCantState, ops: YouCantOps): void {
   ops.print(694);
   ops.printCmdChr(state.curCmd, state.curChr);
   ops.print(1032);
-  ops.printMode(state.modeField);
+  ops.printMode(state.curList.modeField);
 }
 
-export interface ReportIllegalCaseState {
-  helpPtr: number;
-  helpLine: number[];
+export interface ReportIllegalCaseState extends TeXStateSlice<"helpPtr" | "helpLine">{
 }
 
 export interface ReportIllegalCaseOps {
@@ -100,8 +101,7 @@ export function reportIllegalCase(
   ops.error();
 }
 
-export interface PrivilegedState {
-  modeField: number;
+export interface PrivilegedState extends TeXStateSlice<"curList">{
 }
 
 export interface PrivilegedOps {
@@ -112,21 +112,14 @@ export function privileged(
   state: PrivilegedState,
   ops: PrivilegedOps,
 ): boolean {
-  if (state.modeField > 0) {
+  if (state.curList.modeField > 0) {
     return true;
   }
   ops.reportIllegalCase();
   return false;
 }
 
-export interface ItsAllOverState {
-  pageTail: number;
-  curListHeadField: number;
-  curListTailField: number;
-  deadCycles: number;
-  eqtbInt: number[];
-  memRh: number[];
-  memInt: number[];
+export interface ItsAllOverState extends TeXStateSlice<"pageTail" | "curList" | "curList" | "deadCycles" | "eqtb" | "mem" | "mem">{
 }
 
 export interface ItsAllOverOps {
@@ -145,34 +138,27 @@ export function itsAllOver(
   if (ops.privileged()) {
     if (
       state.pageTail === 29998 &&
-      state.curListHeadField === state.curListTailField &&
+      state.curList.headField === state.curList.tailField &&
       state.deadCycles === 0
     ) {
       return true;
     }
 
     ops.backInput();
-    state.memRh[state.curListTailField] = ops.newNullBox();
-    state.curListTailField = state.memRh[state.curListTailField];
-    state.memInt[state.curListTailField + 1] = state.eqtbInt[5848] ?? 0;
-    state.memRh[state.curListTailField] = ops.newGlue(8);
-    state.curListTailField = state.memRh[state.curListTailField];
-    state.memRh[state.curListTailField] = ops.newPenalty(-1073741824);
-    state.curListTailField = state.memRh[state.curListTailField];
+    state.mem[state.curList.tailField].hh.rh = ops.newNullBox();
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
+    state.mem[state.curList.tailField + 1].int = state.eqtb[5848].int ?? 0;
+    state.mem[state.curList.tailField].hh.rh = ops.newGlue(8);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
+    state.mem[state.curList.tailField].hh.rh = ops.newPenalty(-1073741824);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
     ops.buildPage();
   }
 
   return false;
 }
 
-export interface OffSaveState {
-  curGroup: number;
-  curCmd: number;
-  curChr: number;
-  helpPtr: number;
-  helpLine: number[];
-  memLh: number[];
-  memRh: number[];
+export interface OffSaveState extends TeXStateSlice<"curGroup" | "curCmd" | "curChr" | "helpPtr" | "helpLine" | "mem" | "mem">{
 }
 
 export interface OffSaveOps {
@@ -203,34 +189,34 @@ export function offSave(
 
   ops.backInput();
   let p = ops.getAvail();
-  state.memRh[29997] = p;
+  state.mem[29997].hh.rh = p;
   ops.printNl(263);
   ops.print(634);
 
   switch (state.curGroup) {
     case 14:
-      state.memLh[p] = 6711;
+      state.mem[p].hh.lh = 6711;
       ops.printEsc(519);
       break;
     case 15:
-      state.memLh[p] = 804;
+      state.mem[p].hh.lh = 804;
       ops.printChar(36);
       break;
     case 16:
-      state.memLh[p] = 6712;
-      state.memRh[p] = ops.getAvail();
-      p = state.memRh[p];
-      state.memLh[p] = 3118;
+      state.mem[p].hh.lh = 6712;
+      state.mem[p].hh.rh = ops.getAvail();
+      p = state.mem[p].hh.rh;
+      state.mem[p].hh.lh = 3118;
       ops.printEsc(1053);
       break;
     default:
-      state.memLh[p] = 637;
+      state.mem[p].hh.lh = 637;
       ops.printChar(125);
       break;
   }
 
   ops.print(635);
-  ops.beginTokenList(state.memRh[29997] ?? 0, 4);
+  ops.beginTokenList(state.mem[29997].hh.rh ?? 0, 4);
   state.helpPtr = 5;
   state.helpLine[4] = 1048;
   state.helpLine[3] = 1049;
@@ -240,11 +226,7 @@ export function offSave(
   ops.error();
 }
 
-export interface ExtraRightBraceState {
-  curGroup: number;
-  alignState: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ExtraRightBraceState extends TeXStateSlice<"curGroup" | "alignState" | "helpPtr" | "helpLine">{
 }
 
 export interface ExtraRightBraceOps {
@@ -284,9 +266,7 @@ export function extraRightBrace(
   state.alignState += 1;
 }
 
-export interface NormalParagraphState {
-  eqtbInt: number[];
-  eqtbRh: number[];
+export interface NormalParagraphState extends TeXStateSlice<"eqtb" | "eqtb">{
 }
 
 export interface NormalParagraphOps {
@@ -298,36 +278,24 @@ export function normalParagraph(
   state: NormalParagraphState,
   ops: NormalParagraphOps,
 ): void {
-  if ((state.eqtbInt[5287] ?? 0) !== 0) {
+  if ((state.eqtb[5287].int ?? 0) !== 0) {
     ops.eqWordDefine(5287, 0);
   }
-  if ((state.eqtbInt[5862] ?? 0) !== 0) {
+  if ((state.eqtb[5862].int ?? 0) !== 0) {
     ops.eqWordDefine(5862, 0);
   }
-  if ((state.eqtbInt[5309] ?? 0) !== 1) {
+  if ((state.eqtb[5309].int ?? 0) !== 1) {
     ops.eqWordDefine(5309, 1);
   }
-  if ((state.eqtbRh[3412] ?? 0) !== 0) {
+  if ((state.eqtb[3412].hh.rh ?? 0) !== 0) {
     ops.eqDefine(3412, 118, 0);
   }
-  if ((state.eqtbRh[3679] ?? 0) !== 0) {
+  if ((state.eqtb[3679].hh.rh ?? 0) !== 0) {
     ops.eqDefine(3679, 118, 0);
   }
 }
 
-export interface BoxEndState {
-  curBox: number;
-  curVal: number;
-  curCmd: number;
-  curPtr: number;
-  curListModeField: number;
-  curListTailField: number;
-  curListAuxFieldLh: number;
-  adjustTail: number;
-  memRh: number[];
-  memLh: number[];
-  memInt: number[];
-  memB1: number[];
+export interface BoxEndState extends TeXStateSlice<"curBox" | "curVal" | "curCmd" | "curPtr" | "curList" | "curList" | "curList" | "adjustTail" | "helpPtr" | "helpLine" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface BoxEndOps {
@@ -355,30 +323,30 @@ export function boxEnd(
 ): void {
   if (boxContext < 1073741824) {
     if (state.curBox !== 0) {
-      state.memInt[state.curBox + 4] = boxContext;
-      if (Math.abs(state.curListModeField) === 1) {
+      state.mem[state.curBox + 4].int = boxContext;
+      if (Math.abs(state.curList.modeField) === 1) {
         ops.appendToVlist(state.curBox);
         if (state.adjustTail !== 0) {
           if (state.adjustTail !== 29995) {
-            state.memRh[state.curListTailField] = state.memRh[29995] ?? 0;
-            state.curListTailField = state.adjustTail;
+            state.mem[state.curList.tailField].hh.rh = state.mem[29995].hh.rh ?? 0;
+            state.curList.tailField = state.adjustTail;
           }
           state.adjustTail = 0;
         }
-        if (state.curListModeField > 0) {
+        if (state.curList.modeField > 0) {
           ops.buildPage();
         }
       } else {
-        if (Math.abs(state.curListModeField) === 102) {
-          state.curListAuxFieldLh = 1000;
+        if (Math.abs(state.curList.modeField) === 102) {
+          state.curList.auxField.hh.lh = 1000;
         } else {
           const p = ops.newNoad();
-          state.memRh[p + 1] = 2;
-          state.memLh[p + 1] = state.curBox;
+          state.mem[p + 1].hh.rh = 2;
+          state.mem[p + 1].hh.lh = state.curBox;
           state.curBox = p;
         }
-        state.memRh[state.curListTailField] = state.curBox;
-        state.curListTailField = state.curBox;
+        state.mem[state.curList.tailField].hh.rh = state.curBox;
+        state.curList.tailField = state.curBox;
       }
     }
     return;
@@ -421,15 +389,19 @@ export function boxEnd(
     } while (state.curCmd === 10 || state.curCmd === 0);
 
     if (
-      (state.curCmd === 26 && Math.abs(state.curListModeField) !== 1) ||
-      (state.curCmd === 27 && Math.abs(state.curListModeField) === 1)
+      (state.curCmd === 26 && Math.abs(state.curList.modeField) !== 1) ||
+      (state.curCmd === 27 && Math.abs(state.curList.modeField) === 1)
     ) {
       ops.appendGlue();
-      state.memB1[state.curListTailField] = boxContext - 1073807261;
-      state.memRh[state.curListTailField + 1] = state.curBox;
+      state.mem[state.curList.tailField].hh.b1 = boxContext - 1073807261;
+      state.mem[state.curList.tailField + 1].hh.rh = state.curBox;
     } else {
       ops.printNl(263);
       ops.print(1077);
+      state.helpPtr = 3;
+      state.helpLine[2] = 1078;
+      state.helpLine[1] = 1079;
+      state.helpLine[0] = 1080;
       ops.backError();
       ops.flushNodeList(state.curBox);
     }
@@ -439,29 +411,7 @@ export function boxEnd(
   ops.shipOut(state.curBox);
 }
 
-export interface BeginBoxState {
-  curChr: number;
-  curCmd: number;
-  curVal: number;
-  curBox: number;
-  curPtr: number;
-  savePtr: number;
-  saveStackInt: number[];
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListAuxFieldInt: number;
-  curListAuxFieldLh: number;
-  hiMemMin: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  eqtbRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
+export interface BeginBoxState extends TeXStateSlice<"curChr" | "curCmd" | "curVal" | "curBox" | "curPtr" | "savePtr" | "saveStack" | "curList" | "curList" | "curList" | "curList" | "curList" | "hiMemMin" | "interaction" | "helpPtr" | "helpLine" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface BeginBoxOps {
@@ -494,19 +444,19 @@ export function beginBox(
     case 0: {
       ops.scanRegisterNum();
       if (state.curVal < 256) {
-        state.curBox = state.eqtbRh[3683 + state.curVal] ?? 0;
+        state.curBox = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
       } else {
         ops.findSaElement(4, state.curVal, false);
-        state.curBox = state.curPtr === 0 ? 0 : (state.memRh[state.curPtr + 1] ?? 0);
+        state.curBox = state.curPtr === 0 ? 0 : (state.mem[state.curPtr + 1].hh.rh ?? 0);
       }
 
       if (state.curVal < 256) {
-        state.eqtbRh[3683 + state.curVal] = 0;
+        state.eqtb[3683 + state.curVal].hh.rh = 0;
       } else {
         ops.findSaElement(4, state.curVal, false);
         if (state.curPtr !== 0) {
-          state.memRh[state.curPtr + 1] = 0;
-          state.memLh[state.curPtr + 1] = (state.memLh[state.curPtr + 1] ?? 0) + 1;
+          state.mem[state.curPtr + 1].hh.rh = 0;
+          state.mem[state.curPtr + 1].hh.lh = (state.mem[state.curPtr + 1].hh.lh ?? 0) + 1;
           ops.deleteSaRef(state.curPtr);
         }
       }
@@ -516,24 +466,24 @@ export function beginBox(
       ops.scanRegisterNum();
       let q = 0;
       if (state.curVal < 256) {
-        q = state.eqtbRh[3683 + state.curVal] ?? 0;
+        q = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
       } else {
         ops.findSaElement(4, state.curVal, false);
-        q = state.curPtr === 0 ? 0 : (state.memRh[state.curPtr + 1] ?? 0);
+        q = state.curPtr === 0 ? 0 : (state.mem[state.curPtr + 1].hh.rh ?? 0);
       }
       state.curBox = ops.copyNodeList(q);
       break;
     }
     case 2: {
       state.curBox = 0;
-      if (Math.abs(state.curListModeField) === 203) {
+      if (Math.abs(state.curList.modeField) === 203) {
         ops.youCant();
         state.helpPtr = 1;
         state.helpLine[0] = 1082;
         ops.error();
       } else if (
-        state.curListModeField === 1 &&
-        state.curListHeadField === state.curListTailField
+        state.curList.modeField === 1 &&
+        state.curList.headField === state.curList.tailField
       ) {
         ops.youCant();
         state.helpPtr = 2;
@@ -541,16 +491,16 @@ export function beginBox(
         state.helpLine[0] = 1084;
         ops.error();
       } else {
-        let tx = state.curListTailField;
+        let tx = state.curList.tailField;
         if (
           tx < state.hiMemMin &&
-          (state.memB0[tx] ?? 0) === 9 &&
-          (state.memB1[tx] ?? 0) === 3
+          (state.mem[tx].hh.b0 ?? 0) === 9 &&
+          (state.mem[tx].hh.b1 ?? 0) === 3
         ) {
-          let r = state.curListHeadField;
+          let r = state.curList.headField;
           while (true) {
             const q = r;
-            r = state.memRh[q] ?? 0;
+            r = state.mem[q].hh.rh ?? 0;
             if (r === tx) {
               tx = q;
               break;
@@ -560,9 +510,9 @@ export function beginBox(
 
         if (
           tx < state.hiMemMin &&
-          ((state.memB0[tx] ?? 0) === 0 || (state.memB0[tx] ?? 0) === 1)
+          ((state.mem[tx].hh.b0 ?? 0) === 0 || (state.mem[tx].hh.b0 ?? 0) === 1)
         ) {
-          let q = state.curListHeadField;
+          let q = state.curList.headField;
           let p = 0;
           let r = 0;
           let fm = false;
@@ -573,41 +523,41 @@ export function beginBox(
             p = q;
             fm = false;
             if (q < state.hiMemMin) {
-              if ((state.memB0[q] ?? 0) === 7) {
-                for (let m = 1; m <= (state.memB1[q] ?? 0); m += 1) {
-                  p = state.memRh[p] ?? 0;
+              if ((state.mem[q].hh.b0 ?? 0) === 7) {
+                for (let m = 1; m <= (state.mem[q].hh.b1 ?? 0); m += 1) {
+                  p = state.mem[p].hh.rh ?? 0;
                 }
                 if (p === tx) {
                   goto30 = true;
                   break;
                 }
-              } else if ((state.memB0[q] ?? 0) === 9 && (state.memB1[q] ?? 0) === 2) {
+              } else if ((state.mem[q].hh.b0 ?? 0) === 9 && (state.mem[q].hh.b1 ?? 0) === 2) {
                 fm = true;
               }
             }
-            q = state.memRh[p] ?? 0;
+            q = state.mem[p].hh.rh ?? 0;
             if (q === tx) {
               break;
             }
           }
 
           if (!goto30) {
-            q = state.memRh[tx] ?? 0;
-            state.memRh[p] = q;
-            state.memRh[tx] = 0;
+            q = state.mem[tx].hh.rh ?? 0;
+            state.mem[p].hh.rh = q;
+            state.mem[tx].hh.rh = 0;
             if (q === 0) {
               if (fm) {
                 ops.confusion(1081);
               } else {
-                state.curListTailField = p;
+                state.curList.tailField = p;
               }
             } else if (fm) {
-              state.curListTailField = r;
-              state.memRh[r] = 0;
+              state.curList.tailField = r;
+              state.mem[r].hh.rh = 0;
               ops.flushNodeList(p);
             }
             state.curBox = tx;
-            state.memInt[state.curBox + 4] = 0;
+            state.mem[state.curBox + 4].int = 0;
           }
         }
       }
@@ -630,9 +580,9 @@ export function beginBox(
     }
     default: {
       let k = state.curChr - 4;
-      state.saveStackInt[state.savePtr + 0] = boxContext;
+      state.saveStack[state.savePtr + 0].int = boxContext;
       if (k === 102) {
-        if (boxContext < 1073741824 && Math.abs(state.curListModeField) === 1) {
+        if (boxContext < 1073741824 && Math.abs(state.curList.modeField) === 1) {
           ops.scanSpec(3, true);
         } else {
           ops.scanSpec(2, true);
@@ -648,16 +598,16 @@ export function beginBox(
       }
 
       ops.pushNest();
-      state.curListModeField = -k;
+      state.curList.modeField = -k;
       if (k === 1) {
-        state.curListAuxFieldInt = -65536000;
-        if ((state.eqtbRh[3418] ?? 0) !== 0) {
-          ops.beginTokenList(state.eqtbRh[3418] ?? 0, 11);
+        state.curList.auxField.int = -65536000;
+        if ((state.eqtb[3418].hh.rh ?? 0) !== 0) {
+          ops.beginTokenList(state.eqtb[3418].hh.rh ?? 0, 11);
         }
       } else {
-        state.curListAuxFieldLh = 1000;
-        if ((state.eqtbRh[3417] ?? 0) !== 0) {
-          ops.beginTokenList(state.eqtbRh[3417] ?? 0, 10);
+        state.curList.auxField.hh.lh = 1000;
+        if ((state.eqtb[3417].hh.rh ?? 0) !== 0) {
+          ops.beginTokenList(state.eqtb[3417].hh.rh ?? 0, 10);
         }
       }
       return;
@@ -667,11 +617,7 @@ export function beginBox(
   ops.boxEnd(boxContext);
 }
 
-export interface ScanBoxState {
-  curCmd: number;
-  curBox: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanBoxState extends TeXStateSlice<"curCmd" | "curBox" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanBoxOps {
@@ -716,16 +662,7 @@ export function scanBox(
   ops.backError();
 }
 
-export interface PackageState {
-  eqtbInt: number[];
-  savePtr: number;
-  saveStackInt: number[];
-  curListModeField: number;
-  curListHeadField: number;
-  curBox: number;
-  memRh: number[];
-  memB0: number[];
-  memInt: number[];
+export interface PackageState extends TeXStateSlice<"eqtb" | "savePtr" | "saveStack" | "curList" | "curList" | "curBox" | "mem" | "mem" | "mem">{
 }
 
 export interface PackageOps {
@@ -741,54 +678,42 @@ export function packageCommand(
   state: PackageState,
   ops: PackageOps,
 ): void {
-  const d = state.eqtbInt[5852] ?? 0;
+  const d = state.eqtb[5852].int ?? 0;
   ops.unsave();
   state.savePtr -= 3;
 
-  if (state.curListModeField === -102) {
+  if (state.curList.modeField === -102) {
     state.curBox = ops.hpack(
-      state.memRh[state.curListHeadField] ?? 0,
-      state.saveStackInt[state.savePtr + 2] ?? 0,
-      state.saveStackInt[state.savePtr + 1] ?? 0,
+      state.mem[state.curList.headField].hh.rh ?? 0,
+      state.saveStack[state.savePtr + 2].int ?? 0,
+      state.saveStack[state.savePtr + 1].int ?? 0,
     );
   } else {
     state.curBox = ops.vpackage(
-      state.memRh[state.curListHeadField] ?? 0,
-      state.saveStackInt[state.savePtr + 2] ?? 0,
-      state.saveStackInt[state.savePtr + 1] ?? 0,
+      state.mem[state.curList.headField].hh.rh ?? 0,
+      state.saveStack[state.savePtr + 2].int ?? 0,
+      state.saveStack[state.savePtr + 1].int ?? 0,
       d,
     );
     if (c === 4) {
       let h = 0;
-      const p = state.memRh[state.curBox + 5] ?? 0;
-      if (p !== 0 && (state.memB0[p] ?? 0) <= 2) {
-        h = state.memInt[p + 3] ?? 0;
+      const p = state.mem[state.curBox + 5].hh.rh ?? 0;
+      if (p !== 0 && (state.mem[p].hh.b0 ?? 0) <= 2) {
+        h = state.mem[p + 3].int ?? 0;
       }
-      state.memInt[state.curBox + 2] =
-        (state.memInt[state.curBox + 2] ?? 0) -
+      state.mem[state.curBox + 2].int =
+        (state.mem[state.curBox + 2].int ?? 0) -
         h +
-        (state.memInt[state.curBox + 3] ?? 0);
-      state.memInt[state.curBox + 3] = h;
+        (state.mem[state.curBox + 3].int ?? 0);
+      state.mem[state.curBox + 3].int = h;
     }
   }
 
   ops.popNest();
-  ops.boxEnd(state.saveStackInt[state.savePtr + 0] ?? 0);
+  ops.boxEnd(state.saveStack[state.savePtr + 0].int ?? 0);
 }
 
-export interface NewGrafState {
-  curListPgField: number;
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListAuxFieldLh: number;
-  curListAuxFieldRh: number;
-  curLang: number;
-  nestPtr: number;
-  eqtbInt: number[];
-  eqtbRh: number[];
-  memRh: number[];
-  memInt: number[];
+export interface NewGrafState extends TeXStateSlice<"curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "curLang" | "nestPtr" | "eqtb" | "eqtb" | "mem" | "mem">{
 }
 
 export interface NewGrafOps {
@@ -814,53 +739,45 @@ export function newGraf(
   state: NewGrafState,
   ops: NewGrafOps,
 ): void {
-  state.curListPgField = 0;
+  state.curList.pgField = 0;
   if (
-    state.curListModeField === 1 ||
-    state.curListHeadField !== state.curListTailField
+    state.curList.modeField === 1 ||
+    state.curList.headField !== state.curList.tailField
   ) {
-    state.memRh[state.curListTailField] = ops.newParamGlue(2);
-    state.curListTailField = state.memRh[state.curListTailField];
+    state.mem[state.curList.tailField].hh.rh = ops.newParamGlue(2);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
   }
 
   ops.pushNest();
-  state.curListModeField = 102;
-  state.curListAuxFieldLh = 1000;
-  if ((state.eqtbInt[5318] ?? 0) <= 0 || (state.eqtbInt[5318] ?? 0) > 255) {
+  state.curList.modeField = 102;
+  state.curList.auxField.hh.lh = 1000;
+  if ((state.eqtb[5318].int ?? 0) <= 0 || (state.eqtb[5318].int ?? 0) > 255) {
     state.curLang = 0;
   } else {
-    state.curLang = state.eqtbInt[5318] ?? 0;
+    state.curLang = state.eqtb[5318].int ?? 0;
   }
-  state.curListAuxFieldRh = state.curLang;
-  state.curListPgField =
-    (normMinLocal(state.eqtbInt[5319] ?? 0) * 64 +
-      normMinLocal(state.eqtbInt[5320] ?? 0)) *
+  state.curList.auxField.hh.rh = state.curLang;
+  state.curList.pgField =
+    (normMinLocal(state.eqtb[5319].int ?? 0) * 64 +
+      normMinLocal(state.eqtb[5320].int ?? 0)) *
       65536 +
     state.curLang;
 
   if (indented) {
-    state.curListTailField = ops.newNullBox();
-    state.memRh[state.curListHeadField] = state.curListTailField;
-    state.memInt[state.curListTailField + 1] = state.eqtbInt[5845] ?? 0;
+    state.curList.tailField = ops.newNullBox();
+    state.mem[state.curList.headField].hh.rh = state.curList.tailField;
+    state.mem[state.curList.tailField + 1].int = state.eqtb[5845].int ?? 0;
   }
 
-  if ((state.eqtbRh[3414] ?? 0) !== 0) {
-    ops.beginTokenList(state.eqtbRh[3414] ?? 0, 7);
+  if ((state.eqtb[3414].hh.rh ?? 0) !== 0) {
+    ops.beginTokenList(state.eqtb[3414].hh.rh ?? 0, 7);
   }
   if (state.nestPtr === 1) {
     ops.buildPage();
   }
 }
 
-export interface IndentInHModeState {
-  curChr: number;
-  curListModeField: number;
-  curListAuxFieldLh: number;
-  curListTailField: number;
-  eqtbInt: number[];
-  memRh: number[];
-  memLh: number[];
-  memInt: number[];
+export interface IndentInHModeState extends TeXStateSlice<"curChr" | "curList" | "curList" | "curList" | "eqtb" | "mem" | "mem" | "mem">{
 }
 
 export interface IndentInHModeOps {
@@ -877,26 +794,20 @@ export function indentInHMode(
   }
 
   let p = ops.newNullBox();
-  state.memInt[p + 1] = state.eqtbInt[5845] ?? 0;
-  if (Math.abs(state.curListModeField) === 102) {
-    state.curListAuxFieldLh = 1000;
+  state.mem[p + 1].int = state.eqtb[5845].int ?? 0;
+  if (Math.abs(state.curList.modeField) === 102) {
+    state.curList.auxField.hh.lh = 1000;
   } else {
     const q = ops.newNoad();
-    state.memRh[q + 1] = 2;
-    state.memLh[q + 1] = p;
+    state.mem[q + 1].hh.rh = 2;
+    state.mem[q + 1].hh.lh = p;
     p = q;
   }
-  state.memRh[state.curListTailField] = p;
-  state.curListTailField = state.memRh[state.curListTailField];
+  state.mem[state.curList.tailField].hh.rh = p;
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
 }
 
-export interface HeadForVModeState {
-  curListModeField: number;
-  curCmd: number;
-  curTok: number;
-  curInputIndexField: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface HeadForVModeState extends TeXStateSlice<"curList" | "curCmd" | "curTok" | "parToken" | "helpPtr" | "helpLine" | "curInput">{
 }
 
 export interface HeadForVModeOps {
@@ -912,7 +823,7 @@ export function headForVMode(
   state: HeadForVModeState,
   ops: HeadForVModeOps,
 ): void {
-  if (state.curListModeField < 0) {
+  if (state.curList.modeField < 0) {
     if (state.curCmd !== 36) {
       ops.offSave();
     } else {
@@ -929,17 +840,12 @@ export function headForVMode(
   }
 
   ops.backInput();
-  state.curTok = 804;
+  state.curTok = state.parToken;
   ops.backInput();
-  state.curInputIndexField = 4;
+  state.curInput.indexField = 4;
 }
 
-export interface EndGrafState {
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListETeXAuxField: number;
-  errorCount: number;
+export interface EndGrafState extends TeXStateSlice<"curList" | "curList" | "curList" | "curList" | "errorCount">{
 }
 
 export interface EndGrafOps {
@@ -953,33 +859,25 @@ export function endGraf(
   state: EndGrafState,
   ops: EndGrafOps,
 ): void {
-  if (state.curListModeField !== 102) {
+  if (state.curList.modeField !== 102) {
     return;
   }
 
-  if (state.curListHeadField === state.curListTailField) {
+  if (state.curList.headField === state.curList.tailField) {
     ops.popNest();
   } else {
     ops.lineBreak(false);
   }
 
-  if (state.curListETeXAuxField !== 0) {
-    ops.flushList(state.curListETeXAuxField);
-    state.curListETeXAuxField = 0;
+  if (state.curList.eTeXAuxField !== 0) {
+    ops.flushList(state.curList.eTeXAuxField);
+    state.curList.eTeXAuxField = 0;
   }
   ops.normalParagraph();
   state.errorCount = 0;
 }
 
-export interface BeginInsertOrAdjustState {
-  curCmd: number;
-  curVal: number;
-  savePtr: number;
-  saveStackInt: number[];
-  curListModeField: number;
-  curListAuxFieldInt: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface BeginInsertOrAdjustState extends TeXStateSlice<"curCmd" | "curVal" | "savePtr" | "saveStack" | "curList" | "curList" | "helpPtr" | "helpLine">{
 }
 
 export interface BeginInsertOrAdjustOps {
@@ -1015,25 +913,17 @@ export function beginInsertOrAdjust(
     }
   }
 
-  state.saveStackInt[state.savePtr + 0] = state.curVal;
+  state.saveStack[state.savePtr + 0].int = state.curVal;
   state.savePtr += 1;
   ops.newSaveLevel(11);
   ops.scanLeftBrace();
   ops.normalParagraph();
   ops.pushNest();
-  state.curListModeField = -1;
-  state.curListAuxFieldInt = -65536000;
+  state.curList.modeField = -1;
+  state.curList.auxField.int = -65536000;
 }
 
-export interface MakeMarkState {
-  curChr: number;
-  curVal: number;
-  defRef: number;
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface MakeMarkState extends TeXStateSlice<"curChr" | "curVal" | "defRef" | "curList" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface MakeMarkOps {
@@ -1056,26 +946,15 @@ export function makeMark(
 
   ops.scanToks(false, true);
   const p = ops.getNode(2);
-  state.memLh[p + 1] = c;
-  state.memB0[p] = 4;
-  state.memB1[p] = 0;
-  state.memRh[p + 1] = state.defRef;
-  state.memRh[state.curListTailField] = p;
-  state.curListTailField = p;
+  state.mem[p + 1].hh.lh = c;
+  state.mem[p].hh.b0 = 4;
+  state.mem[p].hh.b1 = 0;
+  state.mem[p + 1].hh.rh = state.defRef;
+  state.mem[state.curList.tailField].hh.rh = p;
+  state.curList.tailField = p;
 }
 
-export interface DeleteLastState {
-  curChr: number;
-  lastGlue: number;
-  hiMemMin: number;
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  helpPtr: number;
-  helpLine: number[];
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface DeleteLastState extends TeXStateSlice<"curChr" | "lastGlue" | "hiMemMin" | "curList" | "curList" | "curList" | "helpPtr" | "helpLine" | "mem" | "mem" | "mem">{
 }
 
 export interface DeleteLastOps {
@@ -1090,8 +969,8 @@ export function deleteLast(
   ops: DeleteLastOps,
 ): void {
   if (
-    state.curListModeField === 1 &&
-    state.curListTailField === state.curListHeadField
+    state.curList.modeField === 1 &&
+    state.curList.tailField === state.curList.headField
   ) {
     if (state.curChr !== 10 || state.lastGlue !== 65535) {
       ops.youCant();
@@ -1108,16 +987,16 @@ export function deleteLast(
     return;
   }
 
-  let tx = state.curListTailField;
+  let tx = state.curList.tailField;
   if (
     tx < state.hiMemMin &&
-    (state.memB0[tx] ?? 0) === 9 &&
-    (state.memB1[tx] ?? 0) === 3
+    (state.mem[tx].hh.b0 ?? 0) === 9 &&
+    (state.mem[tx].hh.b1 ?? 0) === 3
   ) {
-    let r = state.curListHeadField;
+    let r = state.curList.headField;
     while (true) {
       const q = r;
-      r = state.memRh[q] ?? 0;
+      r = state.mem[q].hh.rh ?? 0;
       if (r === tx) {
         tx = q;
         break;
@@ -1125,11 +1004,11 @@ export function deleteLast(
     }
   }
 
-  if (tx >= state.hiMemMin || (state.memB0[tx] ?? 0) !== state.curChr) {
+  if (tx >= state.hiMemMin || (state.mem[tx].hh.b0 ?? 0) !== state.curChr) {
     return;
   }
 
-  let q = state.curListHeadField;
+  let q = state.curList.headField;
   let p = 0;
   let r = 0;
   let fm = false;
@@ -1139,53 +1018,41 @@ export function deleteLast(
     p = q;
     fm = false;
     if (q < state.hiMemMin) {
-      if ((state.memB0[q] ?? 0) === 7) {
-        for (let m = 1; m <= (state.memB1[q] ?? 0); m += 1) {
-          p = state.memRh[p] ?? 0;
+      if ((state.mem[q].hh.b0 ?? 0) === 7) {
+        for (let m = 1; m <= (state.mem[q].hh.b1 ?? 0); m += 1) {
+          p = state.mem[p].hh.rh ?? 0;
         }
         if (p === tx) {
           return;
         }
-      } else if ((state.memB0[q] ?? 0) === 9 && (state.memB1[q] ?? 0) === 2) {
+      } else if ((state.mem[q].hh.b0 ?? 0) === 9 && (state.mem[q].hh.b1 ?? 0) === 2) {
         fm = true;
       }
     }
-    q = state.memRh[p] ?? 0;
+    q = state.mem[p].hh.rh ?? 0;
     if (q === tx) {
       break;
     }
   }
 
-  q = state.memRh[tx] ?? 0;
-  state.memRh[p] = q;
-  state.memRh[tx] = 0;
+  q = state.mem[tx].hh.rh ?? 0;
+  state.mem[p].hh.rh = q;
+  state.mem[tx].hh.rh = 0;
   if (q === 0) {
     if (fm) {
       ops.confusion(1081);
     } else {
-      state.curListTailField = p;
+      state.curList.tailField = p;
     }
   } else if (fm) {
-    state.curListTailField = r;
-    state.memRh[r] = 0;
+    state.curList.tailField = r;
+    state.mem[r].hh.rh = 0;
     ops.flushNodeList(p);
   }
   ops.flushNodeList(tx);
 }
 
-export interface UnpackageState {
-  curChr: number;
-  curVal: number;
-  curPtr: number;
-  curListModeField: number;
-  curListTailField: number;
-  helpPtr: number;
-  helpLine: number[];
-  discPtr: number[];
-  eqtbRh: number[];
-  memB0: number[];
-  memLh: number[];
-  memRh: number[];
+export interface UnpackageState extends TeXStateSlice<"curChr" | "curVal" | "curPtr" | "curList" | "curList" | "helpPtr" | "helpLine" | "discPtr" | "eqtb" | "mem" | "mem" | "mem">{
 }
 
 export interface UnpackageOps {
@@ -1204,27 +1071,27 @@ export function unpackage(
   ops: UnpackageOps,
 ): void {
   if (state.curChr > 1) {
-    state.memRh[state.curListTailField] = state.discPtr[state.curChr] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = state.discPtr[state.curChr] ?? 0;
     state.discPtr[state.curChr] = 0;
   } else {
     const c = state.curChr;
     ops.scanRegisterNum();
     let p = 0;
     if (state.curVal < 256) {
-      p = state.eqtbRh[3683 + state.curVal] ?? 0;
+      p = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
     } else {
       ops.findSaElement(4, state.curVal, false);
-      p = state.curPtr === 0 ? 0 : (state.memRh[state.curPtr + 1] ?? 0);
+      p = state.curPtr === 0 ? 0 : (state.mem[state.curPtr + 1].hh.rh ?? 0);
     }
     if (p === 0) {
       return;
     }
 
-    const absMode = Math.abs(state.curListModeField);
+    const absMode = Math.abs(state.curList.modeField);
     if (
       absMode === 203 ||
-      (absMode === 1 && (state.memB0[p] ?? 0) !== 1) ||
-      (absMode === 102 && (state.memB0[p] ?? 0) !== 0)
+      (absMode === 1 && (state.mem[p].hh.b0 ?? 0) !== 1) ||
+      (absMode === 102 && (state.mem[p].hh.b0 ?? 0) !== 0)
     ) {
       ops.printNl(263);
       ops.print(1109);
@@ -1237,16 +1104,16 @@ export function unpackage(
     }
 
     if (c === 1) {
-      state.memRh[state.curListTailField] = ops.copyNodeList(state.memRh[p + 5] ?? 0);
+      state.mem[state.curList.tailField].hh.rh = ops.copyNodeList(state.mem[p + 5].hh.rh ?? 0);
     } else {
-      state.memRh[state.curListTailField] = state.memRh[p + 5] ?? 0;
+      state.mem[state.curList.tailField].hh.rh = state.mem[p + 5].hh.rh ?? 0;
       if (state.curVal < 256) {
-        state.eqtbRh[3683 + state.curVal] = 0;
+        state.eqtb[3683 + state.curVal].hh.rh = 0;
       } else {
         ops.findSaElement(4, state.curVal, false);
         if (state.curPtr !== 0) {
-          state.memRh[state.curPtr + 1] = 0;
-          state.memLh[state.curPtr + 1] = (state.memLh[state.curPtr + 1] ?? 0) + 1;
+          state.mem[state.curPtr + 1].hh.rh = 0;
+          state.mem[state.curPtr + 1].hh.lh = (state.mem[state.curPtr + 1].hh.lh ?? 0) + 1;
           ops.deleteSaRef(state.curPtr);
         }
       }
@@ -1254,22 +1121,12 @@ export function unpackage(
     }
   }
 
-  while ((state.memRh[state.curListTailField] ?? 0) !== 0) {
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+  while ((state.mem[state.curList.tailField].hh.rh ?? 0) !== 0) {
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   }
 }
 
-export interface AppendItalicCorrectionState {
-  hiMemMin: number;
-  curListHeadField: number;
-  curListTailField: number;
-  charBase: number[];
-  italicBase: number[];
-  fontInfoB2: number[];
-  fontInfoInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface AppendItalicCorrectionState extends TeXStateSlice<"hiMemMin" | "curList" | "curList" | "charBase" | "italicBase" | "fontInfo" | "fontInfo" | "mem" | "mem" | "mem">{
 }
 
 export interface AppendItalicCorrectionOps {
@@ -1280,40 +1137,30 @@ export function appendItalicCorrection(
   state: AppendItalicCorrectionState,
   ops: AppendItalicCorrectionOps,
 ): void {
-  if (state.curListTailField === state.curListHeadField) {
+  if (state.curList.tailField === state.curList.headField) {
     return;
   }
 
   let p = 0;
-  if (state.curListTailField >= state.hiMemMin) {
-    p = state.curListTailField;
-  } else if ((state.memB0[state.curListTailField] ?? 0) === 6) {
-    p = state.curListTailField + 1;
+  if (state.curList.tailField >= state.hiMemMin) {
+    p = state.curList.tailField;
+  } else if ((state.mem[state.curList.tailField].hh.b0 ?? 0) === 6) {
+    p = state.curList.tailField + 1;
   } else {
     return;
   }
 
-  const f = state.memB0[p] ?? 0;
-  const charIndex = (state.charBase[f] ?? 0) + (state.memB1[p] ?? 0);
+  const f = state.mem[p].hh.b0 ?? 0;
+  const charIndex = (state.charBase[f] ?? 0) + (state.mem[p].hh.b1 ?? 0);
   const italicIndex =
-    (state.italicBase[f] ?? 0) + Math.trunc((state.fontInfoB2[charIndex] ?? 0) / 4);
-  const tail = state.curListTailField;
-  state.memRh[tail] = ops.newKern(state.fontInfoInt[italicIndex] ?? 0);
-  state.curListTailField = state.memRh[tail] ?? 0;
-  state.memB1[state.curListTailField] = 1;
+    (state.italicBase[f] ?? 0) + Math.trunc((state.fontInfo[charIndex].qqqq.b2 ?? 0) / 4);
+  const tail = state.curList.tailField;
+  state.mem[tail].hh.rh = ops.newKern(state.fontInfo[italicIndex].int ?? 0);
+  state.curList.tailField = state.mem[tail].hh.rh ?? 0;
+  state.mem[state.curList.tailField].hh.b1 = 1;
 }
 
-export interface AppendDiscretionaryState {
-  curChr: number;
-  savePtr: number;
-  curListTailField: number;
-  curListModeField: number;
-  curListAuxFieldLh: number;
-  eqtbRh: number[];
-  hyphenChar: number[];
-  saveStackInt: number[];
-  memLh: number[];
-  memRh: number[];
+export interface AppendDiscretionaryState extends TeXStateSlice<"curChr" | "savePtr" | "curList" | "curList" | "curList" | "eqtb" | "hyphenChar" | "saveStack" | "mem" | "mem">{
 }
 
 export interface AppendDiscretionaryOps {
@@ -1328,40 +1175,27 @@ export function appendDiscretionary(
   state: AppendDiscretionaryState,
   ops: AppendDiscretionaryOps,
 ): void {
-  state.memRh[state.curListTailField] = ops.newDisc();
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+  state.mem[state.curList.tailField].hh.rh = ops.newDisc();
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
 
   if (state.curChr === 1) {
-    const f = state.eqtbRh[3939] ?? 0;
+    const f = state.eqtb[3939].hh.rh ?? 0;
     const c = state.hyphenChar[f] ?? -1;
     if (c >= 0 && c < 256) {
-      state.memLh[state.curListTailField + 1] = ops.newCharacter(f, c);
+      state.mem[state.curList.tailField + 1].hh.lh = ops.newCharacter(f, c);
     }
   } else {
     state.savePtr += 1;
-    state.saveStackInt[state.savePtr - 1] = 0;
+    state.saveStack[state.savePtr - 1].int = 0;
     ops.newSaveLevel(10);
     ops.scanLeftBrace();
     ops.pushNest();
-    state.curListModeField = -102;
-    state.curListAuxFieldLh = 1000;
+    state.curList.modeField = -102;
+    state.curList.auxField.hh.lh = 1000;
   }
 }
 
-export interface BuildDiscretionaryState {
-  hiMemMin: number;
-  savePtr: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListModeField: number;
-  curListAuxFieldLh: number;
-  helpPtr: number;
-  helpLine: number[];
-  saveStackInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface BuildDiscretionaryState extends TeXStateSlice<"hiMemMin" | "savePtr" | "curList" | "curList" | "curList" | "curList" | "helpPtr" | "helpLine" | "saveStack" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface BuildDiscretionaryOps {
@@ -1386,13 +1220,13 @@ export function buildDiscretionary(
 ): void {
   ops.unsave();
 
-  let q = state.curListHeadField;
-  let p = state.memRh[q] ?? 0;
+  let q = state.curList.headField;
+  let p = state.mem[q].hh.rh ?? 0;
   let n = 0;
 
   while (p !== 0) {
     if (p < state.hiMemMin) {
-      const b0 = state.memB0[p] ?? 0;
+      const b0 = state.mem[p].hh.b0 ?? 0;
       if (b0 > 2 && b0 !== 11 && b0 !== 6) {
         ops.printNl(263);
         ops.print(1119);
@@ -1404,27 +1238,27 @@ export function buildDiscretionary(
         ops.showBox(p);
         ops.endDiagnostic(true);
         ops.flushNodeList(p);
-        state.memRh[q] = 0;
+        state.mem[q].hh.rh = 0;
         break;
       }
     }
     q = p;
-    p = state.memRh[q] ?? 0;
+    p = state.mem[q].hh.rh ?? 0;
     n += 1;
   }
 
-  p = state.memRh[state.curListHeadField] ?? 0;
+  p = state.mem[state.curList.headField].hh.rh ?? 0;
   ops.popNest();
 
-  switch (state.saveStackInt[state.savePtr - 1] ?? 0) {
+  switch (state.saveStack[state.savePtr - 1].int ?? 0) {
     case 0:
-      state.memLh[state.curListTailField + 1] = p;
+      state.mem[state.curList.tailField + 1].hh.lh = p;
       break;
     case 1:
-      state.memRh[state.curListTailField + 1] = p;
+      state.mem[state.curList.tailField + 1].hh.rh = p;
       break;
     case 2:
-      if (n > 0 && Math.abs(state.curListModeField) === 203) {
+      if (n > 0 && Math.abs(state.curList.modeField) === 203) {
         ops.printNl(263);
         ops.print(1113);
         ops.printEsc(352);
@@ -1435,10 +1269,10 @@ export function buildDiscretionary(
         n = 0;
         ops.error();
       } else {
-        state.memRh[state.curListTailField] = p;
+        state.mem[state.curList.tailField].hh.rh = p;
       }
       if (n <= 255) {
-        state.memB1[state.curListTailField] = n;
+        state.mem[state.curList.tailField].hh.b1 = n;
       } else {
         ops.printNl(263);
         ops.print(1116);
@@ -1448,7 +1282,7 @@ export function buildDiscretionary(
         ops.error();
       }
       if (n > 0) {
-        state.curListTailField = q;
+        state.curList.tailField = q;
       }
       state.savePtr -= 1;
       return;
@@ -1456,31 +1290,15 @@ export function buildDiscretionary(
       break;
   }
 
-  state.saveStackInt[state.savePtr - 1] = (state.saveStackInt[state.savePtr - 1] ?? 0) + 1;
+  state.saveStack[state.savePtr - 1].int = (state.saveStack[state.savePtr - 1].int ?? 0) + 1;
   ops.newSaveLevel(10);
   ops.scanLeftBrace();
   ops.pushNest();
-  state.curListModeField = -102;
-  state.curListAuxFieldLh = 1000;
+  state.curList.modeField = -102;
+  state.curList.auxField.hh.lh = 1000;
 }
 
-export interface MakeAccentState {
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  curListTailField: number;
-  curListAuxFieldLh: number;
-  eqtbRh: number[];
-  paramBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  charBase: number[];
-  fontInfoB0: number[];
-  fontInfoB1: number[];
-  fontInfoInt: number[];
-  memB1: number[];
-  memInt: number[];
-  memRh: number[];
+export interface MakeAccentState extends TeXStateSlice<"curCmd" | "curChr" | "curVal" | "curList" | "curList" | "eqtb" | "paramBase" | "widthBase" | "heightBase" | "charBase" | "fontInfo" | "fontInfo" | "fontInfo" | "mem" | "mem" | "mem">{
 }
 
 export interface MakeAccentOps {
@@ -1497,23 +1315,23 @@ export function makeAccent(
   ops: MakeAccentOps,
 ): void {
   ops.scanCharNum();
-  let f = state.eqtbRh[3939] ?? 0;
+  let f = state.eqtb[3939].hh.rh ?? 0;
   let p = ops.newCharacter(f, state.curVal);
   if (p === 0) {
     return;
   }
 
-  const x = state.fontInfoInt[5 + (state.paramBase[f] ?? 0)] ?? 0;
-  const s = (state.fontInfoInt[1 + (state.paramBase[f] ?? 0)] ?? 0) / 65536.0;
-  const accentCharIndex = (state.charBase[f] ?? 0) + (state.memB1[p] ?? 0);
+  const x = state.fontInfo[5 + (state.paramBase[f] ?? 0)].int ?? 0;
+  const s = (state.fontInfo[1 + (state.paramBase[f] ?? 0)].int ?? 0) / 65536.0;
+  const accentCharIndex = (state.charBase[f] ?? 0) + (state.mem[p].hh.b1 ?? 0);
   const a =
-    state.fontInfoInt[
-      (state.widthBase[f] ?? 0) + (state.fontInfoB0[accentCharIndex] ?? 0)
-    ] ?? 0;
+    state.fontInfo[
+      (state.widthBase[f] ?? 0) + (state.fontInfo[accentCharIndex].qqqq.b0 ?? 0)
+    ].int ?? 0;
 
   ops.doAssignments();
   let q = 0;
-  f = state.eqtbRh[3939] ?? 0;
+  f = state.eqtb[3939].hh.rh ?? 0;
   if (state.curCmd === 11 || state.curCmd === 12 || state.curCmd === 68) {
     q = ops.newCharacter(f, state.curChr);
   } else if (state.curCmd === 16) {
@@ -1524,40 +1342,34 @@ export function makeAccent(
   }
 
   if (q !== 0) {
-    const t = (state.fontInfoInt[1 + (state.paramBase[f] ?? 0)] ?? 0) / 65536.0;
-    const iIndex = (state.charBase[f] ?? 0) + (state.memB1[q] ?? 0);
-    const w = state.fontInfoInt[(state.widthBase[f] ?? 0) + (state.fontInfoB0[iIndex] ?? 0)] ?? 0;
+    const t = (state.fontInfo[1 + (state.paramBase[f] ?? 0)].int ?? 0) / 65536.0;
+    const iIndex = (state.charBase[f] ?? 0) + (state.mem[q].hh.b1 ?? 0);
+    const w = state.fontInfo[(state.widthBase[f] ?? 0) + (state.fontInfo[iIndex].qqqq.b0 ?? 0)].int ?? 0;
     const h =
-      state.fontInfoInt[
-        (state.heightBase[f] ?? 0) + Math.trunc((state.fontInfoB1[iIndex] ?? 0) / 16)
-      ] ?? 0;
+      state.fontInfo[
+        (state.heightBase[f] ?? 0) + Math.trunc((state.fontInfo[iIndex].qqqq.b1 ?? 0) / 16)
+      ].int ?? 0;
     if (h !== x) {
       p = ops.hpack(p, 0, 1);
-      state.memInt[p + 4] = x - h;
+      state.mem[p + 4].int = x - h;
     }
-    const delta = Math.round((w - a) / 2.0 + h * t - x * s);
+    const delta = round((w - a) / 2.0 + h * t - x * s);
     const r = ops.newKern(delta);
-    state.memB1[r] = 2;
-    state.memRh[state.curListTailField] = r;
-    state.memRh[r] = p;
-    state.curListTailField = ops.newKern(-a - delta);
-    state.memB1[state.curListTailField] = 2;
-    state.memRh[p] = state.curListTailField;
+    state.mem[r].hh.b1 = 2;
+    state.mem[state.curList.tailField].hh.rh = r;
+    state.mem[r].hh.rh = p;
+    state.curList.tailField = ops.newKern(-a - delta);
+    state.mem[state.curList.tailField].hh.b1 = 2;
+    state.mem[p].hh.rh = state.curList.tailField;
     p = q;
   }
 
-  state.memRh[state.curListTailField] = p;
-  state.curListTailField = p;
-  state.curListAuxFieldLh = 1000;
+  state.mem[state.curList.tailField].hh.rh = p;
+  state.curList.tailField = p;
+  state.curList.auxField.hh.lh = 1000;
 }
 
-export interface AlignErrorState {
-  alignState: number;
-  curTok: number;
-  curCmd: number;
-  curChr: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface AlignErrorState extends TeXStateSlice<"alignState" | "curTok" | "curCmd" | "curChr" | "helpPtr" | "helpLine">{
 }
 
 export interface AlignErrorOps {
@@ -1616,9 +1428,7 @@ export function alignError(
   ops.insError();
 }
 
-export interface NoAlignErrorState {
-  helpPtr: number;
-  helpLine: number[];
+export interface NoAlignErrorState extends TeXStateSlice<"helpPtr" | "helpLine">{
 }
 
 export interface NoAlignErrorOps {
@@ -1641,9 +1451,7 @@ export function noAlignError(
   ops.error();
 }
 
-export interface OmitErrorState {
-  helpPtr: number;
-  helpLine: number[];
+export interface OmitErrorState extends TeXStateSlice<"helpPtr" | "helpLine">{
 }
 
 export interface OmitErrorOps {
@@ -1666,16 +1474,7 @@ export function omitError(
   ops.error();
 }
 
-export interface DoEndvState {
-  basePtr: number;
-  inputPtr: number;
-  curGroup: number;
-  curInputIndexField: number;
-  curInputLocField: number;
-  curInputStateField: number;
-  inputStackIndexField: number[];
-  inputStackLocField: number[];
-  inputStackStateField: number[];
+export interface DoEndvState extends TeXStateSlice<"basePtr" | "inputPtr" | "curGroup" | "curInput" | "inputStack">{
 }
 
 export interface DoEndvOps {
@@ -1691,22 +1490,27 @@ export function doEndv(
   ops: DoEndvOps,
 ): void {
   state.basePtr = state.inputPtr;
-  state.inputStackIndexField[state.basePtr] = state.curInputIndexField;
-  state.inputStackLocField[state.basePtr] = state.curInputLocField;
-  state.inputStackStateField[state.basePtr] = state.curInputStateField;
+  state.inputStack[state.basePtr] = {
+    indexField: state.curInput.indexField,
+    startField: state.curInput.startField,
+    locField: state.curInput.locField,
+    limitField: state.curInput.limitField,
+    nameField: state.curInput.nameField,
+    stateField: state.curInput.stateField,
+  };
 
   while (
-    (state.inputStackIndexField[state.basePtr] ?? 0) !== 2 &&
-    (state.inputStackLocField[state.basePtr] ?? 0) === 0 &&
-    (state.inputStackStateField[state.basePtr] ?? 0) === 0
+    (state.inputStack[state.basePtr]?.indexField ?? 0) !== 2 &&
+    (state.inputStack[state.basePtr]?.locField ?? 0) === 0 &&
+    (state.inputStack[state.basePtr]?.stateField ?? 0) === 0
   ) {
     state.basePtr -= 1;
   }
 
   if (
-    (state.inputStackIndexField[state.basePtr] ?? 0) !== 2 ||
-    (state.inputStackLocField[state.basePtr] ?? 0) !== 0 ||
-    (state.inputStackStateField[state.basePtr] ?? 0) !== 0
+    (state.inputStack[state.basePtr]?.indexField ?? 0) !== 2 ||
+    (state.inputStack[state.basePtr]?.locField ?? 0) !== 0 ||
+    (state.inputStack[state.basePtr]?.stateField ?? 0) !== 0
   ) {
     ops.fatalError(604);
     return;
@@ -1722,9 +1526,7 @@ export function doEndv(
   }
 }
 
-export interface CsErrorState {
-  helpPtr: number;
-  helpLine: number[];
+export interface CsErrorState extends TeXStateSlice<"helpPtr" | "helpLine">{
 }
 
 export interface CsErrorOps {
@@ -1746,9 +1548,7 @@ export function csError(
   ops.error();
 }
 
-export interface PushMathState {
-  curListModeField: number;
-  curListAuxFieldInt: number;
+export interface PushMathState extends TeXStateSlice<"curList" | "curList">{
 }
 
 export interface PushMathOps {
@@ -1762,21 +1562,12 @@ export function pushMath(
   ops: PushMathOps,
 ): void {
   ops.pushNest();
-  state.curListModeField = -203;
-  state.curListAuxFieldInt = 0;
+  state.curList.modeField = -203;
+  state.curList.auxField.int = 0;
   ops.newSaveLevel(c);
 }
 
-export interface JustCopyState {
-  hiMemMin: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr?: number[];
-  memB2?: number[];
-  memB3?: number[];
+export interface JustCopyState extends MemWordCoreSlice, MemWordViewsSlice, TeXStateSlice<"hiMemMin">{
 }
 
 export interface JustCopyOps {
@@ -1788,31 +1579,16 @@ export interface JustCopyOps {
 function copyMemWordLocal(
   from: number,
   to: number,
-  state: {
-    memB0: number[];
-    memB1: number[];
-    memLh: number[];
-    memRh: number[];
-    memInt: number[];
-    memGr?: number[];
-    memB2?: number[];
-    memB3?: number[];
-  },
+  state: MemWordCoreSlice & MemGrSlice & Partial<MemB23Slice>,
 ): void {
-  state.memB0[to] = state.memB0[from] ?? 0;
-  state.memB1[to] = state.memB1[from] ?? 0;
-  state.memLh[to] = state.memLh[from] ?? 0;
-  state.memRh[to] = state.memRh[from] ?? 0;
-  state.memInt[to] = state.memInt[from] ?? 0;
-  if (state.memGr !== undefined) {
-    state.memGr[to] = state.memGr[from] ?? 0;
-  }
-  if (state.memB2 !== undefined) {
-    state.memB2[to] = state.memB2[from] ?? 0;
-  }
-  if (state.memB3 !== undefined) {
-    state.memB3[to] = state.memB3[from] ?? 0;
-  }
+  state.mem[to].hh.b0 = state.mem[from].hh.b0 ?? 0;
+  state.mem[to].hh.b1 = state.mem[from].hh.b1 ?? 0;
+  state.mem[to].hh.lh = state.mem[from].hh.lh ?? 0;
+  state.mem[to].hh.rh = state.mem[from].hh.rh ?? 0;
+  state.mem[to].int = state.mem[from].int ?? 0;
+  state.mem[to].gr = state.mem[from].gr ?? 0;
+  state.mem[to].qqqq.b2 = state.mem[from].qqqq.b2 ?? 0;
+  state.mem[to].qqqq.b3 = state.mem[from].qqqq.b3 ?? 0;
 }
 
 export function justCopy(
@@ -1831,14 +1607,14 @@ export function justCopy(
     if (p >= state.hiMemMin) {
       r = ops.getAvail();
     } else {
-      switch (state.memB0[p] ?? 0) {
+      switch (state.mem[p].hh.b0 ?? 0) {
         case 0:
         case 1:
           r = ops.getNode(7);
           copyMemWordLocal(p + 6, r + 6, state);
           copyMemWordLocal(p + 5, r + 5, state);
           words = 5;
-          state.memRh[r + 5] = 0;
+          state.mem[r + 5].hh.rh = 0;
           break;
         case 2:
           r = ops.getNode(4);
@@ -1856,18 +1632,18 @@ export function justCopy(
           break;
         case 10:
           r = ops.getNode(2);
-          state.memRh[state.memLh[p + 1] ?? 0] = (state.memRh[state.memLh[p + 1] ?? 0] ?? 0) + 1;
-          state.memLh[r + 1] = state.memLh[p + 1] ?? 0;
-          state.memRh[r + 1] = 0;
+          state.mem[state.mem[p + 1].hh.lh ?? 0].hh.rh = (state.mem[state.mem[p + 1].hh.lh ?? 0].hh.rh ?? 0) + 1;
+          state.mem[r + 1].hh.lh = state.mem[p + 1].hh.lh ?? 0;
+          state.mem[r + 1].hh.rh = 0;
           break;
         case 8: {
-          const b1 = state.memB1[p] ?? 0;
+          const b1 = state.mem[p].hh.b1 ?? 0;
           if (b1 === 0) {
             r = ops.getNode(3);
             words = 3;
           } else if (b1 === 1 || b1 === 3) {
             r = ops.getNode(2);
-            state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+            state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
             words = 2;
           } else if (b1 === 2 || b1 === 4) {
             r = ops.getNode(2);
@@ -1891,26 +1667,15 @@ export function justCopy(
           copyMemWordLocal(p + words, r + words, state);
         }
       }
-      state.memRh[h] = r;
+      state.mem[h].hh.rh = r;
       h = r;
     }
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
-  state.memRh[h] = t;
+  state.mem[h].hh.rh = t;
 }
 
-export interface JustReverseState {
-  hiMemMin: number;
-  curDir: number;
-  LRPtr: number;
-  LRProblems: number;
-  avail: number;
-  tempPtr: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
+export interface JustReverseState extends TeXStateSlice<"hiMemMin" | "curDir" | "lrPtr" | "lrProblems" | "avail" | "tempPtr" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface JustReverseOps {
@@ -1930,13 +1695,13 @@ export function justReverse(
   let n = 0;
   let q = 0;
 
-  if ((state.memRh[29997] ?? 0) === 0) {
-    ops.justCopy(state.memRh[p] ?? 0, 29997, 0);
-    q = state.memRh[29997] ?? 0;
+  if ((state.mem[29997].hh.rh ?? 0) === 0) {
+    ops.justCopy(state.mem[p].hh.rh ?? 0, 29997, 0);
+    q = state.mem[29997].hh.rh ?? 0;
   } else {
-    q = state.memRh[p] ?? 0;
-    state.memRh[p] = 0;
-    ops.flushNodeList(state.memRh[29997] ?? 0);
+    q = state.mem[p].hh.rh ?? 0;
+    state.mem[p].hh.rh = 0;
+    ops.flushNodeList(state.mem[29997].hh.rh ?? 0);
   }
 
   const t = ops.newEdge(state.curDir, 0);
@@ -1947,65 +1712,61 @@ export function justReverse(
     if (q >= state.hiMemMin) {
       do {
         p = q;
-        q = state.memRh[p] ?? 0;
-        state.memRh[p] = l;
+        q = state.mem[p].hh.rh ?? 0;
+        state.mem[p].hh.rh = l;
         l = p;
       } while (q >= state.hiMemMin);
     } else {
       p = q;
-      q = state.memRh[p] ?? 0;
-      if ((state.memB0[p] ?? 0) === 9) {
-        if (((state.memB1[p] ?? 0) & 1) === 1) {
-          if ((state.memLh[state.LRPtr] ?? 0) !== (4 * Math.trunc((state.memB1[p] ?? 0) / 4) + 3)) {
-            state.memB0[p] = 11;
-            state.LRProblems += 1;
+      q = state.mem[p].hh.rh ?? 0;
+      if ((state.mem[p].hh.b0 ?? 0) === 9) {
+        if (((state.mem[p].hh.b1 ?? 0) & 1) === 1) {
+          if ((state.mem[state.lrPtr].hh.lh ?? 0) !== (4 * Math.trunc((state.mem[p].hh.b1 ?? 0) / 4) + 3)) {
+            state.mem[p].hh.b0 = 11;
+            state.lrProblems += 1;
           } else {
-            state.tempPtr = state.LRPtr;
-            state.LRPtr = state.memRh[state.tempPtr] ?? 0;
-            state.memRh[state.tempPtr] = state.avail;
+            state.tempPtr = state.lrPtr;
+            state.lrPtr = state.mem[state.tempPtr].hh.rh ?? 0;
+            state.mem[state.tempPtr].hh.rh = state.avail;
             state.avail = state.tempPtr;
             if (n > 0) {
               n -= 1;
-              state.memB1[p] = (state.memB1[p] ?? 0) - 1;
+              state.mem[p].hh.b1 = (state.mem[p].hh.b1 ?? 0) - 1;
             } else {
               if (m > 0) {
                 m -= 1;
               } else {
-                state.memInt[t + 1] = state.memInt[p + 1] ?? 0;
-                state.memRh[t] = q;
+                state.mem[t + 1].int = state.mem[p + 1].int ?? 0;
+                state.mem[t].hh.rh = q;
                 ops.freeNode(p, 2);
-                state.memRh[29997] = l;
+                state.mem[29997].hh.rh = l;
                 return;
               }
-              state.memB0[p] = 11;
+              state.mem[p].hh.b0 = 11;
             }
           }
         } else {
           state.tempPtr = ops.getAvail();
-          state.memLh[state.tempPtr] = 4 * Math.trunc((state.memB1[p] ?? 0) / 4) + 3;
-          state.memRh[state.tempPtr] = state.LRPtr;
-          state.LRPtr = state.tempPtr;
-          if (n > 0 || Math.trunc((state.memB1[p] ?? 0) / 8) !== state.curDir) {
+          state.mem[state.tempPtr].hh.lh = 4 * Math.trunc((state.mem[p].hh.b1 ?? 0) / 4) + 3;
+          state.mem[state.tempPtr].hh.rh = state.lrPtr;
+          state.lrPtr = state.tempPtr;
+          if (n > 0 || Math.trunc((state.mem[p].hh.b1 ?? 0) / 8) !== state.curDir) {
             n += 1;
-            state.memB1[p] = (state.memB1[p] ?? 0) + 1;
+            state.mem[p].hh.b1 = (state.mem[p].hh.b1 ?? 0) + 1;
           } else {
-            state.memB0[p] = 11;
+            state.mem[p].hh.b0 = 11;
             m += 1;
           }
         }
       }
-      state.memRh[p] = l;
+      state.mem[p].hh.rh = l;
       l = p;
     }
   }
-  state.memRh[29997] = l;
+  state.mem[29997].hh.rh = l;
 }
 
-export interface StartEqNoState {
-  curChr: number;
-  savePtr: number;
-  saveStackInt: number[];
-  eqtbRh: number[];
+export interface StartEqNoState extends TeXStateSlice<"curChr" | "savePtr" | "saveStack" | "eqtb">{
 }
 
 export interface StartEqNoOps {
@@ -2018,46 +1779,16 @@ export function startEqNo(
   state: StartEqNoState,
   ops: StartEqNoOps,
 ): void {
-  state.saveStackInt[state.savePtr + 0] = state.curChr;
+  state.saveStack[state.savePtr + 0].int = state.curChr;
   state.savePtr += 1;
   ops.pushMath(15);
   ops.eqWordDefine(5312, -1);
-  if ((state.eqtbRh[3415] ?? 0) !== 0) {
-    ops.beginTokenList(state.eqtbRh[3415] ?? 0, 8);
+  if ((state.eqtb[3415].hh.rh ?? 0) !== 0) {
+    ops.beginTokenList(state.eqtb[3415].hh.rh ?? 0, 8);
   }
 }
 
-export interface InitMathState {
-  curCmd: number;
-  curChr: number;
-  curTok: number;
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListPgField: number;
-  curListETeXAuxField: number;
-  justBox: number;
-  eTeXMode: number;
-  nestPtr: number;
-  hiMemMin: number;
-  LRPtr: number;
-  LRProblems: number;
-  avail: number;
-  tempPtr: number;
-  curDir: number;
-  eqtbRh: number[];
-  eqtbInt: number[];
-  paramBase: number[];
-  widthBase: number[];
-  charBase: number[];
-  fontInfoB0: number[];
-  fontInfoInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
+export interface InitMathState extends EqtbIntSlice, MemWordCoreSlice, MemGrSlice, TeXStateSlice<"curCmd" | "curChr" | "curTok" | "curList" | "curList" | "curList" | "curList" | "curList" | "justBox" | "eTeXMode" | "nestPtr" | "hiMemMin" | "lrPtr" | "lrProblems" | "avail" | "tempPtr" | "curDir" | "eqtb" | "paramBase" | "widthBase" | "charBase" | "fontInfo" | "fontInfo">{
 }
 
 export interface InitMathOps {
@@ -2084,7 +1815,7 @@ export function initMath(
   ops: InitMathOps,
 ): void {
   ops.getToken();
-  if (state.curCmd === 3 && state.curListModeField > 0) {
+  if (state.curCmd === 3 && state.curList.modeField > 0) {
     let j = 0;
     let w = -1073741823;
     let x = 0;
@@ -2097,11 +1828,11 @@ export function initMath(
     let v = 0;
     let d = 0;
 
-    if (state.curListHeadField === state.curListTailField) {
+    if (state.curList.headField === state.curList.tailField) {
       ops.popNest();
-      if (state.curListETeXAuxField === 0) {
+      if (state.curList.eTeXAuxField === 0) {
         x = 0;
-      } else if ((state.memLh[state.curListETeXAuxField] ?? 0) >= 8) {
+      } else if ((state.mem[state.curList.eTeXAuxField].hh.lh ?? 0) >= 8) {
         x = -1;
       } else {
         x = 1;
@@ -2109,44 +1840,44 @@ export function initMath(
     } else {
       ops.lineBreak(true);
       if (state.eTeXMode === 1) {
-        if ((state.eqtbRh[2890] ?? 0) === 0) {
+        if ((state.eqtb[2890].hh.rh ?? 0) === 0) {
           j = ops.newKern(0);
         } else {
           j = ops.newParamGlue(8);
         }
-        if ((state.eqtbRh[2889] ?? 0) === 0) {
+        if ((state.eqtb[2889].hh.rh ?? 0) === 0) {
           p = ops.newKern(0);
         } else {
           p = ops.newParamGlue(7);
         }
-        state.memRh[p] = j;
+        state.mem[p].hh.rh = j;
         j = ops.newNullBox();
-        state.memInt[j + 1] = state.memInt[state.justBox + 1] ?? 0;
-        state.memInt[j + 4] = state.memInt[state.justBox + 4] ?? 0;
-        state.memRh[j + 5] = state.memRh[state.justBox + 5] ?? 0;
-        state.memB1[j + 5] = state.memB1[state.justBox + 5] ?? 0;
-        state.memB0[j + 5] = state.memB0[state.justBox + 5] ?? 0;
-        state.memGr[j + 6] = state.memGr[state.justBox + 6] ?? 0;
+        state.mem[j + 1].int = state.mem[state.justBox + 1].int ?? 0;
+        state.mem[j + 4].int = state.mem[state.justBox + 4].int ?? 0;
+        state.mem[j + 5].hh.rh = state.mem[state.justBox + 5].hh.rh ?? 0;
+        state.mem[j + 5].hh.b1 = state.mem[state.justBox + 5].hh.b1 ?? 0;
+        state.mem[j + 5].hh.b0 = state.mem[state.justBox + 5].hh.b0 ?? 0;
+        state.mem[j + 6].gr = state.mem[state.justBox + 6].gr ?? 0;
       }
 
-      v = state.memInt[state.justBox + 4] ?? 0;
-      if (state.curListETeXAuxField === 0) {
+      v = state.mem[state.justBox + 4].int ?? 0;
+      if (state.curList.eTeXAuxField === 0) {
         x = 0;
-      } else if ((state.memLh[state.curListETeXAuxField] ?? 0) >= 8) {
+      } else if ((state.mem[state.curList.eTeXAuxField].hh.lh ?? 0) >= 8) {
         x = -1;
       } else {
         x = 1;
       }
 
       if (x >= 0) {
-        p = state.memRh[state.justBox + 5] ?? 0;
-        state.memRh[29997] = 0;
+        p = state.mem[state.justBox + 5].hh.rh ?? 0;
+        state.mem[29997].hh.rh = 0;
       } else {
-        v = -v - (state.memInt[state.justBox + 1] ?? 0);
+        v = -v - (state.mem[state.justBox + 1].int ?? 0);
         p = ops.newMath(0, 6);
-        state.memRh[29997] = p;
+        state.mem[29997].hh.rh = p;
         ops.justCopy(
-          state.memRh[state.justBox + 5] ?? 0,
+          state.mem[state.justBox + 5].hh.rh ?? 0,
           p,
           ops.newMath(0, 7),
         );
@@ -2155,15 +1886,15 @@ export function initMath(
 
       v +=
         2 *
-        (state.fontInfoInt[
-          6 + (state.paramBase[state.eqtbRh[3939] ?? 0] ?? 0)
-        ] ?? 0);
+        (state.fontInfo[
+          6 + (state.paramBase[state.eqtb[3939].hh.rh ?? 0] ?? 0)
+        ].int ?? 0);
 
-      if ((state.eqtbInt[5332] ?? 0) > 0) {
+      if ((state.eqtb[5332].int ?? 0) > 0) {
         state.tempPtr = ops.getAvail();
-        state.memLh[state.tempPtr] = 0;
-        state.memRh[state.tempPtr] = state.LRPtr;
-        state.LRPtr = state.tempPtr;
+        state.mem[state.tempPtr].hh.lh = 0;
+        state.mem[state.tempPtr].hh.rh = state.lrPtr;
+        state.lrPtr = state.tempPtr;
       }
 
       let jumpTo30 = false;
@@ -2174,93 +1905,93 @@ export function initMath(
         while (restart21) {
           restart21 = false;
           if (p >= state.hiMemMin) {
-            f = state.memB0[p] ?? 0;
+            f = state.mem[p].hh.b0 ?? 0;
             d =
-              state.fontInfoInt[
+              state.fontInfo[
                 (state.widthBase[f] ?? 0) +
-                  (state.fontInfoB0[
-                    (state.charBase[f] ?? 0) + (state.memB1[p] ?? 0)
-                  ] ?? 0)
-              ] ?? 0;
+                  (state.fontInfo[
+                    (state.charBase[f] ?? 0) + (state.mem[p].hh.b1 ?? 0)
+                  ].qqqq.b0 ?? 0)
+              ].int ?? 0;
             jump40 = true;
             break;
           }
 
-          switch (state.memB0[p] ?? 0) {
+          switch (state.mem[p].hh.b0 ?? 0) {
             case 0:
             case 1:
             case 2:
-              d = state.memInt[p + 1] ?? 0;
+              d = state.mem[p + 1].int ?? 0;
               jump40 = true;
               break;
             case 6:
               copyMemWordLocal(p + 1, 29988, state);
-              state.memRh[29988] = state.memRh[p] ?? 0;
+              state.mem[29988].hh.rh = state.mem[p].hh.rh ?? 0;
               p = 29988;
               restart21 = true;
               break;
             case 11:
-              d = state.memInt[p + 1] ?? 0;
+              d = state.mem[p + 1].int ?? 0;
               break;
             case 9:
-              d = state.memInt[p + 1] ?? 0;
-              if ((state.eqtbInt[5332] ?? 0) > 0) {
-                if (((state.memB1[p] ?? 0) & 1) === 1) {
+              d = state.mem[p + 1].int ?? 0;
+              if ((state.eqtb[5332].int ?? 0) > 0) {
+                if (((state.mem[p].hh.b1 ?? 0) & 1) === 1) {
                   if (
-                    (state.memLh[state.LRPtr] ?? 0) ===
-                    4 * Math.trunc((state.memB1[p] ?? 0) / 4) + 3
+                    (state.mem[state.lrPtr].hh.lh ?? 0) ===
+                    4 * Math.trunc((state.mem[p].hh.b1 ?? 0) / 4) + 3
                   ) {
-                    state.tempPtr = state.LRPtr;
-                    state.LRPtr = state.memRh[state.tempPtr] ?? 0;
-                    state.memRh[state.tempPtr] = state.avail;
+                    state.tempPtr = state.lrPtr;
+                    state.lrPtr = state.mem[state.tempPtr].hh.rh ?? 0;
+                    state.mem[state.tempPtr].hh.rh = state.avail;
                     state.avail = state.tempPtr;
-                  } else if ((state.memB1[p] ?? 0) > 4) {
+                  } else if ((state.mem[p].hh.b1 ?? 0) > 4) {
                     w = 1073741823;
                     jumpTo30 = true;
                   }
                 } else {
                   state.tempPtr = ops.getAvail();
-                  state.memLh[state.tempPtr] =
-                    4 * Math.trunc((state.memB1[p] ?? 0) / 4) + 3;
-                  state.memRh[state.tempPtr] = state.LRPtr;
-                  state.LRPtr = state.tempPtr;
+                  state.mem[state.tempPtr].hh.lh =
+                    4 * Math.trunc((state.mem[p].hh.b1 ?? 0) / 4) + 3;
+                  state.mem[state.tempPtr].hh.rh = state.lrPtr;
+                  state.lrPtr = state.tempPtr;
                   if (
-                    Math.trunc((state.memB1[p] ?? 0) / 8) !== state.curDir
+                    Math.trunc((state.mem[p].hh.b1 ?? 0) / 8) !== state.curDir
                   ) {
                     ops.justReverse(p);
                     p = 29997;
                   }
                 }
-              } else if ((state.memB1[p] ?? 0) >= 4) {
+              } else if ((state.mem[p].hh.b1 ?? 0) >= 4) {
                 w = 1073741823;
                 jumpTo30 = true;
               }
               break;
             case 14:
-              d = state.memInt[p + 1] ?? 0;
-              state.curDir = state.memB1[p] ?? 0;
+              d = state.mem[p + 1].int ?? 0;
+              state.curDir = state.mem[p].hh.b1 ?? 0;
               break;
             case 10:
-              q = state.memLh[p + 1] ?? 0;
-              d = state.memInt[q + 1] ?? 0;
-              if ((state.memB0[state.justBox + 5] ?? 0) === 1) {
+              q = state.mem[p + 1].hh.lh ?? 0;
+              d = state.mem[q + 1].int ?? 0;
+              if ((state.mem[state.justBox + 5].hh.b0 ?? 0) === 1) {
                 if (
-                  (state.memB1[state.justBox + 5] ?? 0) ===
-                    (state.memB0[q] ?? 0) &&
-                  (state.memInt[q + 2] ?? 0) !== 0
+                  (state.mem[state.justBox + 5].hh.b1 ?? 0) ===
+                    (state.mem[q].hh.b0 ?? 0) &&
+                  (state.mem[q + 2].int ?? 0) !== 0
                 ) {
                   v = 1073741823;
                 }
-              } else if ((state.memB0[state.justBox + 5] ?? 0) === 2) {
+              } else if ((state.mem[state.justBox + 5].hh.b0 ?? 0) === 2) {
                 if (
-                  (state.memB1[state.justBox + 5] ?? 0) ===
-                    (state.memB1[q] ?? 0) &&
-                  (state.memInt[q + 3] ?? 0) !== 0
+                  (state.mem[state.justBox + 5].hh.b1 ?? 0) ===
+                    (state.mem[q].hh.b1 ?? 0) &&
+                  (state.mem[q + 3].int ?? 0) !== 0
                 ) {
                   v = 1073741823;
                 }
               }
-              if ((state.memB1[p] ?? 0) >= 100) {
+              if ((state.mem[p].hh.b1 ?? 0) >= 100) {
                 jump40 = true;
               }
               break;
@@ -2287,65 +2018,65 @@ export function initMath(
         } else if (v < 1073741823) {
           v += d;
         }
-        p = state.memRh[p] ?? 0;
+        p = state.mem[p].hh.rh ?? 0;
       }
 
-      if ((state.eqtbInt[5332] ?? 0) > 0) {
-        while (state.LRPtr !== 0) {
-          state.tempPtr = state.LRPtr;
-          state.LRPtr = state.memRh[state.tempPtr] ?? 0;
-          state.memRh[state.tempPtr] = state.avail;
+      if ((state.eqtb[5332].int ?? 0) > 0) {
+        while (state.lrPtr !== 0) {
+          state.tempPtr = state.lrPtr;
+          state.lrPtr = state.mem[state.tempPtr].hh.rh ?? 0;
+          state.mem[state.tempPtr].hh.rh = state.avail;
           state.avail = state.tempPtr;
         }
-        if (state.LRProblems !== 0) {
+        if (state.lrProblems !== 0) {
           w = 1073741823;
-          state.LRProblems = 0;
+          state.lrProblems = 0;
         }
       }
       state.curDir = 0;
-      ops.flushNodeList(state.memRh[29997] ?? 0);
+      ops.flushNodeList(state.mem[29997].hh.rh ?? 0);
     }
 
-    if ((state.eqtbRh[3412] ?? 0) === 0) {
+    if ((state.eqtb[3412].hh.rh ?? 0) === 0) {
       if (
-        (state.eqtbInt[5862] ?? 0) !== 0 &&
-        (((state.eqtbInt[5309] ?? 0) >= 0 &&
-          state.curListPgField + 2 > (state.eqtbInt[5309] ?? 0)) ||
-          state.curListPgField + 1 < -(state.eqtbInt[5309] ?? 0))
+        (state.eqtb[5862].int ?? 0) !== 0 &&
+        (((state.eqtb[5309].int ?? 0) >= 0 &&
+          state.curList.pgField + 2 > (state.eqtb[5309].int ?? 0)) ||
+          state.curList.pgField + 1 < -(state.eqtb[5309].int ?? 0))
       ) {
-        l = (state.eqtbInt[5848] ?? 0) - Math.abs(state.eqtbInt[5862] ?? 0);
-        if ((state.eqtbInt[5862] ?? 0) > 0) {
-          s = state.eqtbInt[5862] ?? 0;
+        l = (state.eqtb[5848].int ?? 0) - Math.abs(state.eqtb[5862].int ?? 0);
+        if ((state.eqtb[5862].int ?? 0) > 0) {
+          s = state.eqtb[5862].int ?? 0;
         } else {
           s = 0;
         }
       } else {
-        l = state.eqtbInt[5848] ?? 0;
+        l = state.eqtb[5848].int ?? 0;
         s = 0;
       }
     } else {
-      n = state.memLh[state.eqtbRh[3412] ?? 0] ?? 0;
-      if (state.curListPgField + 2 >= n) {
-        p = (state.eqtbRh[3412] ?? 0) + 2 * n;
+      n = state.mem[state.eqtb[3412].hh.rh ?? 0].hh.lh ?? 0;
+      if (state.curList.pgField + 2 >= n) {
+        p = (state.eqtb[3412].hh.rh ?? 0) + 2 * n;
       } else {
-        p = (state.eqtbRh[3412] ?? 0) + 2 * (state.curListPgField + 2);
+        p = (state.eqtb[3412].hh.rh ?? 0) + 2 * (state.curList.pgField + 2);
       }
-      s = state.memInt[p - 1] ?? 0;
-      l = state.memInt[p] ?? 0;
+      s = state.mem[p - 1].int ?? 0;
+      l = state.mem[p].int ?? 0;
     }
 
     ops.pushMath(15);
-    state.curListModeField = 203;
+    state.curList.modeField = 203;
     ops.eqWordDefine(5312, -1);
     ops.eqWordDefine(5858, w);
-    state.curListETeXAuxField = j;
+    state.curList.eTeXAuxField = j;
     if (state.eTeXMode === 1) {
       ops.eqWordDefine(5328, x);
     }
     ops.eqWordDefine(5859, l);
     ops.eqWordDefine(5860, s);
-    if ((state.eqtbRh[3416] ?? 0) !== 0) {
-      ops.beginTokenList(state.eqtbRh[3416] ?? 0, 9);
+    if ((state.eqtb[3416].hh.rh ?? 0) !== 0) {
+      ops.beginTokenList(state.eqtb[3416].hh.rh ?? 0, 9);
     }
     if (state.nestPtr === 1) {
       ops.buildPage();
@@ -2354,25 +2085,13 @@ export function initMath(
     ops.backInput();
     ops.pushMath(15);
     ops.eqWordDefine(5312, -1);
-    if ((state.eqtbRh[3415] ?? 0) !== 0) {
-      ops.beginTokenList(state.eqtbRh[3415] ?? 0, 8);
+    if ((state.eqtb[3415].hh.rh ?? 0) !== 0) {
+      ops.beginTokenList(state.eqtb[3415].hh.rh ?? 0, 8);
     }
   }
 }
 
-export interface ScanMathState {
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  curCs: number;
-  savePtr: number;
-  saveStackInt: number[];
-  eqtbB0: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface ScanMathState extends TeXStateSlice<"curCmd" | "curChr" | "curVal" | "curCs" | "savePtr" | "saveStack" | "eqtb" | "eqtb" | "eqtb" | "mem" | "mem" | "mem">{
 }
 
 export interface ScanMathOps {
@@ -2397,76 +2116,72 @@ export function scanMath(
     do {
       ops.getXToken();
     } while (state.curCmd === 10 || state.curCmd === 0);
-
-    if (state.curCmd === 11 || state.curCmd === 12 || state.curCmd === 68) {
-      c = (state.eqtbRh[5012 + state.curChr] ?? 0) - 0;
-      if (c === 32768) {
-        state.curCs = state.curChr + 1;
-        state.curCmd = state.eqtbB0[state.curCs] ?? 0;
-        state.curChr = state.eqtbRh[state.curCs] ?? 0;
-        ops.xToken();
-        ops.backInput();
-        continue;
+    dispatchLoop: while (true) {
+      if (state.curCmd === 11 || state.curCmd === 12 || state.curCmd === 68) {
+        c = (state.eqtb[5012 + state.curChr].hh.rh ?? 0) - 0;
+        if (c === 32768) {
+          state.curCs = state.curChr + 1;
+          state.curCmd = state.eqtb[state.curCs].hh.b0 ?? 0;
+          state.curChr = state.eqtb[state.curCs].hh.rh ?? 0;
+          ops.xToken();
+          ops.backInput();
+          break dispatchLoop;
+        }
+        break;
       }
+
+      if (state.curCmd === 16) {
+        ops.scanCharNum();
+        state.curChr = state.curVal;
+        state.curCmd = 68;
+        continue dispatchLoop;
+      }
+
+      if (state.curCmd === 17) {
+        ops.scanFifteenBitInt();
+        c = state.curVal;
+        break;
+      }
+
+      if (state.curCmd === 69) {
+        c = state.curChr;
+        break;
+      }
+
+      if (state.curCmd === 15) {
+        ops.scanTwentySevenBitInt();
+        c = Math.trunc(state.curVal / 4096);
+        break;
+      }
+
+      ops.backInput();
+      ops.scanLeftBrace();
+      state.saveStack[state.savePtr + 0].int = p;
+      state.savePtr += 1;
+      ops.pushMath(9);
+      return;
+    }
+
+    if (c !== 32768) {
       break;
     }
-
-    if (state.curCmd === 16) {
-      ops.scanCharNum();
-      state.curChr = state.curVal;
-      state.curCmd = 68;
-      continue;
-    }
-
-    if (state.curCmd === 17) {
-      ops.scanFifteenBitInt();
-      c = state.curVal;
-      break;
-    }
-
-    if (state.curCmd === 69) {
-      c = state.curChr;
-      break;
-    }
-
-    if (state.curCmd === 15) {
-      ops.scanTwentySevenBitInt();
-      c = Math.trunc(state.curVal / 4096);
-      break;
-    }
-
-    ops.backInput();
-    ops.scanLeftBrace();
-    state.saveStackInt[state.savePtr + 0] = p;
-    state.savePtr += 1;
-    ops.pushMath(9);
-    return;
+    c = 0;
   }
 
-  state.memRh[p] = 1;
-  state.memB1[p] = (c % 256) + 0;
+  state.mem[p].hh.rh = 1;
+  state.mem[p].hh.b1 = (c % 256) + 0;
   if (
     c >= 28672 &&
-    (state.eqtbInt[5312] ?? 0) >= 0 &&
-    (state.eqtbInt[5312] ?? 0) < 16
+    (state.eqtb[5312].int ?? 0) >= 0 &&
+    (state.eqtb[5312].int ?? 0) < 16
   ) {
-    state.memB0[p] = state.eqtbInt[5312] ?? 0;
+    state.mem[p].hh.b0 = state.eqtb[5312].int ?? 0;
   } else {
-    state.memB0[p] = Math.trunc(c / 256) % 16;
+    state.mem[p].hh.b0 = Math.trunc(c / 256) % 16;
   }
 }
 
-export interface SetMathCharState {
-  curCs: number;
-  curCmd: number;
-  curChr: number;
-  curListTailField: number;
-  eqtbB0: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface SetMathCharState extends TeXStateSlice<"curCs" | "curCmd" | "curChr" | "curList" | "eqtb" | "eqtb" | "eqtb" | "mem" | "mem" | "mem">{
 }
 
 export interface SetMathCharOps {
@@ -2482,38 +2197,30 @@ export function setMathChar(
 ): void {
   if (c >= 32768) {
     state.curCs = state.curChr + 1;
-    state.curCmd = state.eqtbB0[state.curCs] ?? 0;
-    state.curChr = state.eqtbRh[state.curCs] ?? 0;
+    state.curCmd = state.eqtb[state.curCs].hh.b0 ?? 0;
+    state.curChr = state.eqtb[state.curCs].hh.rh ?? 0;
     ops.xToken();
     ops.backInput();
     return;
   }
 
   const p = ops.newNoad();
-  state.memRh[p + 1] = 1;
-  state.memB1[p + 1] = (c % 256) + 0;
-  state.memB0[p + 1] = Math.trunc(c / 256) % 16;
+  state.mem[p + 1].hh.rh = 1;
+  state.mem[p + 1].hh.b1 = (c % 256) + 0;
+  state.mem[p + 1].hh.b0 = Math.trunc(c / 256) % 16;
   if (c >= 28672) {
-    if ((state.eqtbInt[5312] ?? 0) >= 0 && (state.eqtbInt[5312] ?? 0) < 16) {
-      state.memB0[p + 1] = state.eqtbInt[5312] ?? 0;
+    if ((state.eqtb[5312].int ?? 0) >= 0 && (state.eqtb[5312].int ?? 0) < 16) {
+      state.mem[p + 1].hh.b0 = state.eqtb[5312].int ?? 0;
     }
-    state.memB0[p] = 16;
+    state.mem[p].hh.b0 = 16;
   } else {
-    state.memB0[p] = 16 + Math.trunc(c / 4096);
+    state.mem[p].hh.b0 = 16 + Math.trunc(c / 4096);
   }
-  state.memRh[state.curListTailField] = p;
-  state.curListTailField = p;
+  state.mem[state.curList.tailField].hh.rh = p;
+  state.curList.tailField = p;
 }
 
-export interface MathLimitSwitchState {
-  interaction: number;
-  curChr: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListHeadField: number;
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
+export interface MathLimitSwitchState extends TeXStateSlice<"interaction" | "curChr" | "helpPtr" | "helpLine" | "curList" | "curList" | "mem" | "mem">{
 }
 
 export interface MathLimitSwitchOps {
@@ -2526,9 +2233,9 @@ export function mathLimitSwitch(
   state: MathLimitSwitchState,
   ops: MathLimitSwitchOps,
 ): void {
-  if (state.curListHeadField !== state.curListTailField) {
-    if ((state.memB0[state.curListTailField] ?? 0) === 17) {
-      state.memB1[state.curListTailField] = state.curChr;
+  if (state.curList.headField !== state.curList.tailField) {
+    if ((state.mem[state.curList.tailField].hh.b0 ?? 0) === 17) {
+      state.mem[state.curList.tailField].hh.b1 = state.curChr;
       return;
     }
   }
@@ -2543,18 +2250,7 @@ export function mathLimitSwitch(
   ops.error();
 }
 
-export interface ScanDelimiterState {
-  interaction: number;
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memB2: number[];
-  memB3: number[];
+export interface ScanDelimiterState extends TeXStateSlice<"interaction" | "curCmd" | "curChr" | "curVal" | "helpPtr" | "helpLine" | "eqtb" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface ScanDelimiterOps {
@@ -2581,7 +2277,7 @@ export function scanDelimiter(
     switch (state.curCmd) {
       case 11:
       case 12:
-        state.curVal = state.eqtbInt[5589 + state.curChr] ?? 0;
+        state.curVal = state.eqtb[5589 + state.curChr].int ?? 0;
         break;
       case 15:
         ops.scanTwentySevenBitInt();
@@ -2609,18 +2305,13 @@ export function scanDelimiter(
     state.curVal = 0;
   }
 
-  state.memB0[p] = Math.trunc(state.curVal / 1048576) % 16;
-  state.memB1[p] = Math.trunc(state.curVal / 4096) % 256 + 0;
-  state.memB2[p] = Math.trunc(state.curVal / 256) % 16;
-  state.memB3[p] = (state.curVal % 256) + 0;
+  state.mem[p].hh.b0 = Math.trunc(state.curVal / 1048576) % 16;
+  state.mem[p].hh.b1 = Math.trunc(state.curVal / 4096) % 256 + 0;
+  state.mem[p].qqqq.b2 = Math.trunc(state.curVal / 256) % 16;
+  state.mem[p].qqqq.b3 = (state.curVal % 256) + 0;
 }
 
-export interface MathRadicalState {
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface MathRadicalState extends TeXStateSlice<"curList" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface MathRadicalOps {
@@ -2633,42 +2324,31 @@ export function mathRadical(
   state: MathRadicalState,
   ops: MathRadicalOps,
 ): void {
-  state.memRh[state.curListTailField] = ops.getNode(5);
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-  state.memB0[state.curListTailField] = 24;
-  state.memB1[state.curListTailField] = 0;
+  state.mem[state.curList.tailField].hh.rh = ops.getNode(5);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+  state.mem[state.curList.tailField].hh.b0 = 24;
+  state.mem[state.curList.tailField].hh.b1 = 0;
 
-  state.memB0[state.curListTailField + 1] = 0;
-  state.memB1[state.curListTailField + 1] = 0;
-  state.memLh[state.curListTailField + 1] = 0;
-  state.memRh[state.curListTailField + 1] = 0;
+  state.mem[state.curList.tailField + 1].hh.b0 = 0;
+  state.mem[state.curList.tailField + 1].hh.b1 = 0;
+  state.mem[state.curList.tailField + 1].hh.lh = 0;
+  state.mem[state.curList.tailField + 1].hh.rh = 0;
 
-  state.memB0[state.curListTailField + 3] = 0;
-  state.memB1[state.curListTailField + 3] = 0;
-  state.memLh[state.curListTailField + 3] = 0;
-  state.memRh[state.curListTailField + 3] = 0;
+  state.mem[state.curList.tailField + 3].hh.b0 = 0;
+  state.mem[state.curList.tailField + 3].hh.b1 = 0;
+  state.mem[state.curList.tailField + 3].hh.lh = 0;
+  state.mem[state.curList.tailField + 3].hh.rh = 0;
 
-  state.memB0[state.curListTailField + 2] = 0;
-  state.memB1[state.curListTailField + 2] = 0;
-  state.memLh[state.curListTailField + 2] = 0;
-  state.memRh[state.curListTailField + 2] = 0;
+  state.mem[state.curList.tailField + 2].hh.b0 = 0;
+  state.mem[state.curList.tailField + 2].hh.b1 = 0;
+  state.mem[state.curList.tailField + 2].hh.lh = 0;
+  state.mem[state.curList.tailField + 2].hh.rh = 0;
 
-  ops.scanDelimiter(state.curListTailField + 4, true);
-  ops.scanMath(state.curListTailField + 1);
+  ops.scanDelimiter(state.curList.tailField + 4, true);
+  ops.scanMath(state.curList.tailField + 1);
 }
 
-export interface MathAcState {
-  interaction: number;
-  curCmd: number;
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListTailField: number;
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface MathAcState extends TeXStateSlice<"interaction" | "curCmd" | "curVal" | "helpPtr" | "helpLine" | "curList" | "eqtb" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface MathAcOps {
@@ -2696,48 +2376,44 @@ export function mathAc(state: MathAcState, ops: MathAcOps): void {
     ops.error();
   }
 
-  state.memRh[state.curListTailField] = ops.getNode(5);
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-  state.memB0[state.curListTailField] = 28;
-  state.memB1[state.curListTailField] = 0;
+  state.mem[state.curList.tailField].hh.rh = ops.getNode(5);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+  state.mem[state.curList.tailField].hh.b0 = 28;
+  state.mem[state.curList.tailField].hh.b1 = 0;
 
-  state.memB0[state.curListTailField + 1] = 0;
-  state.memB1[state.curListTailField + 1] = 0;
-  state.memLh[state.curListTailField + 1] = 0;
-  state.memRh[state.curListTailField + 1] = 0;
+  state.mem[state.curList.tailField + 1].hh.b0 = 0;
+  state.mem[state.curList.tailField + 1].hh.b1 = 0;
+  state.mem[state.curList.tailField + 1].hh.lh = 0;
+  state.mem[state.curList.tailField + 1].hh.rh = 0;
 
-  state.memB0[state.curListTailField + 3] = 0;
-  state.memB1[state.curListTailField + 3] = 0;
-  state.memLh[state.curListTailField + 3] = 0;
-  state.memRh[state.curListTailField + 3] = 0;
+  state.mem[state.curList.tailField + 3].hh.b0 = 0;
+  state.mem[state.curList.tailField + 3].hh.b1 = 0;
+  state.mem[state.curList.tailField + 3].hh.lh = 0;
+  state.mem[state.curList.tailField + 3].hh.rh = 0;
 
-  state.memB0[state.curListTailField + 2] = 0;
-  state.memB1[state.curListTailField + 2] = 0;
-  state.memLh[state.curListTailField + 2] = 0;
-  state.memRh[state.curListTailField + 2] = 0;
+  state.mem[state.curList.tailField + 2].hh.b0 = 0;
+  state.mem[state.curList.tailField + 2].hh.b1 = 0;
+  state.mem[state.curList.tailField + 2].hh.lh = 0;
+  state.mem[state.curList.tailField + 2].hh.rh = 0;
 
-  state.memRh[state.curListTailField + 4] = 1;
+  state.mem[state.curList.tailField + 4].hh.rh = 1;
   ops.scanFifteenBitInt();
-  state.memB1[state.curListTailField + 4] = (state.curVal % 256) + 0;
+  state.mem[state.curList.tailField + 4].hh.b1 = (state.curVal % 256) + 0;
   if (
     state.curVal >= 28672 &&
-    (state.eqtbInt[5312] ?? 0) >= 0 &&
-    (state.eqtbInt[5312] ?? 0) < 16
+    (state.eqtb[5312].int ?? 0) >= 0 &&
+    (state.eqtb[5312].int ?? 0) < 16
   ) {
-    state.memB0[state.curListTailField + 4] = state.eqtbInt[5312] ?? 0;
+    state.mem[state.curList.tailField + 4].hh.b0 = state.eqtb[5312].int ?? 0;
   } else {
-    state.memB0[state.curListTailField + 4] =
+    state.mem[state.curList.tailField + 4].hh.b0 =
       Math.trunc(state.curVal / 256) % 16;
   }
 
-  ops.scanMath(state.curListTailField + 1);
+  ops.scanMath(state.curList.tailField + 1);
 }
 
-export interface AppendChoicesState {
-  curListTailField: number;
-  savePtr: number;
-  saveStackInt: number[];
-  memRh: number[];
+export interface AppendChoicesState extends TeXStateSlice<"curList" | "savePtr" | "saveStack" | "mem">{
 }
 
 export interface AppendChoicesOps {
@@ -2750,22 +2426,15 @@ export function appendChoices(
   state: AppendChoicesState,
   ops: AppendChoicesOps,
 ): void {
-  state.memRh[state.curListTailField] = ops.newChoice();
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+  state.mem[state.curList.tailField].hh.rh = ops.newChoice();
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   state.savePtr += 1;
-  state.saveStackInt[state.savePtr - 1] = 0;
+  state.saveStack[state.savePtr - 1].int = 0;
   ops.pushMath(13);
   ops.scanLeftBrace();
 }
 
-export interface FinMlistState {
-  curListAuxFieldInt: number;
-  curListETeXAuxField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  memB0: number[];
-  memLh: number[];
-  memRh: number[];
+export interface FinMlistState extends TeXStateSlice<"curList" | "curList" | "curList" | "curList" | "mem" | "mem" | "mem">{
 }
 
 export interface FinMlistOps {
@@ -2780,40 +2449,35 @@ export function finMlist(
 ): number {
   let q = 0;
 
-  if (state.curListAuxFieldInt !== 0) {
-    state.memRh[state.curListAuxFieldInt + 3] = 3;
-    state.memLh[state.curListAuxFieldInt + 3] =
-      state.memRh[state.curListHeadField] ?? 0;
+  if (state.curList.auxField.int !== 0) {
+    state.mem[state.curList.auxField.int + 3].hh.rh = 3;
+    state.mem[state.curList.auxField.int + 3].hh.lh =
+      state.mem[state.curList.headField].hh.rh ?? 0;
     if (p === 0) {
-      q = state.curListAuxFieldInt;
+      q = state.curList.auxField.int;
     } else {
-      q = state.memLh[state.curListAuxFieldInt + 2] ?? 0;
+      q = state.mem[state.curList.auxField.int + 2].hh.lh ?? 0;
       if (
-        (state.memB0[q] ?? 0) !== 30 ||
-        state.curListETeXAuxField === 0
+        (state.mem[q].hh.b0 ?? 0) !== 30 ||
+        state.curList.eTeXAuxField === 0
       ) {
         ops.confusion(888);
       }
-      state.memLh[state.curListAuxFieldInt + 2] =
-        state.memRh[state.curListETeXAuxField] ?? 0;
-      state.memRh[state.curListETeXAuxField] = state.curListAuxFieldInt;
-      state.memRh[state.curListAuxFieldInt] = p;
+      state.mem[state.curList.auxField.int + 2].hh.lh =
+        state.mem[state.curList.eTeXAuxField].hh.rh ?? 0;
+      state.mem[state.curList.eTeXAuxField].hh.rh = state.curList.auxField.int;
+      state.mem[state.curList.auxField.int].hh.rh = p;
     }
   } else {
-    state.memRh[state.curListTailField] = p;
-    q = state.memRh[state.curListHeadField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = p;
+    q = state.mem[state.curList.headField].hh.rh ?? 0;
   }
 
   ops.popNest();
   return q;
 }
 
-export interface BuildChoicesState {
-  curListTailField: number;
-  savePtr: number;
-  saveStackInt: number[];
-  memLh: number[];
-  memRh: number[];
+export interface BuildChoicesState extends TeXStateSlice<"curList" | "savePtr" | "saveStack" | "mem" | "mem">{
 }
 
 export interface BuildChoicesOps {
@@ -2830,39 +2494,31 @@ export function buildChoices(
   ops.unsave();
   const p = ops.finMlist(0);
 
-  switch (state.saveStackInt[state.savePtr - 1] ?? 0) {
+  switch (state.saveStack[state.savePtr - 1].int ?? 0) {
     case 0:
-      state.memLh[state.curListTailField + 1] = p;
+      state.mem[state.curList.tailField + 1].hh.lh = p;
       break;
     case 1:
-      state.memRh[state.curListTailField + 1] = p;
+      state.mem[state.curList.tailField + 1].hh.rh = p;
       break;
     case 2:
-      state.memLh[state.curListTailField + 2] = p;
+      state.mem[state.curList.tailField + 2].hh.lh = p;
       break;
     case 3:
-      state.memRh[state.curListTailField + 2] = p;
+      state.mem[state.curList.tailField + 2].hh.rh = p;
       state.savePtr -= 1;
       return;
     default:
       break;
   }
 
-  state.saveStackInt[state.savePtr - 1] =
-    (state.saveStackInt[state.savePtr - 1] ?? 0) + 1;
+  state.saveStack[state.savePtr - 1].int =
+    (state.saveStack[state.savePtr - 1].int ?? 0) + 1;
   ops.pushMath(13);
   ops.scanLeftBrace();
 }
 
-export interface SubSupState {
-  interaction: number;
-  curCmd: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListHeadField: number;
-  curListTailField: number;
-  memB0: number[];
-  memRh: number[];
+export interface SubSupState extends TeXStateSlice<"interaction" | "curCmd" | "helpPtr" | "helpLine" | "curList" | "curList" | "mem" | "mem">{
 }
 
 export interface SubSupOps {
@@ -2876,18 +2532,18 @@ export interface SubSupOps {
 export function subSup(state: SubSupState, ops: SubSupOps): void {
   let t = 0;
   let p = 0;
-  if (state.curListTailField !== state.curListHeadField) {
-    const b0 = state.memB0[state.curListTailField] ?? 0;
+  if (state.curList.tailField !== state.curList.headField) {
+    const b0 = state.mem[state.curList.tailField].hh.b0 ?? 0;
     if (b0 >= 16 && b0 < 30) {
-      p = state.curListTailField + 2 + state.curCmd - 7;
-      t = state.memRh[p] ?? 0;
+      p = state.curList.tailField + 2 + state.curCmd - 7;
+      t = state.mem[p].hh.rh ?? 0;
     }
   }
 
   if (p === 0 || t !== 0) {
-    state.memRh[state.curListTailField] = ops.newNoad();
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-    p = state.curListTailField + 2 + state.curCmd - 7;
+    state.mem[state.curList.tailField].hh.rh = ops.newNoad();
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+    p = state.curList.tailField + 2 + state.curCmd - 7;
     if (t !== 0) {
       if (state.curCmd === 7) {
         if (state.interaction === 3) {
@@ -2913,22 +2569,7 @@ export function subSup(state: SubSupState, ops: SubSupOps): void {
   ops.scanMath(p);
 }
 
-export interface MathFractionState {
-  interaction: number;
-  curChr: number;
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListAuxFieldInt: number;
-  curListHeadField: number;
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
-  memB2: number[];
-  memB3: number[];
-  memInt: number[];
-  memLh: number[];
-  memRh: number[];
+export interface MathFractionState extends TeXStateSlice<"interaction" | "curChr" | "curVal" | "helpPtr" | "helpLine" | "curList" | "curList" | "curList" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface MathFractionOps {
@@ -2945,7 +2586,7 @@ export function mathFraction(
   ops: MathFractionOps,
 ): void {
   const c = state.curChr;
-  if (state.curListAuxFieldInt !== 0) {
+  if (state.curList.auxField.int !== 0) {
     if (c >= 3) {
       ops.scanDelimiter(29988, false);
       ops.scanDelimiter(29988, false);
@@ -2966,64 +2607,52 @@ export function mathFraction(
     return;
   }
 
-  state.curListAuxFieldInt = ops.getNode(6);
-  state.memB0[state.curListAuxFieldInt] = 25;
-  state.memB1[state.curListAuxFieldInt] = 0;
-  state.memRh[state.curListAuxFieldInt + 2] = 3;
-  state.memLh[state.curListAuxFieldInt + 2] = state.memRh[state.curListHeadField] ?? 0;
+  state.curList.auxField.int = ops.getNode(6);
+  state.mem[state.curList.auxField.int].hh.b0 = 25;
+  state.mem[state.curList.auxField.int].hh.b1 = 0;
+  state.mem[state.curList.auxField.int + 2].hh.rh = 3;
+  state.mem[state.curList.auxField.int + 2].hh.lh = state.mem[state.curList.headField].hh.rh ?? 0;
 
-  state.memB0[state.curListAuxFieldInt + 3] = 0;
-  state.memB1[state.curListAuxFieldInt + 3] = 0;
-  state.memLh[state.curListAuxFieldInt + 3] = 0;
-  state.memRh[state.curListAuxFieldInt + 3] = 0;
+  state.mem[state.curList.auxField.int + 3].hh.b0 = 0;
+  state.mem[state.curList.auxField.int + 3].hh.b1 = 0;
+  state.mem[state.curList.auxField.int + 3].hh.lh = 0;
+  state.mem[state.curList.auxField.int + 3].hh.rh = 0;
 
-  state.memB0[state.curListAuxFieldInt + 4] = 0;
-  state.memB1[state.curListAuxFieldInt + 4] = 0;
-  state.memB2[state.curListAuxFieldInt + 4] = 0;
-  state.memB3[state.curListAuxFieldInt + 4] = 0;
+  state.mem[state.curList.auxField.int + 4].hh.b0 = 0;
+  state.mem[state.curList.auxField.int + 4].hh.b1 = 0;
+  state.mem[state.curList.auxField.int + 4].qqqq.b2 = 0;
+  state.mem[state.curList.auxField.int + 4].qqqq.b3 = 0;
 
-  state.memB0[state.curListAuxFieldInt + 5] = 0;
-  state.memB1[state.curListAuxFieldInt + 5] = 0;
-  state.memB2[state.curListAuxFieldInt + 5] = 0;
-  state.memB3[state.curListAuxFieldInt + 5] = 0;
+  state.mem[state.curList.auxField.int + 5].hh.b0 = 0;
+  state.mem[state.curList.auxField.int + 5].hh.b1 = 0;
+  state.mem[state.curList.auxField.int + 5].qqqq.b2 = 0;
+  state.mem[state.curList.auxField.int + 5].qqqq.b3 = 0;
 
-  state.memRh[state.curListHeadField] = 0;
-  state.curListTailField = state.curListHeadField;
+  state.mem[state.curList.headField].hh.rh = 0;
+  state.curList.tailField = state.curList.headField;
 
   if (c >= 3) {
-    ops.scanDelimiter(state.curListAuxFieldInt + 4, false);
-    ops.scanDelimiter(state.curListAuxFieldInt + 5, false);
+    ops.scanDelimiter(state.curList.auxField.int + 4, false);
+    ops.scanDelimiter(state.curList.auxField.int + 5, false);
   }
 
   switch (c % 3) {
     case 0:
       ops.scanDimen(false, false, false);
-      state.memInt[state.curListAuxFieldInt + 1] = state.curVal;
+      state.mem[state.curList.auxField.int + 1].int = state.curVal;
       break;
     case 1:
-      state.memInt[state.curListAuxFieldInt + 1] = 1073741824;
+      state.mem[state.curList.auxField.int + 1].int = 1073741824;
       break;
     case 2:
-      state.memInt[state.curListAuxFieldInt + 1] = 0;
+      state.mem[state.curList.auxField.int + 1].int = 0;
       break;
     default:
       break;
   }
 }
 
-export interface MathLeftRightState {
-  interaction: number;
-  curChr: number;
-  curGroup: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListHeadField: number;
-  curListTailField: number;
-  curListETeXAuxField: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface MathLeftRightState extends TeXStateSlice<"interaction" | "curChr" | "curGroup" | "helpPtr" | "helpLine" | "curList" | "curList" | "curList" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface MathLeftRightOps {
@@ -3069,11 +2698,11 @@ export function mathLeftRight(
   }
 
   const p = ops.newNoad();
-  state.memB0[p] = t;
+  state.mem[p].hh.b0 = t;
   ops.scanDelimiter(p + 1, false);
   if (t === 1) {
-    state.memB0[p] = 31;
-    state.memB1[p] = 1;
+    state.mem[p].hh.b0 = 31;
+    state.mem[p].hh.b1 = 1;
   }
 
   let q = 0;
@@ -3086,26 +2715,19 @@ export function mathLeftRight(
 
   if (t !== 31) {
     ops.pushMath(16);
-    state.memRh[state.curListHeadField] = q;
-    state.curListTailField = p;
-    state.curListETeXAuxField = p;
+    state.mem[state.curList.headField].hh.rh = q;
+    state.curList.tailField = p;
+    state.curList.eTeXAuxField = p;
   } else {
-    state.memRh[state.curListTailField] = ops.newNoad();
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-    state.memB0[state.curListTailField] = 23;
-    state.memRh[state.curListTailField + 1] = 3;
-    state.memLh[state.curListTailField + 1] = q;
+    state.mem[state.curList.tailField].hh.rh = ops.newNoad();
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+    state.mem[state.curList.tailField].hh.b0 = 23;
+    state.mem[state.curList.tailField + 1].hh.rh = 3;
+    state.mem[state.curList.tailField + 1].hh.lh = q;
   }
 }
 
-export interface AppDisplayState {
-  tempPtr: number;
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  memLh: number[];
-  memRh: number[];
+export interface AppDisplayState extends TeXStateSlice<"tempPtr" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface AppDisplayOps {
@@ -3127,9 +2749,9 @@ export function appDisplay(
   ops: AppDisplayOps,
 ): void {
   let z = 0;
-  let s = state.eqtbInt[5860] ?? 0;
+  let s = state.eqtb[5860].int ?? 0;
   let e = 0;
-  const x = state.eqtbInt[5328] ?? 0;
+  const x = state.eqtb[5328].int ?? 0;
   let p = 0;
   let q = 0;
   let r = 0;
@@ -3138,30 +2760,30 @@ export function appDisplay(
   let jVar = j;
 
   if (x === 0) {
-    state.memInt[b + 4] = s + d;
+    state.mem[b + 4].int = s + d;
   } else {
-    z = state.eqtbInt[5859] ?? 0;
+    z = state.eqtb[5859].int ?? 0;
     p = b;
     if (x > 0) {
-      e = z - d - (state.memInt[p + 1] ?? 0);
+      e = z - d - (state.mem[p + 1].int ?? 0);
     } else {
       e = d;
-      d = z - e - (state.memInt[p + 1] ?? 0);
+      d = z - e - (state.mem[p + 1].int ?? 0);
     }
 
     if (jVar !== 0) {
       b = ops.copyNodeList(jVar);
-      state.memInt[b + 3] = state.memInt[p + 3] ?? 0;
-      state.memInt[b + 2] = state.memInt[p + 2] ?? 0;
-      s -= state.memInt[b + 4] ?? 0;
+      state.mem[b + 3].int = state.mem[p + 3].int ?? 0;
+      state.mem[b + 2].int = state.mem[p + 2].int ?? 0;
+      s -= state.mem[b + 4].int ?? 0;
       d += s;
-      e += (state.memInt[b + 1] ?? 0) - z - s;
+      e += (state.mem[b + 1].int ?? 0) - z - s;
     }
 
-    if ((state.memB1[p] ?? 0) === 2) {
+    if ((state.mem[p].hh.b1 ?? 0) === 2) {
       q = p;
     } else {
-      r = state.memRh[p + 5] ?? 0;
+      r = state.mem[p + 5].hh.rh ?? 0;
       ops.freeNode(p, 7);
       if (r === 0) {
         ops.confusion(1378);
@@ -3170,7 +2792,7 @@ export function appDisplay(
         p = r;
         while (true) {
           q = r;
-          r = state.memRh[r] ?? 0;
+          r = state.mem[r].hh.rh ?? 0;
           if (r === 0) {
             break;
           }
@@ -3179,8 +2801,8 @@ export function appDisplay(
         p = 0;
         q = r;
         while (true) {
-          t = state.memRh[r] ?? 0;
-          state.memRh[r] = p;
+          t = state.mem[r].hh.rh ?? 0;
+          state.mem[r].hh.rh = p;
           p = r;
           r = t;
           if (r === 0) {
@@ -3194,49 +2816,49 @@ export function appDisplay(
       r = ops.newKern(0);
       t = ops.newKern(0);
     } else {
-      r = state.memRh[b + 5] ?? 0;
-      t = state.memRh[r] ?? 0;
+      r = state.mem[b + 5].hh.rh ?? 0;
+      t = state.mem[r].hh.rh ?? 0;
     }
 
     u = ops.newMath(0, 3);
-    if ((state.memB0[t] ?? 0) === 10) {
+    if ((state.mem[t].hh.b0 ?? 0) === 10) {
       jVar = ops.newSkipParam(8);
-      state.memRh[q] = jVar;
-      state.memRh[jVar] = u;
-      jVar = state.memLh[t + 1] ?? 0;
-      state.memB0[state.tempPtr] = state.memB0[jVar] ?? 0;
-      state.memB1[state.tempPtr] = state.memB1[jVar] ?? 0;
-      state.memInt[state.tempPtr + 1] = e - (state.memInt[jVar + 1] ?? 0);
-      state.memInt[state.tempPtr + 2] = -(state.memInt[jVar + 2] ?? 0);
-      state.memInt[state.tempPtr + 3] = -(state.memInt[jVar + 3] ?? 0);
-      state.memRh[u] = t;
+      state.mem[q].hh.rh = jVar;
+      state.mem[jVar].hh.rh = u;
+      jVar = state.mem[t + 1].hh.lh ?? 0;
+      state.mem[state.tempPtr].hh.b0 = state.mem[jVar].hh.b0 ?? 0;
+      state.mem[state.tempPtr].hh.b1 = state.mem[jVar].hh.b1 ?? 0;
+      state.mem[state.tempPtr + 1].int = e - (state.mem[jVar + 1].int ?? 0);
+      state.mem[state.tempPtr + 2].int = -(state.mem[jVar + 2].int ?? 0);
+      state.mem[state.tempPtr + 3].int = -(state.mem[jVar + 3].int ?? 0);
+      state.mem[u].hh.rh = t;
     } else {
-      state.memInt[t + 1] = e;
-      state.memRh[t] = u;
-      state.memRh[q] = t;
+      state.mem[t + 1].int = e;
+      state.mem[t].hh.rh = u;
+      state.mem[q].hh.rh = t;
     }
 
     u = ops.newMath(0, 2);
-    if ((state.memB0[r] ?? 0) === 10) {
+    if ((state.mem[r].hh.b0 ?? 0) === 10) {
       jVar = ops.newSkipParam(7);
-      state.memRh[u] = jVar;
-      state.memRh[jVar] = p;
-      jVar = state.memLh[r + 1] ?? 0;
-      state.memB0[state.tempPtr] = state.memB0[jVar] ?? 0;
-      state.memB1[state.tempPtr] = state.memB1[jVar] ?? 0;
-      state.memInt[state.tempPtr + 1] = d - (state.memInt[jVar + 1] ?? 0);
-      state.memInt[state.tempPtr + 2] = -(state.memInt[jVar + 2] ?? 0);
-      state.memInt[state.tempPtr + 3] = -(state.memInt[jVar + 3] ?? 0);
-      state.memRh[r] = u;
+      state.mem[u].hh.rh = jVar;
+      state.mem[jVar].hh.rh = p;
+      jVar = state.mem[r + 1].hh.lh ?? 0;
+      state.mem[state.tempPtr].hh.b0 = state.mem[jVar].hh.b0 ?? 0;
+      state.mem[state.tempPtr].hh.b1 = state.mem[jVar].hh.b1 ?? 0;
+      state.mem[state.tempPtr + 1].int = d - (state.mem[jVar + 1].int ?? 0);
+      state.mem[state.tempPtr + 2].int = -(state.mem[jVar + 2].int ?? 0);
+      state.mem[state.tempPtr + 3].int = -(state.mem[jVar + 3].int ?? 0);
+      state.mem[r].hh.rh = u;
     } else {
-      state.memInt[r + 1] = d;
-      state.memRh[r] = p;
-      state.memRh[u] = r;
+      state.mem[r + 1].int = d;
+      state.mem[r].hh.rh = p;
+      state.mem[u].hh.rh = r;
       if (jVar === 0) {
         b = ops.hpack(u, 0, 1);
-        state.memInt[b + 4] = s;
+        state.mem[b + 4].int = s;
       } else {
-        state.memRh[b + 5] = u;
+        state.mem[b + 5].hh.rh = u;
       }
     }
   }
@@ -3244,16 +2866,7 @@ export function appDisplay(
   ops.appendToVlist(b);
 }
 
-export interface ResumeAfterDisplayState {
-  curGroup: number;
-  curLang: number;
-  curCmd: number;
-  nestPtr: number;
-  curListPgField: number;
-  curListModeField: number;
-  curListAuxFieldLh: number;
-  curListAuxFieldRh: number;
-  eqtbInt: number[];
+export interface ResumeAfterDisplayState extends TeXStateSlice<"curGroup" | "curLang" | "curCmd" | "nestPtr" | "curList" | "curList" | "curList" | "curList" | "eqtb">{
 }
 
 export interface ResumeAfterDisplayOps {
@@ -3273,22 +2886,22 @@ export function resumeAfterDisplay(
     ops.confusion(1182);
   }
   ops.unsave();
-  state.curListPgField += 3;
+  state.curList.pgField += 3;
   ops.pushNest();
-  state.curListModeField = 102;
-  state.curListAuxFieldLh = 1000;
+  state.curList.modeField = 102;
+  state.curList.auxField.hh.lh = 1000;
 
-  const language = state.eqtbInt[5318] ?? 0;
+  const language = state.eqtb[5318].int ?? 0;
   if (language <= 0 || language > 255) {
     state.curLang = 0;
   } else {
     state.curLang = language;
   }
-  state.curListAuxFieldRh = state.curLang;
+  state.curList.auxField.hh.rh = state.curLang;
 
-  const n1 = Math.min(63, Math.max(1, state.eqtbInt[5319] ?? 0));
-  const n2 = Math.min(63, Math.max(1, state.eqtbInt[5320] ?? 0));
-  state.curListPgField = (n1 * 64 + n2) * 65536 + state.curLang;
+  const n1 = Math.min(63, Math.max(1, state.eqtb[5319].int ?? 0));
+  const n2 = Math.min(63, Math.max(1, state.eqtb[5320].int ?? 0));
+  state.curList.pgField = (n1 * 64 + n2) * 65536 + state.curLang;
 
   ops.getXToken();
   if (state.curCmd !== 10) {
@@ -3299,12 +2912,7 @@ export function resumeAfterDisplay(
   }
 }
 
-export interface GetRTokenState {
-  interaction: number;
-  curTok: number;
-  curCs: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface GetRTokenState extends TeXStateSlice<"interaction" | "curTok" | "curCs" | "helpPtr" | "helpLine">{
 }
 
 export interface GetRTokenOps {
@@ -3348,32 +2956,7 @@ export function getRToken(
   }
 }
 
-export interface AfterMathState {
-  interaction: number;
-  curCmd: number;
-  curListModeField: number;
-  curListETeXAuxField: number;
-  curListTailField: number;
-  curListAuxFieldLh: number;
-  savePtr: number;
-  curMlist: number;
-  curStyle: number;
-  mlistPenalties: boolean;
-  adjustTail: number;
-  hiMemMin: number;
-  helpPtr: number;
-  helpLine: number[];
-  saveStackInt: number[];
-  totalShrink: number[];
-  fontParams: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  eqtbInt: number[];
-  eqtbRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  memRh: number[];
+export interface AfterMathState extends TeXStateSlice<"interaction" | "curCmd" | "curList" | "curList" | "curList" | "curList" | "savePtr" | "curMlist" | "curStyle" | "mlistPenalties" | "adjustTail" | "hiMemMin" | "helpPtr" | "helpLine" | "saveStack" | "totalShrink" | "fontParams" | "paramBase" | "fontInfo" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface AfterMathOps {
@@ -3406,9 +2989,9 @@ export function afterMath(
 
   const checkMathFonts = (): boolean => {
     if (
-      (state.fontParams[state.eqtbRh[3942] ?? 0] ?? 0) < 22 ||
-      (state.fontParams[state.eqtbRh[3958] ?? 0] ?? 0) < 22 ||
-      (state.fontParams[state.eqtbRh[3974] ?? 0] ?? 0) < 22
+      (state.fontParams[state.eqtb[3942].hh.rh ?? 0] ?? 0) < 22 ||
+      (state.fontParams[state.eqtb[3958].hh.rh ?? 0] ?? 0) < 22 ||
+      (state.fontParams[state.eqtb[3974].hh.rh ?? 0] ?? 0) < 22
     ) {
       if (state.interaction === 3) {
         // Pascal has an empty statement in this branch.
@@ -3425,9 +3008,9 @@ export function afterMath(
     }
 
     if (
-      (state.fontParams[state.eqtbRh[3943] ?? 0] ?? 0) < 13 ||
-      (state.fontParams[state.eqtbRh[3959] ?? 0] ?? 0) < 13 ||
-      (state.fontParams[state.eqtbRh[3975] ?? 0] ?? 0) < 13
+      (state.fontParams[state.eqtb[3943].hh.rh ?? 0] ?? 0) < 13 ||
+      (state.fontParams[state.eqtb[3959].hh.rh ?? 0] ?? 0) < 13 ||
+      (state.fontParams[state.eqtb[3975].hh.rh ?? 0] ?? 0) < 13
     ) {
       if (state.interaction === 3) {
         // Pascal has an empty statement in this branch.
@@ -3448,18 +3031,18 @@ export function afterMath(
 
   let danger = false;
   let j = 0;
-  if (state.curListModeField === 203) {
-    j = state.curListETeXAuxField;
+  if (state.curList.modeField === 203) {
+    j = state.curList.eTeXAuxField;
   }
 
   danger = checkMathFonts();
 
-  let m = state.curListModeField;
+  let m = state.curList.modeField;
   let l = false;
   let p = ops.finMlist(0);
   let a = 0;
 
-  if (state.curListModeField === -m) {
+  if (state.curList.modeField === -m) {
     ops.getXToken();
     if (state.curCmd !== 3) {
       if (state.interaction === 3) {
@@ -3477,38 +3060,38 @@ export function afterMath(
     state.curStyle = 2;
     state.mlistPenalties = false;
     ops.mlistToHlist();
-    a = ops.hpack(state.memRh[29997] ?? 0, 0, 1);
-    state.memB1[a] = 2;
+    a = ops.hpack(state.mem[29997].hh.rh ?? 0, 0, 1);
+    state.mem[a].hh.b1 = 2;
     ops.unsave();
     state.savePtr -= 1;
-    if ((state.saveStackInt[state.savePtr + 0] ?? 0) === 1) {
+    if ((state.saveStack[state.savePtr + 0].int ?? 0) === 1) {
       l = true;
     }
 
     danger = false;
-    if (state.curListModeField === 203) {
-      j = state.curListETeXAuxField;
+    if (state.curList.modeField === 203) {
+      j = state.curList.eTeXAuxField;
     }
     danger = checkMathFonts();
 
-    m = state.curListModeField;
+    m = state.curList.modeField;
     p = ops.finMlist(0);
   }
 
   if (m < 0) {
-    state.memRh[state.curListTailField] = ops.newMath(state.eqtbInt[5846] ?? 0, 0);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = ops.newMath(state.eqtb[5846].int ?? 0, 0);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
     state.curMlist = p;
     state.curStyle = 2;
-    state.mlistPenalties = state.curListModeField > 0;
+    state.mlistPenalties = state.curList.modeField > 0;
     ops.mlistToHlist();
-    state.memRh[state.curListTailField] = state.memRh[29997] ?? 0;
-    while ((state.memRh[state.curListTailField] ?? 0) !== 0) {
-      state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = state.mem[29997].hh.rh ?? 0;
+    while ((state.mem[state.curList.tailField].hh.rh ?? 0) !== 0) {
+      state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
     }
-    state.memRh[state.curListTailField] = ops.newMath(state.eqtbInt[5846] ?? 0, 1);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-    state.curListAuxFieldLh = 1000;
+    state.mem[state.curList.tailField].hh.rh = ops.newMath(state.eqtb[5846].int ?? 0, 1);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+    state.curList.auxField.hh.lh = 1000;
     ops.unsave();
     return;
   }
@@ -3532,28 +3115,28 @@ export function afterMath(
   state.curStyle = 0;
   state.mlistPenalties = false;
   ops.mlistToHlist();
-  p = state.memRh[29997] ?? 0;
+  p = state.mem[29997].hh.rh ?? 0;
   state.adjustTail = 29995;
   let b = ops.hpack(p, 0, 1);
-  p = state.memRh[b + 5] ?? 0;
+  p = state.mem[b + 5].hh.rh ?? 0;
   const t = state.adjustTail;
   state.adjustTail = 0;
-  let w = state.memInt[b + 1] ?? 0;
-  const z = state.eqtbInt[5859] ?? 0;
-  let s = state.eqtbInt[5860] ?? 0;
-  if ((state.eqtbInt[5328] ?? 0) < 0) {
+  let w = state.mem[b + 1].int ?? 0;
+  const z = state.eqtb[5859].int ?? 0;
+  let s = state.eqtb[5860].int ?? 0;
+  if ((state.eqtb[5328].int ?? 0) < 0) {
     s = -s - z;
   }
 
   let e = 0;
   let q = 0;
   if (!(a === 0 || danger)) {
-    e = state.memInt[a + 1] ?? 0;
+    e = state.mem[a + 1].int ?? 0;
     q =
       e +
-      (state.fontInfoInt[
-        6 + (state.paramBase[state.eqtbRh[3942] ?? 0] ?? 0)
-      ] ?? 0);
+      (state.fontInfo[
+        6 + (state.paramBase[state.eqtb[3942].hh.rh ?? 0] ?? 0)
+      ].int ?? 0);
   }
 
   if (w + q > z) {
@@ -3573,24 +3156,24 @@ export function afterMath(
         b = ops.hpack(p, z, 0);
       }
     }
-    w = state.memInt[b + 1] ?? 0;
+    w = state.mem[b + 1].int ?? 0;
   }
 
-  state.memB1[b] = 2;
+  state.mem[b].hh.b1 = 2;
   let d = half(z - w);
   if (e > 0 && d < 2 * e) {
     d = half(z - w - e);
-    if (p !== 0 && p < state.hiMemMin && (state.memB0[p] ?? 0) === 10) {
+    if (p !== 0 && p < state.hiMemMin && (state.mem[p].hh.b0 ?? 0) === 10) {
       d = 0;
     }
   }
 
-  state.memRh[state.curListTailField] = ops.newPenalty(state.eqtbInt[5279] ?? 0);
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+  state.mem[state.curList.tailField].hh.rh = ops.newPenalty(state.eqtb[5279].int ?? 0);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
 
   let g1 = 0;
   let g2 = 0;
-  if (d + s <= (state.eqtbInt[5858] ?? 0) || l) {
+  if (d + s <= (state.eqtb[5858].int ?? 0) || l) {
     g1 = 3;
     g2 = 4;
   } else {
@@ -3600,66 +3183,52 @@ export function afterMath(
 
   if (l && e === 0) {
     ops.appDisplay(j, a, 0);
-    state.memRh[state.curListTailField] = ops.newPenalty(10000);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = ops.newPenalty(10000);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   } else {
-    state.memRh[state.curListTailField] = ops.newParamGlue(g1);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = ops.newParamGlue(g1);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   }
 
   if (e !== 0) {
     const r = ops.newKern(z - w - e - d);
     if (l) {
-      state.memRh[a] = r;
-      state.memRh[r] = b;
+      state.mem[a].hh.rh = r;
+      state.mem[r].hh.rh = b;
       b = a;
       d = 0;
     } else {
-      state.memRh[b] = r;
-      state.memRh[r] = a;
+      state.mem[b].hh.rh = r;
+      state.mem[r].hh.rh = a;
     }
     b = ops.hpack(b, 0, 1);
   }
   ops.appDisplay(j, b, d);
 
   if (a !== 0 && e === 0 && !l) {
-    state.memRh[state.curListTailField] = ops.newPenalty(10000);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-    ops.appDisplay(j, a, z - (state.memInt[a + 1] ?? 0));
+    state.mem[state.curList.tailField].hh.rh = ops.newPenalty(10000);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+    ops.appDisplay(j, a, z - (state.mem[a + 1].int ?? 0));
     g2 = 0;
   }
 
   if (t !== 29995) {
-    state.memRh[state.curListTailField] = state.memRh[29995] ?? 0;
-    state.curListTailField = t;
+    state.mem[state.curList.tailField].hh.rh = state.mem[29995].hh.rh ?? 0;
+    state.curList.tailField = t;
   }
 
-  state.memRh[state.curListTailField] = ops.newPenalty(state.eqtbInt[5280] ?? 0);
-  state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+  state.mem[state.curList.tailField].hh.rh = ops.newPenalty(state.eqtb[5280].int ?? 0);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   if (g2 > 0) {
-    state.memRh[state.curListTailField] = ops.newParamGlue(g2);
-    state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+    state.mem[state.curList.tailField].hh.rh = ops.newParamGlue(g2);
+    state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
   }
 
   ops.flushNodeList(j);
   ops.resumeAfterDisplay();
 }
 
-export interface DoRegisterCommandState {
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  curPtr: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  arithError: boolean;
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  memRh: number[];
-  eqtbInt: number[];
-  eqtbRh: number[];
+export interface DoRegisterCommandState extends TeXStateSlice<"curCmd" | "curChr" | "curVal" | "curPtr" | "interaction" | "helpPtr" | "helpLine" | "arithError" | "mem" | "mem" | "mem" | "mem" | "eqtb" | "eqtb">{
 }
 
 export interface DoRegisterCommandOps {
@@ -3729,7 +3298,7 @@ export function doRegisterCommand(
   if (!goto40) {
     if (state.curChr < 0 || state.curChr > 19) {
       l = state.curChr;
-      p = Math.trunc((state.memB0[l] ?? 0) / 16);
+      p = Math.trunc((state.mem[l].hh.b0 ?? 0) / 16);
       e = true;
     } else {
       p = state.curChr;
@@ -3759,14 +3328,14 @@ export function doRegisterCommand(
 
   if (p < 2) {
     if (e) {
-      w = state.memInt[l + 2] ?? 0;
+      w = state.mem[l + 2].int ?? 0;
     } else {
-      w = state.eqtbInt[l] ?? 0;
+      w = state.eqtb[l].int ?? 0;
     }
   } else if (e) {
-    s = state.memRh[l + 1] ?? 0;
+    s = state.mem[l + 1].hh.rh ?? 0;
   } else {
-    s = state.eqtbRh[l] ?? 0;
+    s = state.eqtb[l].hh.rh ?? 0;
   }
 
   if (q === 89) {
@@ -3792,33 +3361,33 @@ export function doRegisterCommand(
         const newSpec = ops.newSpec(state.curVal);
         r = s;
         ops.deleteGlueRef(state.curVal);
-        state.memInt[newSpec + 1] =
-          (state.memInt[newSpec + 1] ?? 0) + (state.memInt[r + 1] ?? 0);
-        if ((state.memInt[newSpec + 2] ?? 0) === 0) {
-          state.memB0[newSpec] = 0;
+        state.mem[newSpec + 1].int =
+          (state.mem[newSpec + 1].int ?? 0) + (state.mem[r + 1].int ?? 0);
+        if ((state.mem[newSpec + 2].int ?? 0) === 0) {
+          state.mem[newSpec].hh.b0 = 0;
         }
-        if ((state.memB0[newSpec] ?? 0) === (state.memB0[r] ?? 0)) {
-          state.memInt[newSpec + 2] =
-            (state.memInt[newSpec + 2] ?? 0) + (state.memInt[r + 2] ?? 0);
+        if ((state.mem[newSpec].hh.b0 ?? 0) === (state.mem[r].hh.b0 ?? 0)) {
+          state.mem[newSpec + 2].int =
+            (state.mem[newSpec + 2].int ?? 0) + (state.mem[r + 2].int ?? 0);
         } else if (
-          (state.memB0[newSpec] ?? 0) < (state.memB0[r] ?? 0) &&
-          (state.memInt[r + 2] ?? 0) !== 0
+          (state.mem[newSpec].hh.b0 ?? 0) < (state.mem[r].hh.b0 ?? 0) &&
+          (state.mem[r + 2].int ?? 0) !== 0
         ) {
-          state.memInt[newSpec + 2] = state.memInt[r + 2] ?? 0;
-          state.memB0[newSpec] = state.memB0[r] ?? 0;
+          state.mem[newSpec + 2].int = state.mem[r + 2].int ?? 0;
+          state.mem[newSpec].hh.b0 = state.mem[r].hh.b0 ?? 0;
         }
-        if ((state.memInt[newSpec + 3] ?? 0) === 0) {
-          state.memB1[newSpec] = 0;
+        if ((state.mem[newSpec + 3].int ?? 0) === 0) {
+          state.mem[newSpec].hh.b1 = 0;
         }
-        if ((state.memB1[newSpec] ?? 0) === (state.memB1[r] ?? 0)) {
-          state.memInt[newSpec + 3] =
-            (state.memInt[newSpec + 3] ?? 0) + (state.memInt[r + 3] ?? 0);
+        if ((state.mem[newSpec].hh.b1 ?? 0) === (state.mem[r].hh.b1 ?? 0)) {
+          state.mem[newSpec + 3].int =
+            (state.mem[newSpec + 3].int ?? 0) + (state.mem[r + 3].int ?? 0);
         } else if (
-          (state.memB1[newSpec] ?? 0) < (state.memB1[r] ?? 0) &&
-          (state.memInt[r + 3] ?? 0) !== 0
+          (state.mem[newSpec].hh.b1 ?? 0) < (state.mem[r].hh.b1 ?? 0) &&
+          (state.mem[r + 3].int ?? 0) !== 0
         ) {
-          state.memInt[newSpec + 3] = state.memInt[r + 3] ?? 0;
-          state.memB1[newSpec] = state.memB1[r] ?? 0;
+          state.mem[newSpec + 3].int = state.mem[r + 3].int ?? 0;
+          state.mem[newSpec].hh.b1 = state.mem[r].hh.b1 ?? 0;
         }
         state.curVal = newSpec;
       }
@@ -3838,28 +3407,28 @@ export function doRegisterCommand(
     } else {
       r = ops.newSpec(s);
       if (q === 91) {
-        state.memInt[r + 1] = ops.multAndAdd(
-          state.memInt[s + 1] ?? 0,
+        state.mem[r + 1].int = ops.multAndAdd(
+          state.mem[s + 1].int ?? 0,
           state.curVal,
           0,
           1073741823,
         );
-        state.memInt[r + 2] = ops.multAndAdd(
-          state.memInt[s + 2] ?? 0,
+        state.mem[r + 2].int = ops.multAndAdd(
+          state.mem[s + 2].int ?? 0,
           state.curVal,
           0,
           1073741823,
         );
-        state.memInt[r + 3] = ops.multAndAdd(
-          state.memInt[s + 3] ?? 0,
+        state.mem[r + 3].int = ops.multAndAdd(
+          state.mem[s + 3].int ?? 0,
           state.curVal,
           0,
           1073741823,
         );
       } else {
-        state.memInt[r + 1] = ops.xOverN(state.memInt[s + 1] ?? 0, state.curVal);
-        state.memInt[r + 2] = ops.xOverN(state.memInt[s + 2] ?? 0, state.curVal);
-        state.memInt[r + 3] = ops.xOverN(state.memInt[s + 3] ?? 0, state.curVal);
+        state.mem[r + 1].int = ops.xOverN(state.mem[s + 1].int ?? 0, state.curVal);
+        state.mem[r + 2].int = ops.xOverN(state.mem[s + 2].int ?? 0, state.curVal);
+        state.mem[r + 3].int = ops.xOverN(state.mem[s + 3].int ?? 0, state.curVal);
       }
       state.curVal = r;
     }
@@ -3909,15 +3478,7 @@ export function doRegisterCommand(
   }
 }
 
-export interface AlterAuxState {
-  curChr: number;
-  curVal: number;
-  curListModeField: number;
-  curListAuxFieldInt: number;
-  curListAuxFieldLh: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface AlterAuxState extends TeXStateSlice<"curChr" | "curVal" | "curList" | "curList" | "curList" | "interaction" | "helpPtr" | "helpLine">{
 }
 
 export interface AlterAuxOps {
@@ -3931,7 +3492,7 @@ export interface AlterAuxOps {
 }
 
 export function alterAux(state: AlterAuxState, ops: AlterAuxOps): void {
-  if (state.curChr !== Math.abs(state.curListModeField)) {
+  if (state.curChr !== Math.abs(state.curList.modeField)) {
     ops.reportIllegalCase();
     return;
   }
@@ -3940,7 +3501,7 @@ export function alterAux(state: AlterAuxState, ops: AlterAuxOps): void {
   ops.scanOptionalEquals();
   if (c === 1) {
     ops.scanDimen(false, false, false);
-    state.curListAuxFieldInt = state.curVal;
+    state.curList.auxField.int = state.curVal;
     return;
   }
 
@@ -3957,19 +3518,10 @@ export function alterAux(state: AlterAuxState, ops: AlterAuxOps): void {
     return;
   }
 
-  state.curListAuxFieldLh = state.curVal;
+  state.curList.auxField.hh.lh = state.curVal;
 }
 
-export interface AlterPrevGrafState {
-  curVal: number;
-  curListModeField: number;
-  curListPgField: number;
-  nestPtr: number;
-  nestModeField: number[];
-  nestPgField: number[];
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface AlterPrevGrafState extends NestModeSlice, NestPgSlice, TeXStateSlice<"curVal" | "curList" | "curList" | "nestPtr" | "interaction" | "helpPtr" | "helpLine" | "nest">{
 }
 
 export interface AlterPrevGrafOps {
@@ -3985,11 +3537,15 @@ export function alterPrevGraf(
   state: AlterPrevGrafState,
   ops: AlterPrevGrafOps,
 ): void {
-  state.nestModeField[state.nestPtr] = state.curListModeField;
-  state.nestPgField[state.nestPtr] = state.curListPgField;
+  state.nest[state.nestPtr].modeField = state.curList.modeField;
+  state.nest[state.nestPtr].pgField = state.curList.pgField;
+  if (state.nest && state.nest[state.nestPtr]) {
+    state.nest[state.nestPtr].modeField = state.curList.modeField;
+    state.nest[state.nestPtr].pgField = state.curList.pgField;
+  }
 
   let p = state.nestPtr;
-  while (Math.abs(state.nestModeField[p] ?? 0) !== 1) {
+  while (Math.abs(state.nest[p].modeField ?? 0) !== 1) {
     p -= 1;
   }
 
@@ -4008,15 +3564,15 @@ export function alterPrevGraf(
     return;
   }
 
-  state.nestPgField[p] = state.curVal;
-  state.curListModeField = state.nestModeField[state.nestPtr] ?? 0;
-  state.curListPgField = state.nestPgField[state.nestPtr] ?? 0;
+  state.nest[p].pgField = state.curVal;
+  if (state.nest && state.nest[p]) {
+    state.nest[p].pgField = state.curVal;
+  }
+  state.curList.modeField = state.nest[state.nestPtr].modeField ?? 0;
+  state.curList.pgField = state.nest[state.nestPtr].pgField ?? 0;
 }
 
-export interface AlterPageSoFarState {
-  curChr: number;
-  curVal: number;
-  pageSoFar: number[];
+export interface AlterPageSoFarState extends TeXStateSlice<"curChr" | "curVal" | "pageSoFar">{
 }
 
 export interface AlterPageSoFarOps {
@@ -4034,14 +3590,7 @@ export function alterPageSoFar(
   state.pageSoFar[c] = state.curVal;
 }
 
-export interface AlterIntegerState {
-  curChr: number;
-  curVal: number;
-  deadCycles: number;
-  insertPenalties: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface AlterIntegerState extends TeXStateSlice<"curChr" | "curVal" | "deadCycles" | "insertPenalties" | "interaction" | "helpPtr" | "helpLine">{
 }
 
 export interface AlterIntegerOps {
@@ -4087,13 +3636,7 @@ export function alterInteger(
   state.insertPenalties = state.curVal;
 }
 
-export interface AlterBoxDimenState {
-  curChr: number;
-  curVal: number;
-  curPtr: number;
-  memInt: number[];
-  memRh: number[];
-  eqtbRh: number[];
+export interface AlterBoxDimenState extends TeXStateSlice<"curChr" | "curVal" | "curPtr" | "mem" | "mem" | "eqtb">{
 }
 
 export interface AlterBoxDimenOps {
@@ -4111,28 +3654,24 @@ export function alterBoxDimen(
   ops.scanRegisterNum();
   let b = 0;
   if (state.curVal < 256) {
-    b = state.eqtbRh[3683 + state.curVal] ?? 0;
+    b = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
   } else {
     ops.findSaElement(4, state.curVal, false);
     if (state.curPtr === 0) {
       b = 0;
     } else {
-      b = state.memRh[state.curPtr + 1] ?? 0;
+      b = state.mem[state.curPtr + 1].hh.rh ?? 0;
     }
   }
 
   ops.scanOptionalEquals();
   ops.scanDimen(false, false, false);
   if (b !== 0) {
-    state.memInt[b + c] = state.curVal;
+    state.mem[b + c].int = state.curVal;
   }
 }
 
-export interface NewInteractionState {
-  curChr: number;
-  interaction: number;
-  selector: number;
-  logOpened: boolean;
+export interface NewInteractionState extends TeXStateSlice<"curChr" | "interaction" | "selector" | "logOpened">{
 }
 
 export interface NewInteractionOps {
@@ -4155,28 +3694,7 @@ export function newInteraction(
   }
 }
 
-export interface NewFontState {
-  jobName: number;
-  curCs: number;
-  curVal: number;
-  curName: number;
-  curArea: number;
-  selector: number;
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
-  strPtr: number;
-  fontPtr: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  nameInProgress: boolean;
-  hashRh: number[];
-  strStart: number[];
-  fontName: number[];
-  fontArea: number[];
-  fontSize: number[];
-  fontDsize: number[];
+export interface NewFontState extends TeXStateSlice<"jobName" | "curCs" | "curVal" | "curName" | "curArea" | "selector" | "poolPtr" | "poolSize" | "initPoolPtr" | "strPtr" | "fontPtr" | "interaction" | "helpPtr" | "helpLine" | "nameInProgress" | "hash" | "strStart" | "fontName" | "fontArea" | "fontSize" | "fontDsize">{
 }
 
 export interface NewFontOps {
@@ -4215,7 +3733,7 @@ export function newFont(
 
   let t = 0;
   if (u >= 514) {
-    t = state.hashRh[u] ?? 0;
+    t = state.hash[u].rh ?? 0;
   } else if (u >= 257) {
     if (u === 513) {
       t = 1235;
@@ -4315,32 +3833,10 @@ export function newFont(
     ops.eqDefine(u, 87, f);
   }
   ops.copyEqtbEntry(2624 + f, u);
-  state.hashRh[2624 + f] = t;
+  state.hash[2624 + f].rh = t;
 }
 
-export interface PrefixedCommandState {
-  curCmd: number;
-  curChr: number;
-  curTok: number;
-  curCs: number;
-  curVal: number;
-  curPtr: number;
-  defRef: number;
-  afterToken: number;
-  avail: number;
-  setBoxAllowed: boolean;
-  eTeXMode: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  eqtbInt: number[];
-  eqtbRh: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  fontInfoInt: number[];
-  hyphenChar: number[];
-  skewChar: number[];
+export interface PrefixedCommandState extends TeXStateSlice<"curCmd" | "curChr" | "curTok" | "curCs" | "curVal" | "curPtr" | "defRef" | "afterToken" | "avail" | "setBoxAllowed" | "eTeXMode" | "interaction" | "helpPtr" | "helpLine" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "fontInfo" | "hyphenChar" | "skewChar">{
 }
 
 export interface PrefixedCommandOps {
@@ -4421,7 +3917,7 @@ export function prefixedCommand(
       ops.backError();
       return;
     }
-    if ((state.eqtbInt[5304] ?? 0) > 2 && state.eTeXMode === 1) {
+    if ((state.eqtb[5304].int ?? 0) > 2 && state.eTeXMode === 1) {
       ops.showCurCmdChr();
     }
   }
@@ -4453,14 +3949,14 @@ export function prefixedCommand(
     ops.error();
   }
 
-  if ((state.eqtbInt[5311] ?? 0) !== 0) {
-    if ((state.eqtbInt[5311] ?? 0) < 0) {
+  if ((state.eqtb[5311].int ?? 0) !== 0) {
+    if ((state.eqtb[5311].int ?? 0) < 0) {
       if (a >= 4) {
         a -= 4;
       }
+    } else if (!(a >= 4)) {
+      a += 4;
     }
-  } else if (!(a >= 4)) {
-    a += 4;
   }
 
   switch (state.curCmd as number) {
@@ -4476,7 +3972,7 @@ export function prefixedCommand(
       if (
         state.curChr % 2 === 1 &&
         !(a >= 4) &&
-        (state.eqtbInt[5311] ?? 0) >= 0
+        (state.eqtb[5311].int ?? 0) >= 0
       ) {
         a += 4;
       }
@@ -4486,9 +3982,9 @@ export function prefixedCommand(
       let q = ops.scanToks(true, e);
       if (j !== 0) {
         q = ops.getAvail();
-        state.memLh[q] = j;
-        state.memRh[q] = state.memRh[state.defRef] ?? 0;
-        state.memRh[state.defRef] = q;
+        state.mem[q].hh.lh = j;
+        state.mem[q].hh.rh = state.mem[state.defRef].hh.rh ?? 0;
+        state.mem[state.defRef].hh.rh = q;
       }
       if (a >= 4) {
         ops.geqDefine(p, 111 + (a % 4), state.defRef);
@@ -4520,12 +4016,12 @@ export function prefixedCommand(
         ops.backInput();
       }
       if ((state.curCmd as number) >= 111) {
-        state.memLh[state.curChr] = (state.memLh[state.curChr] ?? 0) + 1;
+        state.mem[state.curChr].hh.lh = (state.mem[state.curChr].hh.lh ?? 0) + 1;
       } else if (
         ((state.curCmd as number) === 89 || (state.curCmd as number) === 71) &&
         (state.curChr < 0 || state.curChr > 19)
       ) {
-        state.memLh[state.curChr + 1] = (state.memLh[state.curChr + 1] ?? 0) + 1;
+        state.mem[state.curChr + 1].hh.lh = (state.mem[state.curChr + 1].hh.lh ?? 0) + 1;
       }
       if (a >= 4) {
         ops.geqDefine(p, state.curCmd, state.curChr);
@@ -4566,7 +4062,7 @@ export function prefixedCommand(
             r = 5;
           }
           ops.findSaElement(r, state.curVal, true);
-          state.memLh[state.curPtr + 1] = (state.memLh[state.curPtr + 1] ?? 0) + 1;
+          state.mem[state.curPtr + 1].hh.lh = (state.mem[state.curPtr + 1].hh.lh ?? 0) + 1;
           if (r === 5) {
             r = 71;
           } else {
@@ -4650,9 +4146,9 @@ export function prefixedCommand(
           } else {
             state.curChr = 3423 + state.curVal;
           }
+        } else {
+          e = true;
         }
-      } else {
-        e = true;
       }
       const p = state.curChr;
       ops.scanOptionalEquals();
@@ -4665,20 +4161,20 @@ export function prefixedCommand(
             if (state.curChr === 0) {
               ops.scanRegisterNum();
               if (state.curVal < 256) {
-                q = state.eqtbRh[3423 + state.curVal] ?? 0;
+                q = state.eqtb[3423 + state.curVal].hh.rh ?? 0;
               } else {
                 ops.findSaElement(5, state.curVal, false);
                 if (state.curPtr === 0) {
                   q = 0;
                 } else {
-                  q = state.memRh[state.curPtr + 1] ?? 0;
+                  q = state.mem[state.curPtr + 1].hh.rh ?? 0;
                 }
               }
             } else {
-              q = state.memRh[state.curChr + 1] ?? 0;
+              q = state.mem[state.curChr + 1].hh.rh ?? 0;
             }
           } else {
-            q = state.eqtbRh[state.curChr] ?? 0;
+            q = state.eqtb[state.curChr].hh.rh ?? 0;
           }
           if (q === 0) {
             if (e) {
@@ -4693,7 +4189,7 @@ export function prefixedCommand(
               ops.eqDefine(p, 101, 0);
             }
           } else {
-            state.memLh[q] = (state.memLh[q] ?? 0) + 1;
+            state.mem[q].hh.lh = (state.mem[q].hh.lh ?? 0) + 1;
             if (e) {
               if (a >= 4) {
                 ops.gsaDef(p, q);
@@ -4712,7 +4208,7 @@ export function prefixedCommand(
       ops.backInput();
       state.curCs = q;
       q = ops.scanToks(false, false);
-      if ((state.memRh[state.defRef] ?? 0) === 0) {
+      if ((state.mem[state.defRef].hh.rh ?? 0) === 0) {
         if (e) {
           if (a >= 4) {
             ops.gsaDef(p, 0);
@@ -4724,17 +4220,17 @@ export function prefixedCommand(
         } else {
           ops.eqDefine(p, 101, 0);
         }
-        state.memRh[state.defRef] = state.avail;
+        state.mem[state.defRef].hh.rh = state.avail;
         state.avail = state.defRef;
       } else {
         if (p === 3413 && !e) {
-          state.memRh[q] = ops.getAvail();
-          q = state.memRh[q] ?? 0;
-          state.memLh[q] = 637;
+          state.mem[q].hh.rh = ops.getAvail();
+          q = state.mem[q].hh.rh ?? 0;
+          state.mem[q].hh.lh = 637;
           q = ops.getAvail();
-          state.memLh[q] = 379;
-          state.memRh[q] = state.memRh[state.defRef] ?? 0;
-          state.memRh[state.defRef] = q;
+          state.mem[q].hh.lh = 379;
+          state.mem[q].hh.rh = state.mem[state.defRef].hh.rh ?? 0;
+          state.mem[state.defRef].hh.rh = q;
         }
         if (e) {
           if (a >= 4) {
@@ -4910,24 +4406,24 @@ export function prefixedCommand(
         if (q > 3412) {
           const halfn = Math.trunc(state.curVal / 2) + 1;
           p = ops.getNode(2 * halfn + 1);
-          state.memLh[p] = halfn;
+          state.mem[p].hh.lh = halfn;
           n = state.curVal;
-          state.memInt[p + 1] = n;
+          state.mem[p + 1].int = n;
           for (let jj = p + 2; jj <= p + n + 1; jj += 1) {
             ops.scanInt();
-            state.memInt[jj] = state.curVal;
+            state.mem[jj].int = state.curVal;
           }
           if (n % 2 === 0) {
-            state.memInt[p + n + 2] = 0;
+            state.mem[p + n + 2].int = 0;
           }
         } else {
           p = ops.getNode(2 * n + 1);
-          state.memLh[p] = n;
+          state.mem[p].hh.lh = n;
           for (let jj = 1; jj <= n; jj += 1) {
             ops.scanDimen(false, false, false);
-            state.memInt[p + 2 * jj - 1] = state.curVal;
+            state.mem[p + 2 * jj - 1].int = state.curVal;
             ops.scanDimen(false, false, false);
-            state.memInt[p + 2 * jj] = state.curVal;
+            state.mem[p + 2 * jj].int = state.curVal;
           }
         }
       }
@@ -4950,7 +4446,7 @@ export function prefixedCommand(
       const k = state.curVal;
       ops.scanOptionalEquals();
       ops.scanDimen(false, false, false);
-      state.fontInfoInt[k] = state.curVal;
+      state.fontInfo[k].int = state.curVal;
       break;
     }
     case 78: {
@@ -4984,9 +4480,7 @@ export function prefixedCommand(
   }
 }
 
-export interface DoAssignmentsState {
-  curCmd: number;
-  setBoxAllowed: boolean;
+export interface DoAssignmentsState extends TeXStateSlice<"curCmd" | "setBoxAllowed">{
 }
 
 export interface DoAssignmentsOps {
@@ -5011,14 +4505,7 @@ export function doAssignments(
   }
 }
 
-export interface OpenOrCloseInState {
-  curChr: number;
-  curVal: number;
-  curName: number;
-  curArea: number;
-  curExt: number;
-  readOpen: number[];
-  readFile: number[];
+export interface OpenOrCloseInState extends TeXStateSlice<"curChr" | "curVal" | "curName" | "curArea" | "curExt" | "readOpen" | "readFile">{
 }
 
 export interface OpenOrCloseInOps {
@@ -5054,25 +4541,7 @@ export function openOrCloseIn(
   }
 }
 
-export interface IssueMessageState {
-  curChr: number;
-  selector: number;
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
-  strPtr: number;
-  termOffset: number;
-  fileOffset: number;
-  maxPrintLine: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  longHelpSeen: boolean;
-  useErrHelp: boolean;
-  defRef: number;
-  memRh: number[];
-  eqtbRh: number[];
-  strStart: number[];
+export interface IssueMessageState extends TeXStateSlice<"curChr" | "selector" | "poolPtr" | "poolSize" | "initPoolPtr" | "strPtr" | "termOffset" | "fileOffset" | "maxPrintLine" | "interaction" | "helpPtr" | "helpLine" | "longHelpSeen" | "useErrHelp" | "defRef" | "mem" | "eqtb" | "strStart">{
 }
 
 export interface IssueMessageOps {
@@ -5095,7 +4564,7 @@ export function issueMessage(
   ops: IssueMessageOps,
 ): void {
   const c = state.curChr;
-  state.memRh[29988] = ops.scanToks(false, true);
+  state.mem[29988].hh.rh = ops.scanToks(false, true);
   const oldSetting = state.selector;
   state.selector = 21;
   ops.tokenShow(state.defRef);
@@ -5123,7 +4592,7 @@ export function issueMessage(
     ops.printNl(263);
     ops.print(339);
     ops.slowPrint(s);
-    if ((state.eqtbRh[3421] ?? 0) !== 0) {
+    if ((state.eqtb[3421].hh.rh ?? 0) !== 0) {
       state.useErrHelp = true;
     } else if (state.longHelpSeen) {
       state.helpPtr = 1;
@@ -5145,13 +4614,7 @@ export function issueMessage(
   state.poolPtr = state.strStart[state.strPtr] ?? 0;
 }
 
-export interface ShiftCaseState {
-  curChr: number;
-  defRef: number;
-  avail: number;
-  memLh: number[];
-  memRh: number[];
-  eqtbRh: number[];
+export interface ShiftCaseState extends TeXStateSlice<"curChr" | "defRef" | "avail" | "mem" | "mem" | "eqtb">{
 }
 
 export interface ShiftCaseOps {
@@ -5162,42 +4625,23 @@ export interface ShiftCaseOps {
 export function shiftCase(state: ShiftCaseState, ops: ShiftCaseOps): void {
   const b = state.curChr;
   ops.scanToks(false, false);
-  let p = state.memRh[state.defRef] ?? 0;
+  let p = state.mem[state.defRef].hh.rh ?? 0;
   while (p !== 0) {
-    const t = state.memLh[p] ?? 0;
+    const t = state.mem[p].hh.lh ?? 0;
     if (t < 4352) {
       const c = t % 256;
-      if ((state.eqtbRh[b + c] ?? 0) !== 0) {
-        state.memLh[p] = t - c + (state.eqtbRh[b + c] ?? 0);
+      if ((state.eqtb[b + c].hh.rh ?? 0) !== 0) {
+        state.mem[p].hh.lh = t - c + (state.eqtb[b + c].hh.rh ?? 0);
       }
     }
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
-  ops.beginTokenList(state.memRh[state.defRef] ?? 0, 3);
-  state.memRh[state.defRef] = state.avail;
+  ops.beginTokenList(state.mem[state.defRef].hh.rh ?? 0, 3);
+  state.mem[state.defRef].hh.rh = state.avail;
   state.avail = state.defRef;
 }
 
-export interface ShowWhateverState {
-  curChr: number;
-  curVal: number;
-  curPtr: number;
-  curCs: number;
-  selector: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  errorCount: number;
-  condPtr: number;
-  curIf: number;
-  ifLine: number;
-  ifLimit: number;
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  memRh: number[];
-  eqtbInt: number[];
-  eqtbRh: number[];
+export interface ShowWhateverState extends TeXStateSlice<"curChr" | "curVal" | "curPtr" | "curCs" | "selector" | "interaction" | "helpPtr" | "helpLine" | "errorCount" | "condPtr" | "curIf" | "ifLine" | "ifLimit" | "mem" | "mem" | "mem" | "mem" | "eqtb" | "eqtb">{
 }
 
 export interface ShowWhateverOps {
@@ -5239,13 +4683,13 @@ export function showWhatever(
       ops.scanRegisterNum();
       let p = 0;
       if (state.curVal < 256) {
-        p = state.eqtbRh[3683 + state.curVal] ?? 0;
+        p = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
       } else {
         ops.findSaElement(4, state.curVal, false);
         if (state.curPtr === 0) {
           p = 0;
         } else {
-          p = state.memRh[state.curPtr + 1] ?? 0;
+          p = state.mem[state.curPtr + 1].hh.rh ?? 0;
         }
       }
       ops.beginDiagnostic();
@@ -5288,7 +4732,7 @@ export function showWhatever(
         let n = 0;
         do {
           n += 1;
-          p = state.memRh[p] ?? 0;
+          p = state.mem[p].hh.rh ?? 0;
         } while (p !== 0);
         p = state.condPtr;
         let t = state.curIf;
@@ -5307,10 +4751,10 @@ export function showWhatever(
             ops.printInt(l);
           }
           n -= 1;
-          t = state.memB1[p] ?? 0;
-          l = state.memInt[p + 1] ?? 0;
-          m = state.memB0[p] ?? 0;
-          p = state.memRh[p] ?? 0;
+          t = state.mem[p].hh.b1 ?? 0;
+          l = state.mem[p + 1].int ?? 0;
+          m = state.mem[p].hh.b0 ?? 0;
+          p = state.mem[p].hh.rh ?? 0;
         } while (p !== 0);
       }
       break;
@@ -5321,7 +4765,7 @@ export function showWhatever(
       }
       ops.printNl(1264);
       ops.tokenShow(29997);
-      ops.flushList(state.memRh[29997] ?? 0);
+      ops.flushList(state.mem[29997].hh.rh ?? 0);
       skipPostDiagnostic = true;
       break;
   }
@@ -5333,7 +4777,7 @@ export function showWhatever(
     }
     ops.printNl(263);
     ops.print(1269);
-    if (state.selector === 19 && (state.eqtbInt[5297] ?? 0) <= 0) {
+    if (state.selector === 19 && (state.eqtb[5297].int ?? 0) <= 0) {
       state.selector = 17;
       ops.print(1270);
       state.selector = 19;
@@ -5343,7 +4787,7 @@ export function showWhatever(
   if (state.interaction < 3) {
     state.helpPtr = 0;
     state.errorCount -= 1;
-  } else if ((state.eqtbInt[5297] ?? 0) > 0) {
+  } else if ((state.eqtb[5297].int ?? 0) > 0) {
     state.helpPtr = 3;
     state.helpLine[2] = 1259;
     state.helpLine[1] = 1260;
@@ -5359,11 +4803,7 @@ export function showWhatever(
   ops.error();
 }
 
-export interface NewWhatsitState {
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface NewWhatsitState extends TeXStateSlice<"curList" | "mem" | "mem" | "mem">{
 }
 
 export interface NewWhatsitOps {
@@ -5377,17 +4817,13 @@ export function newWhatsit(
   ops: NewWhatsitOps,
 ): void {
   const p = ops.getNode(w);
-  state.memB0[p] = 8;
-  state.memB1[p] = s;
-  state.memRh[state.curListTailField] = p;
-  state.curListTailField = p;
+  state.mem[p].hh.b0 = 8;
+  state.mem[p].hh.b1 = s;
+  state.mem[state.curList.tailField].hh.rh = p;
+  state.curList.tailField = p;
 }
 
-export interface NewWriteWhatsitState {
-  curChr: number;
-  curVal: number;
-  curListTailField: number;
-  memLh: number[];
+export interface NewWriteWhatsitState extends TeXStateSlice<"curChr" | "curVal" | "curList" | "mem">{
 }
 
 export interface NewWriteWhatsitOps {
@@ -5412,26 +4848,10 @@ export function newWriteWhatsit(
       state.curVal = 16;
     }
   }
-  state.memLh[state.curListTailField + 1] = state.curVal;
+  state.mem[state.curList.tailField + 1].hh.lh = state.curVal;
 }
 
-export interface DoExtensionState {
-  curChr: number;
-  curCmd: number;
-  curCs: number;
-  curVal: number;
-  curName: number;
-  curArea: number;
-  curExt: number;
-  defRef: number;
-  curListTailField: number;
-  curListModeField: number;
-  curListAuxFieldRh: number;
-  eqtbInt: number[];
-  memLh: number[];
-  memRh: number[];
-  memB0: number[];
-  memB1: number[];
+export interface DoExtensionState extends TeXStateSlice<"curChr" | "curCmd" | "curCs" | "curVal" | "curName" | "curArea" | "curExt" | "defRef" | "curList" | "curList" | "curList" | "eqtb" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface DoExtensionOps {
@@ -5459,58 +4879,58 @@ export function doExtension(
       ops.newWriteWhatsit(3);
       ops.scanOptionalEquals();
       ops.scanFileName();
-      state.memRh[state.curListTailField + 1] = state.curName;
-      state.memLh[state.curListTailField + 2] = state.curArea;
-      state.memRh[state.curListTailField + 2] = state.curExt;
+      state.mem[state.curList.tailField + 1].hh.rh = state.curName;
+      state.mem[state.curList.tailField + 2].hh.lh = state.curArea;
+      state.mem[state.curList.tailField + 2].hh.rh = state.curExt;
       break;
     case 1: {
       const k = state.curCs;
       ops.newWriteWhatsit(2);
       state.curCs = k;
       ops.scanToks(false, false);
-      state.memRh[state.curListTailField + 1] = state.defRef;
+      state.mem[state.curList.tailField + 1].hh.rh = state.defRef;
       break;
     }
     case 2:
       ops.newWriteWhatsit(2);
-      state.memRh[state.curListTailField + 1] = 0;
+      state.mem[state.curList.tailField + 1].hh.rh = 0;
       break;
     case 3:
       ops.newWhatsit(3, 2);
-      state.memLh[state.curListTailField + 1] = 0;
+      state.mem[state.curList.tailField + 1].hh.lh = 0;
       ops.scanToks(false, true);
-      state.memRh[state.curListTailField + 1] = state.defRef;
+      state.mem[state.curList.tailField + 1].hh.rh = state.defRef;
       break;
     case 4:
       ops.getXToken();
       if (state.curCmd === 59 && state.curChr <= 2) {
-        const p = state.curListTailField;
+        const p = state.curList.tailField;
         doExtension(state, ops);
-        ops.outWhat(state.curListTailField);
-        ops.flushNodeList(state.curListTailField);
-        state.curListTailField = p;
-        state.memRh[p] = 0;
+        ops.outWhat(state.curList.tailField);
+        ops.flushNodeList(state.curList.tailField);
+        state.curList.tailField = p;
+        state.mem[p].hh.rh = 0;
       } else {
         ops.backInput();
       }
       break;
     case 5:
-      if (Math.abs(state.curListModeField) !== 102) {
+      if (Math.abs(state.curList.modeField) !== 102) {
         ops.reportIllegalCase();
       } else {
         ops.newWhatsit(4, 2);
         ops.scanInt();
         if (state.curVal <= 0 || state.curVal > 255) {
-          state.curListAuxFieldRh = 0;
+          state.curList.auxField.hh.rh = 0;
         } else {
-          state.curListAuxFieldRh = state.curVal;
+          state.curList.auxField.hh.rh = state.curVal;
         }
-        state.memRh[state.curListTailField + 1] = state.curListAuxFieldRh;
-        state.memB0[state.curListTailField + 1] = ops.normMin(
-          state.eqtbInt[5319] ?? 0,
+        state.mem[state.curList.tailField + 1].hh.rh = state.curList.auxField.hh.rh;
+        state.mem[state.curList.tailField + 1].hh.b0 = ops.normMin(
+          state.eqtb[5319].int ?? 0,
         );
-        state.memB1[state.curListTailField + 1] = ops.normMin(
-          state.eqtbInt[5320] ?? 0,
+        state.mem[state.curList.tailField + 1].hh.b1 = ops.normMin(
+          state.eqtb[5320].int ?? 0,
         );
       }
       break;
@@ -5520,13 +4940,7 @@ export function doExtension(
   }
 }
 
-export interface FixLanguageState {
-  curListTailField: number;
-  curListAuxFieldRh: number;
-  eqtbInt: number[];
-  memRh: number[];
-  memB0: number[];
-  memB1: number[];
+export interface FixLanguageState extends TeXStateSlice<"curList" | "curList" | "eqtb" | "mem" | "mem" | "mem">{
 }
 
 export interface FixLanguageOps {
@@ -5539,51 +4953,24 @@ export function fixLanguage(
   ops: FixLanguageOps,
 ): void {
   let l = 0;
-  if ((state.eqtbInt[5318] ?? 0) <= 0) {
+  if ((state.eqtb[5318].int ?? 0) <= 0) {
     l = 0;
-  } else if ((state.eqtbInt[5318] ?? 0) > 255) {
+  } else if ((state.eqtb[5318].int ?? 0) > 255) {
     l = 0;
   } else {
-    l = state.eqtbInt[5318] ?? 0;
+    l = state.eqtb[5318].int ?? 0;
   }
-  if (l !== state.curListAuxFieldRh) {
+  if (l !== state.curList.auxField.hh.rh) {
     ops.newWhatsit(4, 2);
-    state.memRh[state.curListTailField + 1] = l;
-    state.curListAuxFieldRh = l;
-    state.memB0[state.curListTailField + 1] = ops.normMin(state.eqtbInt[5319] ?? 0);
-    state.memB1[state.curListTailField + 1] = ops.normMin(state.eqtbInt[5320] ?? 0);
+    state.mem[state.curList.tailField + 1].hh.rh = l;
+    state.curList.auxField.hh.rh = l;
+    state.mem[state.curList.tailField + 1].hh.b0 = ops.normMin(state.eqtb[5319].int ?? 0);
+    state.mem[state.curList.tailField + 1].hh.b1 = ops.normMin(state.eqtb[5320].int ?? 0);
   }
 }
 
-export interface HandleRightBraceState {
-  curGroup: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  curTok: number;
-  curVal: number;
-  curCmd: number;
-  savePtr: number;
-  adjustTail: number;
-  pageTail: number;
-  nestPtr: number;
-  outputActive: boolean;
-  insertPenalties: number;
-  discPtr2: number;
-  curInputLocField: number;
-  curInputIndexField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListAuxFieldRh: number;
-  nest0TailField: number;
-  saveStackInt: number[];
-  eqtbInt: number[];
-  eqtbRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  memLh: number[];
-  memRh: number[];
+export interface HandleRightBraceState
+  extends EqtbIntSlice, MemWordCoreSlice, NestTailSlice, SaveStackIntSlice, TeXStateSlice<"curGroup" | "interaction" | "helpPtr" | "helpLine" | "curTok" | "curVal" | "curCmd" | "adjustTail" | "pageTail" | "nestPtr" | "outputActive" | "insertPenalties" | "discPtr" | "curList" | "curList" | "curList" | "eqtb" | "curInput">{
 }
 
 export interface HandleRightBraceOps {
@@ -5657,31 +5044,31 @@ export function handleRightBrace(
       break;
     case 11: {
       ops.endGraf();
-      const q = state.eqtbRh[2892] ?? 0;
-      state.memRh[q] = (state.memRh[q] ?? 0) + 1;
-      const d = state.eqtbInt[5851] ?? 0;
-      const f = state.eqtbInt[5310] ?? 0;
+      const q = state.eqtb[2892].hh.rh ?? 0;
+      state.mem[q].hh.rh = (state.mem[q].hh.rh ?? 0) + 1;
+      const d = state.eqtb[5851].int ?? 0;
+      const f = state.eqtb[5310].int ?? 0;
       ops.unsave();
       state.savePtr -= 1;
-      const p = ops.vpackage(state.memRh[state.curListHeadField] ?? 0, 0, 1, 1073741823);
+      const p = ops.vpackage(state.mem[state.curList.headField].hh.rh ?? 0, 0, 1, 1073741823);
       ops.popNest();
-      if ((state.saveStackInt[state.savePtr] ?? 0) < 255) {
-        state.memRh[state.curListTailField] = ops.getNode(5);
-        state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-        state.memB0[state.curListTailField] = 3;
-        state.memB1[state.curListTailField] = state.saveStackInt[state.savePtr] ?? 0;
-        state.memInt[state.curListTailField + 3] =
-          (state.memInt[p + 3] ?? 0) + (state.memInt[p + 2] ?? 0);
-        state.memLh[state.curListTailField + 4] = state.memRh[p + 5] ?? 0;
-        state.memRh[state.curListTailField + 4] = q;
-        state.memInt[state.curListTailField + 2] = d;
-        state.memInt[state.curListTailField + 1] = f;
+      if ((state.saveStack[state.savePtr].int ?? 0) < 255) {
+        state.mem[state.curList.tailField].hh.rh = ops.getNode(5);
+        state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+        state.mem[state.curList.tailField].hh.b0 = 3;
+        state.mem[state.curList.tailField].hh.b1 = state.saveStack[state.savePtr].int ?? 0;
+        state.mem[state.curList.tailField + 3].int =
+          (state.mem[p + 3].int ?? 0) + (state.mem[p + 2].int ?? 0);
+        state.mem[state.curList.tailField + 4].hh.lh = state.mem[p + 5].hh.rh ?? 0;
+        state.mem[state.curList.tailField + 4].hh.rh = q;
+        state.mem[state.curList.tailField + 2].int = d;
+        state.mem[state.curList.tailField + 1].int = f;
       } else {
-        state.memRh[state.curListTailField] = ops.getNode(2);
-        state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-        state.memB0[state.curListTailField] = 5;
-        state.memB1[state.curListTailField] = 0;
-        state.memInt[state.curListTailField + 1] = state.memRh[p + 5] ?? 0;
+        state.mem[state.curList.tailField].hh.rh = ops.getNode(2);
+        state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+        state.mem[state.curList.tailField].hh.b0 = 5;
+        state.mem[state.curList.tailField].hh.b1 = 0;
+        state.mem[state.curList.tailField + 1].int = state.mem[p + 5].hh.rh ?? 0;
         ops.deleteGlueRef(q);
       }
       ops.freeNode(p, 7);
@@ -5692,8 +5079,8 @@ export function handleRightBrace(
     }
     case 8:
       if (
-        state.curInputLocField !== 0 ||
-        (state.curInputIndexField !== 6 && state.curInputIndexField !== 3)
+        state.curInput.locField !== 0 ||
+        (state.curInput.indexField !== 6 && state.curInput.indexField !== 3)
       ) {
         if (state.interaction === 3) {
           // Pascal has an empty statement in this branch.
@@ -5706,14 +5093,14 @@ export function handleRightBrace(
         ops.error();
         do {
           ops.getToken();
-        } while (state.curInputLocField !== 0);
+        } while (state.curInput.locField !== 0);
       }
       ops.endTokenList();
       ops.endGraf();
       ops.unsave();
       state.outputActive = false;
       state.insertPenalties = 0;
-      if ((state.eqtbRh[3938] ?? 0) !== 0) {
+      if ((state.eqtb[3938].hh.rh ?? 0) !== 0) {
         if (state.interaction === 3) {
           // Pascal has an empty statement in this branch.
         }
@@ -5727,21 +5114,21 @@ export function handleRightBrace(
         state.helpLine[0] = 1028;
         ops.boxError(255);
       }
-      if (state.curListTailField !== state.curListHeadField) {
-        state.memRh[state.pageTail] = state.memRh[state.curListHeadField] ?? 0;
-        state.pageTail = state.curListTailField;
+      if (state.curList.tailField !== state.curList.headField) {
+        state.mem[state.pageTail].hh.rh = state.mem[state.curList.headField].hh.rh ?? 0;
+        state.pageTail = state.curList.tailField;
       }
-      if ((state.memRh[29998] ?? 0) !== 0) {
-        if ((state.memRh[29999] ?? 0) === 0) {
-          state.nest0TailField = state.pageTail;
+      if ((state.mem[29998].hh.rh ?? 0) !== 0) {
+        if ((state.mem[29999].hh.rh ?? 0) === 0) {
+          state.nest[0].tailField = state.pageTail;
         }
-        state.memRh[state.pageTail] = state.memRh[29999] ?? 0;
-        state.memRh[29999] = state.memRh[29998] ?? 0;
-        state.memRh[29998] = 0;
+        state.mem[state.pageTail].hh.rh = state.mem[29999].hh.rh ?? 0;
+        state.mem[29999].hh.rh = state.mem[29998].hh.rh ?? 0;
+        state.mem[29998].hh.rh = 0;
         state.pageTail = 29998;
       }
-      ops.flushNodeList(state.discPtr2);
-      state.discPtr2 = 0;
+      ops.flushNodeList(state.discPtr[2] ?? 0);
+      state.discPtr[2] = 0;
       ops.popNest();
       ops.buildPage();
       break;
@@ -5772,17 +5159,17 @@ export function handleRightBrace(
       ops.unsave();
       state.savePtr -= 2;
       const p = ops.vpackage(
-        state.memRh[state.curListHeadField] ?? 0,
-        state.saveStackInt[state.savePtr + 1] ?? 0,
-        state.saveStackInt[state.savePtr] ?? 0,
+        state.mem[state.curList.headField].hh.rh ?? 0,
+        state.saveStack[state.savePtr + 1].int ?? 0,
+        state.saveStack[state.savePtr].int ?? 0,
         1073741823,
       );
       ops.popNest();
-      state.memRh[state.curListTailField] = ops.newNoad();
-      state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-      state.memB0[state.curListTailField] = 29;
-      state.memRh[state.curListTailField + 1] = 2;
-      state.memLh[state.curListTailField + 1] = p;
+      state.mem[state.curList.tailField].hh.rh = ops.newNoad();
+      state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+      state.mem[state.curList.tailField].hh.b0 = 29;
+      state.mem[state.curList.tailField + 1].hh.rh = 2;
+      state.mem[state.curList.tailField + 1].hh.lh = p;
       break;
     }
     case 13:
@@ -5791,34 +5178,34 @@ export function handleRightBrace(
     case 9: {
       ops.unsave();
       state.savePtr -= 1;
-      const q = state.saveStackInt[state.savePtr] ?? 0;
-      state.memRh[q] = 3;
+      const q = state.saveStack[state.savePtr].int ?? 0;
+      state.mem[q].hh.rh = 3;
       const p = ops.finMlist(0);
-      state.memLh[q] = p;
+      state.mem[q].hh.lh = p;
       if (p !== 0) {
-        if ((state.memRh[p] ?? 0) === 0) {
-          if ((state.memB0[p] ?? 0) === 16) {
-            if ((state.memRh[p + 3] ?? 0) === 0) {
-              if ((state.memRh[p + 2] ?? 0) === 0) {
-                state.memB0[q] = state.memB0[p + 1] ?? 0;
-                state.memB1[q] = state.memB1[p + 1] ?? 0;
-                state.memLh[q] = state.memLh[p + 1] ?? 0;
-                state.memRh[q] = state.memRh[p + 1] ?? 0;
+        if ((state.mem[p].hh.rh ?? 0) === 0) {
+          if ((state.mem[p].hh.b0 ?? 0) === 16) {
+            if ((state.mem[p + 3].hh.rh ?? 0) === 0) {
+              if ((state.mem[p + 2].hh.rh ?? 0) === 0) {
+                state.mem[q].hh.b0 = state.mem[p + 1].hh.b0 ?? 0;
+                state.mem[q].hh.b1 = state.mem[p + 1].hh.b1 ?? 0;
+                state.mem[q].hh.lh = state.mem[p + 1].hh.lh ?? 0;
+                state.mem[q].hh.rh = state.mem[p + 1].hh.rh ?? 0;
                 ops.freeNode(p, 4);
               }
             }
           } else if (
-            (state.memB0[p] ?? 0) === 28 &&
-            q === state.curListTailField + 1 &&
-            (state.memB0[state.curListTailField] ?? 0) === 16
+            (state.mem[p].hh.b0 ?? 0) === 28 &&
+            q === state.curList.tailField + 1 &&
+            (state.mem[state.curList.tailField].hh.b0 ?? 0) === 16
           ) {
-            let r = state.curListHeadField;
-            while ((state.memRh[r] ?? 0) !== state.curListTailField) {
-              r = state.memRh[r] ?? 0;
+            let r = state.curList.headField;
+            while ((state.mem[r].hh.rh ?? 0) !== state.curList.tailField) {
+              r = state.mem[r].hh.rh ?? 0;
             }
-            state.memRh[r] = p;
-            ops.freeNode(state.curListTailField, 4);
-            state.curListTailField = p;
+            state.mem[r].hh.rh = p;
+            ops.freeNode(state.curList.tailField, 4);
+            state.curList.tailField = p;
           }
         }
       }
@@ -5830,8 +5217,7 @@ export function handleRightBrace(
   }
 }
 
-export interface GiveErrHelpState {
-  eqtbRh: number[];
+export interface GiveErrHelpState extends TeXStateSlice<"eqtb">{
 }
 
 export interface GiveErrHelpOps {
@@ -5839,13 +5225,10 @@ export interface GiveErrHelpOps {
 }
 
 export function giveErrHelp(state: GiveErrHelpState, ops: GiveErrHelpOps): void {
-  ops.tokenShow(state.eqtbRh[3421] ?? 0);
+  ops.tokenShow(state.eqtb[3421].hh.rh ?? 0);
 }
 
-export interface OpenFmtFileState {
-  curInputLocField: number;
-  last: number;
-  buffer: number[];
+export interface OpenFmtFileState extends TeXStateSlice<"last" | "buffer" | "curInput">{
 }
 
 export interface OpenFmtFileOps {
@@ -5856,22 +5239,22 @@ export interface OpenFmtFileOps {
 }
 
 export function openFmtFile(state: OpenFmtFileState, ops: OpenFmtFileOps): boolean {
-  let j = state.curInputLocField;
-  if ((state.buffer[state.curInputLocField] ?? 0) === 38) {
-    state.curInputLocField += 1;
-    j = state.curInputLocField;
+  let j = state.curInput.locField;
+  if ((state.buffer[state.curInput.locField] ?? 0) === 38) {
+    state.curInput.locField += 1;
+    j = state.curInput.locField;
     state.buffer[state.last] = 32;
     while ((state.buffer[j] ?? 0) !== 32) {
       j += 1;
     }
-    ops.packBufferedName(0, state.curInputLocField, j - 1);
+    ops.packBufferedName(0, state.curInput.locField, j - 1);
     if (ops.wOpenIn()) {
-      state.curInputLocField = j;
+      state.curInput.locField = j;
       return true;
     }
-    ops.packBufferedName(11, state.curInputLocField, j - 1);
+    ops.packBufferedName(11, state.curInput.locField, j - 1);
     if (ops.wOpenIn()) {
-      state.curInputLocField = j;
+      state.curInput.locField = j;
       return true;
     }
     ops.writeLnTermOut("Sorry, I can't find that format; will try PLAIN.");
@@ -5884,32 +5267,11 @@ export function openFmtFile(state: OpenFmtFileState, ops: OpenFmtFileOps): boole
     return false;
   }
 
-  state.curInputLocField = j;
+  state.curInput.locField = j;
   return true;
 }
 
-export interface FinalCleanupState {
-  curChr: number;
-  jobName: number;
-  inputPtr: number;
-  curInputStateField: number;
-  openParens: number;
-  curLevel: number;
-  eTeXMode: number;
-  condPtr: number;
-  curIf: number;
-  ifLine: number;
-  history: number;
-  interaction: number;
-  selector: number;
-  lastGlue: number;
-  curMark: number[];
-  saRoot: number[];
-  discPtr: number[];
-  eqtbInt: number[];
-  memInt: number[];
-  memB1: number[];
-  memRh: number[];
+export interface FinalCleanupState extends TeXStateSlice<"curChr" | "jobName" | "inputPtr" | "openParens" | "curLevel" | "eTeXMode" | "condPtr" | "curIf" | "ifLine" | "history" | "interaction" | "selector" | "lastGlue" | "curMark" | "saRoot" | "discPtr" | "eqtb" | "mem" | "mem" | "mem" | "curInput">{
 }
 
 export interface FinalCleanupOps {
@@ -5934,13 +5296,13 @@ export interface FinalCleanupOps {
 export function finalCleanup(state: FinalCleanupState, ops: FinalCleanupOps): void {
   const c = state.curChr;
   if (c !== 1) {
-    state.eqtbInt[5317] = -1;
+    state.eqtb[5317].int = -1;
   }
   if (state.jobName === 0) {
     ops.openLogFile();
   }
   while (state.inputPtr > 0) {
-    if (state.curInputStateField === 0) {
+    if (state.curInput.stateField === 0) {
       ops.endTokenList();
     } else {
       ops.endFileReading();
@@ -5970,10 +5332,13 @@ export function finalCleanup(state: FinalCleanupState, ops: FinalCleanupOps): vo
       ops.printInt(state.ifLine);
     }
     ops.print(1295);
-    state.ifLine = state.memInt[state.condPtr + 1] ?? 0;
-    state.curIf = state.memB1[state.condPtr] ?? 0;
+    if ((state.curIf % 32) === 14) {
+      ops.printChar(32);
+    }
+    state.ifLine = state.mem[state.condPtr + 1].int ?? 0;
+    state.curIf = state.mem[state.condPtr].hh.b1 ?? 0;
     const tempPtr = state.condPtr;
-    state.condPtr = state.memRh[state.condPtr] ?? 0;
+    state.condPtr = state.mem[state.condPtr].hh.rh ?? 0;
     ops.freeNode(tempPtr, 2);
   }
   if (state.history !== 0) {
@@ -6008,30 +5373,7 @@ export function finalCleanup(state: FinalCleanupState, ops: FinalCleanupOps): vo
   }
 }
 
-export interface CloseFilesAndTerminateState {
-  writeOpen: boolean[];
-  writeFile: number[];
-  eqtbInt: number[];
-  curS: number;
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
-  totalPages: number;
-  lastBop: number;
-  dviOffset: number;
-  maxV: number;
-  maxH: number;
-  maxPush: number;
-  dviBufSize: number;
-  halfBuf: number;
-  fontPtr: number;
-  fontUsed: boolean[];
-  outputFileName: number;
-  dviFile: number;
-  logOpened: boolean;
-  logFile: number;
-  selector: number;
-  logName: number;
+export interface CloseFilesAndTerminateState extends TeXStateSlice<"writeOpen" | "writeFile" | "eqtb" | "hyphCount" | "curS" | "dviBuf" | "dviPtr" | "dviLimit" | "totalPages" | "lastBop" | "dviOffset" | "maxV" | "maxH" | "maxPush" | "dviBufSize" | "halfBuf" | "fontPtr" | "fontUsed" | "outputFileName" | "dviFile" | "logOpened" | "logFile" | "selector" | "logName">{
 }
 
 export interface CloseFilesAndTerminateOps {
@@ -6047,6 +5389,7 @@ export interface CloseFilesAndTerminateOps {
   printInt: (n: number) => void;
   printChar: (c: number) => void;
   bClose: (f: number) => void;
+  writeLog: (text: string) => void;
   writeLnLog: () => void;
 }
 
@@ -6067,7 +5410,18 @@ export function closeFilesAndTerminate(
       ops.aClose(state.writeFile[k] ?? 0);
     }
   }
-  state.eqtbInt[5317] = -1;
+  state.eqtb[5317].int = -1;
+  if ((state.eqtb[5299].int ?? 0) > 0 && state.logOpened) {
+    ops.writeLnLog();
+    ops.writeLog("Here is how much of TeX's memory you used:");
+    ops.writeLnLog();
+    ops.writeLog(` ${state.hyphCount} hyphenation exception`);
+    if (state.hyphCount !== 1) {
+      ops.writeLog("s");
+    }
+    ops.writeLog(" out of 8191");
+    ops.writeLnLog();
+  }
 
   while (state.curS > -1) {
     if (state.curS > 0) {
@@ -6088,7 +5442,7 @@ export function closeFilesAndTerminate(
     ops.dviFour(25400000);
     ops.dviFour(473628672);
     ops.prepareMag();
-    ops.dviFour(state.eqtbInt[5285] ?? 0);
+    ops.dviFour(state.eqtb[5285].int ?? 0);
     ops.dviFour(state.maxV);
     ops.dviFour(state.maxH);
     appendDviByte(Math.trunc(state.maxPush / 256));
@@ -6141,17 +5495,7 @@ export function closeFilesAndTerminate(
   }
 }
 
-export interface InitPrimState {
-  noNewControlSequence: boolean;
-  first: number;
-  curVal: number;
-  parLoc: number;
-  parToken: number;
-  writeLoc: number;
-  hashRh: number[];
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
+export interface InitPrimState extends TeXStateSlice<"noNewControlSequence" | "first" | "curVal" | "parLoc" | "parToken" | "writeLoc" | "hash" | "eqtb" | "eqtb" | "eqtb">{
 }
 
 export interface InitPrimOps {
@@ -6491,9 +5835,9 @@ export function initPrim(state: InitPrimState, ops: InitPrimOps): void {
   ];
 
   const copyEqtbEntry = (dest: number, src: number): void => {
-    state.eqtbB0[dest] = state.eqtbB0[src] ?? 0;
-    state.eqtbB1[dest] = state.eqtbB1[src] ?? 0;
-    state.eqtbRh[dest] = state.eqtbRh[src] ?? 0;
+    state.eqtb[dest].hh.b0 = state.eqtb[src].hh.b0 ?? 0;
+    state.eqtb[dest].hh.b1 = state.eqtb[src].hh.b1 ?? 0;
+    state.eqtb[dest].hh.rh = state.eqtb[src].hh.rh ?? 0;
   };
 
   for (const [s, c, o] of primitiveTriples) {
@@ -6501,11 +5845,11 @@ export function initPrim(state: InitPrimState, ops: InitPrimOps): void {
 
     switch (s) {
       case 519:
-        state.hashRh[2616] = 519;
+        state.hash[2616].rh = 519;
         copyEqtbEntry(2616, state.curVal);
         break;
       case 539:
-        state.hashRh[2621] = 539;
+        state.hash[2621].rh = 539;
         copyEqtbEntry(2621, state.curVal);
         break;
       case 606:
@@ -6513,28 +5857,28 @@ export function initPrim(state: InitPrimState, ops: InitPrimOps): void {
         state.parToken = 4095 + state.parLoc;
         break;
       case 785:
-        state.hashRh[2618] = 785;
+        state.hash[2618].rh = 785;
         copyEqtbEntry(2618, state.curVal);
         break;
       case 812:
-        state.hashRh[2624] = 812;
+        state.hash[2624].rh = 812;
         copyEqtbEntry(2624, state.curVal);
         break;
       case 911:
-        state.hashRh[2615] = 911;
+        state.hash[2615].rh = 911;
         copyEqtbEntry(2615, state.curVal);
         break;
       case 912:
-        state.hashRh[2619] = 913;
-        state.hashRh[2620] = 913;
-        state.eqtbB0[2620] = 9;
-        state.eqtbRh[2620] = 29989;
-        state.eqtbB1[2620] = 1;
+        state.hash[2619].rh = 913;
+        state.hash[2620].rh = 913;
+        state.eqtb[2620].hh.b0 = 9;
+        state.eqtb[2620].hh.rh = 29989;
+        state.eqtb[2620].hh.b1 = 1;
         copyEqtbEntry(2619, 2620);
-        state.eqtbB0[2619] = 115;
+        state.eqtb[2619].hh.b0 = 115;
         break;
       case 888:
-        state.hashRh[2617] = 888;
+        state.hash[2617].rh = 888;
         copyEqtbEntry(2617, state.curVal);
         break;
       case 603:
@@ -6555,81 +5899,8 @@ export interface LoadFmtQqqq {
   b3: number;
 }
 
-export interface LoadFmtFileState {
+export interface LoadFmtFileState extends TeXStateSlice<"eTeXMode" | "maxRegNum" | "maxRegHelpLine" | "poolSize" | "maxStrings" | "poolPtr" | "strPtr" | "strStart" | "strPool" | "initStrPtr" | "initPoolPtr" | "loMemMax" | "rover" | "saRoot" | "memMin" | "hiMemMin" | "memEnd" | "avail" | "varUsed" | "dynUsed" | "mem" | "mem" | "eqtb" | "eqtb" | "eqtb" | "eqtb" | "parLoc" | "parToken" | "writeLoc" | "hashUsed" | "csCount" | "fontMemSize" | "fmemPtr" | "fontMax" | "fontPtr" | "fontSize" | "fontDsize" | "fontParams" | "hyphenChar" | "skewChar" | "fontName" | "fontArea" | "fontBc" | "fontEc" | "charBase" | "widthBase" | "heightBase" | "depthBase" | "italicBase" | "ligKernBase" | "kernBase" | "extenBase" | "paramBase" | "fontGlue" | "bcharLabel" | "fontBchar" | "fontFalseBchar" | "hyphCount" | "hyphWord" | "hyphList" | "trieSize" | "trieMax" | "hyphStart" | "trieOpSize" | "trieOpPtr" | "hyfDistance" | "hyfNum" | "hyfNext" | "trieUsed" | "opStart" | "trieNotReady" | "interaction" | "formatIdent">{
   fmtFirstInt: number;
-  eTeXMode: number;
-  maxRegNum: number;
-  maxRegHelpLine: number;
-  poolSize: number;
-  maxStrings: number;
-  poolPtr: number;
-  strPtr: number;
-  strStart: number[];
-  strPool: number[];
-  initStrPtr: number;
-  initPoolPtr: number;
-  loMemMax: number;
-  rover: number;
-  saRoot: number[];
-  memMin: number;
-  hiMemMin: number;
-  memEnd: number;
-  avail: number;
-  varUsed: number;
-  dynUsed: number;
-  memLh: number[];
-  memRh: number[];
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  parLoc: number;
-  parToken: number;
-  writeLoc: number;
-  hashUsed: number;
-  csCount: number;
-  fontMemSize: number;
-  fmemPtr: number;
-  fontMax: number;
-  fontPtr: number;
-  fontSize: number[];
-  fontDsize: number[];
-  fontParams: number[];
-  hyphenChar: number[];
-  skewChar: number[];
-  fontName: number[];
-  fontArea: number[];
-  fontBc: number[];
-  fontEc: number[];
-  charBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  depthBase: number[];
-  italicBase: number[];
-  ligKernBase: number[];
-  kernBase: number[];
-  extenBase: number[];
-  paramBase: number[];
-  fontGlue: number[];
-  bcharLabel: number[];
-  fontBchar: number[];
-  fontFalseBchar: number[];
-  hyphCount: number;
-  hyphWord: number[];
-  hyphList: number[];
-  trieSize: number;
-  trieMax: number;
-  hyphStart: number;
-  trieOpSize: number;
-  trieOpPtr: number;
-  hyfDistance: number[];
-  hyfNum: number[];
-  hyfNext: number[];
-  trieUsed: number[];
-  opStart: number[];
-  trieNotReady: boolean;
-  interaction: number;
-  formatIdent: number;
 }
 
 export interface LoadFmtFileOps {
@@ -6769,11 +6040,11 @@ export function loadFmtFile(state: LoadFmtFileState, ops: LoadFmtFileOps): boole
     for (k = p; k <= q + 1; k += 1) {
       ops.readMemWordAt(k);
     }
-    p = q + (state.memLh[q] ?? 0);
-    if (p > state.loMemMax || ((q >= (state.memRh[q + 1] ?? 0)) && (state.memRh[q + 1] ?? 0) !== state.rover)) {
+    p = q + (state.mem[q].hh.lh ?? 0);
+    if (p > state.loMemMax || ((q >= (state.mem[q + 1].hh.rh ?? 0)) && (state.mem[q + 1].hh.rh ?? 0) !== state.rover)) {
       return failFmt();
     }
-    q = state.memRh[q + 1] ?? 0;
+    q = state.mem[q + 1].hh.rh ?? 0;
     if (q === state.rover) {
       break;
     }
@@ -6784,16 +6055,16 @@ export function loadFmtFile(state: LoadFmtFileState, ops: LoadFmtFileOps): boole
   }
 
   if (state.memMin < -2) {
-    p = state.memLh[state.rover + 1] ?? 0;
+    p = state.mem[state.rover + 1].hh.lh ?? 0;
     q = state.memMin + 1;
-    state.memRh[state.memMin] = 0;
-    state.memLh[state.memMin] = 0;
-    state.memRh[p + 1] = q;
-    state.memLh[state.rover + 1] = q;
-    state.memRh[q + 1] = state.rover;
-    state.memLh[q + 1] = p;
-    state.memRh[q] = 65535;
-    state.memLh[q] = -q;
+    state.mem[state.memMin].hh.rh = 0;
+    state.mem[state.memMin].hh.lh = 0;
+    state.mem[p + 1].hh.rh = q;
+    state.mem[state.rover + 1].hh.lh = q;
+    state.mem[q + 1].hh.rh = state.rover;
+    state.mem[q + 1].hh.lh = p;
+    state.mem[q].hh.rh = 65535;
+    state.mem[q].hh.lh = -q;
   }
 
   x = readInt();
@@ -6832,10 +6103,10 @@ export function loadFmtFile(state: LoadFmtFileState, ops: LoadFmtFileOps): boole
       return failFmt();
     }
     for (let j = k; j <= k + x - 1; j += 1) {
-      state.eqtbB0[j] = state.eqtbB0[k - 1] ?? 0;
-      state.eqtbB1[j] = state.eqtbB1[k - 1] ?? 0;
-      state.eqtbRh[j] = state.eqtbRh[k - 1] ?? 0;
-      state.eqtbInt[j] = state.eqtbInt[k - 1] ?? 0;
+      state.eqtb[j].hh.b0 = state.eqtb[k - 1].hh.b0 ?? 0;
+      state.eqtb[j].hh.b1 = state.eqtb[k - 1].hh.b1 ?? 0;
+      state.eqtb[j].hh.rh = state.eqtb[k - 1].hh.rh ?? 0;
+      state.eqtb[j].int = state.eqtb[k - 1].int ?? 0;
     }
     k += x;
   }
@@ -7100,79 +6371,7 @@ export interface StoreFmtQqqq {
   b3: number;
 }
 
-export interface StoreFmtFileState {
-  savePtr: number;
-  interaction: number;
-  logOpened: boolean;
-  history: number;
-  selector: number;
-  helpPtr: number;
-  helpLine: number[];
-  jobName: number;
-  eqtbInt: number[];
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
-  hashRh: number[];
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
-  formatIdent: number;
-  strPtr: number;
-  strStart: number[];
-  strPool: number[];
-  eTeXMode: number;
-  pseudoFiles: number;
-  loMemMax: number;
-  rover: number;
-  saRoot: number[];
-  varUsed: number;
-  dynUsed: number;
-  memEnd: number;
-  hiMemMin: number;
-  avail: number;
-  memLh: number[];
-  memRh: number[];
-  parLoc: number;
-  writeLoc: number;
-  hashUsed: number;
-  csCount: number;
-  fmemPtr: number;
-  fontPtr: number;
-  fontSize: number[];
-  fontDsize: number[];
-  fontParams: number[];
-  hyphenChar: number[];
-  skewChar: number[];
-  fontName: number[];
-  fontArea: number[];
-  fontBc: number[];
-  fontEc: number[];
-  charBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  depthBase: number[];
-  italicBase: number[];
-  ligKernBase: number[];
-  kernBase: number[];
-  extenBase: number[];
-  paramBase: number[];
-  fontGlue: number[];
-  bcharLabel: number[];
-  fontBchar: number[];
-  fontFalseBchar: number[];
-  hyphCount: number;
-  hyphWord: number[];
-  hyphList: number[];
-  trieNotReady: boolean;
-  trieMax: number;
-  hyphStart: number;
-  trieOpPtr: number;
-  hyfDistance: number[];
-  hyfNum: number[];
-  hyfNext: number[];
-  trieUsed: number[];
-  trieOpSize: number;
+export interface StoreFmtFileState extends TeXStateSlice<"savePtr" | "interaction" | "logOpened" | "history" | "selector" | "helpPtr" | "helpLine" | "jobName" | "eqtb" | "eqtb" | "eqtb" | "eqtb" | "hash" | "poolPtr" | "poolSize" | "initPoolPtr" | "formatIdent" | "strPtr" | "strStart" | "strPool" | "eTeXMode" | "pseudoFiles" | "loMemMax" | "rover" | "saRoot" | "varUsed" | "dynUsed" | "memEnd" | "hiMemMin" | "avail" | "mem" | "mem" | "parLoc" | "writeLoc" | "hashUsed" | "csCount" | "fmemPtr" | "fontPtr" | "fontSize" | "fontDsize" | "fontParams" | "hyphenChar" | "skewChar" | "fontName" | "fontArea" | "fontBc" | "fontEc" | "charBase" | "widthBase" | "heightBase" | "depthBase" | "italicBase" | "ligKernBase" | "kernBase" | "extenBase" | "paramBase" | "fontGlue" | "bcharLabel" | "fontBchar" | "fontFalseBchar" | "hyphCount" | "hyphWord" | "hyphList" | "trieNotReady" | "trieMax" | "hyphStart" | "trieOpPtr" | "hyfDistance" | "hyfNum" | "hyfNext" | "trieUsed" | "trieOpSize">{
 }
 
 export interface StoreFmtFileOps {
@@ -7232,11 +6431,11 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
   ops.print(1286);
   ops.print(state.jobName);
   ops.printChar(32);
-  ops.printInt(state.eqtbInt[5291] ?? 0);
+  ops.printInt(state.eqtb[5291].int ?? 0);
   ops.printChar(46);
-  ops.printInt(state.eqtbInt[5290] ?? 0);
+  ops.printInt(state.eqtb[5290].int ?? 0);
   ops.printChar(46);
-  ops.printInt(state.eqtbInt[5289] ?? 0);
+  ops.printInt(state.eqtb[5289].int ?? 0);
   ops.printChar(41);
   if (state.interaction === 0) {
     state.selector = 18;
@@ -7262,7 +6461,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
 
   writeInt(236367277);
   writeInt(state.eTeXMode);
-  state.eqtbInt[5332] = 0;
+  state.eqtb[5332].int = 0;
 
   while (state.pseudoFiles !== 0) {
     ops.pseudoClose();
@@ -7323,8 +6522,8 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
     }
     x += q + 2 - p;
     state.varUsed += q - p;
-    p = q + (state.memLh[q] ?? 0);
-    q = state.memRh[q + 1] ?? 0;
+    p = q + (state.mem[q].hh.lh ?? 0);
+    q = state.mem[q + 1].hh.rh ?? 0;
   } while (q !== state.rover);
 
   state.varUsed += state.loMemMax - p;
@@ -7344,7 +6543,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
   p = state.avail;
   while (p !== 0) {
     state.dynUsed -= 1;
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
 
   writeInt(state.varUsed);
@@ -7361,9 +6560,9 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
     let j = k;
     while (j < 5267) {
       if (
-        (state.eqtbRh[j] ?? 0) === (state.eqtbRh[j + 1] ?? 0) &&
-        (state.eqtbB0[j] ?? 0) === (state.eqtbB0[j + 1] ?? 0) &&
-        (state.eqtbB1[j] ?? 0) === (state.eqtbB1[j + 1] ?? 0)
+        (state.eqtb[j].hh.rh ?? 0) === (state.eqtb[j + 1].hh.rh ?? 0) &&
+        (state.eqtb[j].hh.b0 ?? 0) === (state.eqtb[j + 1].hh.b0 ?? 0) &&
+        (state.eqtb[j].hh.b1 ?? 0) === (state.eqtb[j + 1].hh.b1 ?? 0)
       ) {
         break;
       }
@@ -7376,9 +6575,9 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
       l = j;
       while (j < 5267) {
         if (
-          (state.eqtbRh[j] ?? 0) !== (state.eqtbRh[j + 1] ?? 0) ||
-          (state.eqtbB0[j] ?? 0) !== (state.eqtbB0[j + 1] ?? 0) ||
-          (state.eqtbB1[j] ?? 0) !== (state.eqtbB1[j + 1] ?? 0)
+          (state.eqtb[j].hh.rh ?? 0) !== (state.eqtb[j + 1].hh.rh ?? 0) ||
+          (state.eqtb[j].hh.b0 ?? 0) !== (state.eqtb[j + 1].hh.b0 ?? 0) ||
+          (state.eqtb[j].hh.b1 ?? 0) !== (state.eqtb[j + 1].hh.b1 ?? 0)
         ) {
           break;
         }
@@ -7401,7 +6600,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
   while (k <= 6121) {
     let j = k;
     while (j < 6121) {
-      if ((state.eqtbInt[j] ?? 0) === (state.eqtbInt[j + 1] ?? 0)) {
+      if ((state.eqtb[j].int ?? 0) === (state.eqtb[j + 1].int ?? 0)) {
         break;
       }
       j += 1;
@@ -7412,7 +6611,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
       j += 1;
       l = j;
       while (j < 6121) {
-        if ((state.eqtbInt[j] ?? 0) !== (state.eqtbInt[j + 1] ?? 0)) {
+        if ((state.eqtb[j].int ?? 0) !== (state.eqtb[j + 1].int ?? 0)) {
           break;
         }
         j += 1;
@@ -7434,7 +6633,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
   writeInt(state.hashUsed);
   state.csCount = 2613 - state.hashUsed;
   for (p = 514; p <= state.hashUsed; p += 1) {
-    if ((state.hashRh[p] ?? 0) !== 0) {
+    if ((state.hash[p].rh ?? 0) !== 0) {
       writeInt(p);
       ops.writeHashWordAt(p);
       state.csCount += 1;
@@ -7480,7 +6679,7 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
     writeInt(state.fontFalseBchar[k] ?? 0);
 
     ops.printNl(1279);
-    ops.printEsc(state.hashRh[2624 + k] ?? 0);
+    ops.printEsc(state.hash[2624 + k].rh ?? 0);
     ops.printChar(61);
     ops.printFileName(state.fontName[k] ?? 0, state.fontArea[k] ?? 0, 339);
     if ((state.fontSize[k] ?? 0) !== (state.fontDsize[k] ?? 0)) {
@@ -7554,34 +6753,11 @@ export function storeFmtFile(state: StoreFmtFileState, ops: StoreFmtFileOps): vo
   writeInt(state.interaction);
   writeInt(state.formatIdent);
   writeInt(69069);
-  state.eqtbInt[5299] = 0;
+  state.eqtb[5299].int = 0;
   ops.wClose();
 }
 
-export interface MainControlState {
-  eqtbRh: number[];
-  eqtbInt: number[];
-  memRh: number[];
-  memInt: number[];
-  memB0: number[];
-  memB1: number[];
-  fontGlue: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  interrupt: number;
-  okToInterrupt: boolean;
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  cancelBoundary: boolean;
-  curGroup: number;
-  alignState: number;
-  afterToken: number;
-  curTok: number;
-  curListModeField: number;
-  curListTailField: number;
-  curListAuxFieldLh: number;
-  curListAuxFieldInt: number;
+export interface MainControlState extends TeXStateSlice<"eqtb" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "fontGlue" | "paramBase" | "fontInfo" | "interrupt" | "okToInterrupt" | "curCmd" | "curChr" | "curVal" | "cancelBoundary" | "curGroup" | "alignState" | "afterToken" | "curTok" | "curList" | "curList" | "curList" | "curList">{
 }
 
 export interface MainControlOps {
@@ -7656,7 +6832,7 @@ export interface MainControlOps {
   shiftCase: () => void;
   showWhatever: () => void;
   doExtension: () => void;
-  mainControlCharacter: () => void;
+  mainControlCharacter: () => boolean;
   newSpec: (p: number) => number;
   newParamGlue: (n: number) => number;
 }
@@ -7670,8 +6846,8 @@ function isPrefixedCommandCode(code: number): boolean {
 }
 
 export function mainControl(state: MainControlState, ops: MainControlOps): void {
-  if ((state.eqtbRh[3419] ?? 0) !== 0) {
-    ops.beginTokenList(state.eqtbRh[3419] ?? 0, 12);
+  if ((state.eqtb[3419].hh.rh ?? 0) !== 0) {
+    ops.beginTokenList(state.eqtb[3419].hh.rh ?? 0, 12);
   }
 
   let label: 10 | 21 | 60 | 70 | 120 = 60;
@@ -7691,11 +6867,11 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
         continue;
       }
 
-      if ((state.eqtbInt[5304] ?? 0) > 0) {
+      if ((state.eqtb[5304].int ?? 0) > 0) {
         ops.showCurCmdChr();
       }
 
-      const code = Math.abs(state.curListModeField) + state.curCmd;
+      const code = Math.abs(state.curList.modeField) + state.curCmd;
       switch (code) {
         case 113:
         case 114:
@@ -7720,7 +6896,7 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           label = 21;
           continue;
         case 112:
-          if (state.curListAuxFieldLh === 1000) {
+          if (state.curList.auxField.hh.lh === 1000) {
             label = 120;
             continue;
           }
@@ -7812,12 +6988,12 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
         case 37:
         case 137:
         case 238:
-          state.memRh[state.curListTailField] = ops.scanRuleSpec();
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-          if (Math.abs(state.curListModeField) === 1) {
-            state.curListAuxFieldInt = -65536000;
-          } else if (Math.abs(state.curListModeField) === 102) {
-            state.curListAuxFieldLh = 1000;
+          state.mem[state.curList.tailField].hh.rh = ops.scanRuleSpec();
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+          if (Math.abs(state.curList.modeField) === 1) {
+            state.curList.auxField.int = -65536000;
+          } else if (Math.abs(state.curList.modeField) === 102) {
+            state.curList.auxField.hh.lh = 1000;
           }
           break;
         case 28:
@@ -7902,7 +7078,7 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           break;
         case 14:
           ops.normalParagraph();
-          if (state.curListModeField > 0) {
+          if (state.curList.modeField > 0) {
             ops.buildPage();
           }
           break;
@@ -7911,7 +7087,7 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
             ops.offSave();
           }
           ops.endGraf();
-          if (state.curListModeField === 1) {
+          if (state.curList.modeField === 1) {
             ops.buildPage();
           }
           break;
@@ -7953,8 +7129,8 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           ops.appendItalicCorrection();
           break;
         case 247:
-          state.memRh[state.curListTailField] = ops.newKern(0);
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+          state.mem[state.curList.tailField].hh.rh = ops.newKern(0);
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
           break;
         case 149:
         case 250:
@@ -7986,9 +7162,9 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           break;
         case 135:
           if (state.curChr > 0) {
-            if (ops.etexEnabled((state.eqtbInt[5332] ?? 0) > 0, state.curCmd, state.curChr)) {
-              state.memRh[state.curListTailField] = ops.newMath(0, state.curChr);
-              state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+            if (ops.etexEnabled((state.eqtb[5332].int ?? 0) > 0, state.curCmd, state.curChr)) {
+              state.mem[state.curList.tailField].hh.rh = ops.newMath(0, state.curChr);
+              state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
             }
           } else {
             ops.initAlign();
@@ -8025,20 +7201,20 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           }
           break;
         case 204:
-          state.memRh[state.curListTailField] = ops.newNoad();
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+          state.mem[state.curList.tailField].hh.rh = ops.newNoad();
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
           ops.backInput();
-          ops.scanMath(state.curListTailField + 1);
+          ops.scanMath(state.curList.tailField + 1);
           break;
         case 214:
         case 215:
         case 271:
-          ops.setMathChar((state.eqtbRh[5012 + state.curChr] ?? 0) - 0);
+          ops.setMathChar((state.eqtb[5012 + state.curChr].hh.rh ?? 0) - 0);
           break;
         case 219:
           ops.scanCharNum();
           state.curChr = state.curVal;
-          ops.setMathChar((state.eqtbRh[5012 + state.curChr] ?? 0) - 0);
+          ops.setMathChar((state.eqtb[5012 + state.curChr].hh.rh ?? 0) - 0);
           break;
         case 220:
           ops.scanFifteenBitInt();
@@ -8052,10 +7228,10 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           ops.setMathChar(Math.trunc(state.curVal / 4096));
           break;
         case 253:
-          state.memRh[state.curListTailField] = ops.newNoad();
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-          state.memB0[state.curListTailField] = state.curChr;
-          ops.scanMath(state.curListTailField + 1);
+          state.mem[state.curList.tailField].hh.rh = ops.newNoad();
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+          state.mem[state.curList.tailField].hh.b0 = state.curChr;
+          ops.scanMath(state.curList.tailField + 1);
           break;
         case 254:
           ops.mathLimitSwitch();
@@ -8071,20 +7247,20 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
           ops.scanSpec(12, false);
           ops.normalParagraph();
           ops.pushNest();
-          state.curListModeField = -1;
-          state.curListAuxFieldInt = -65536000;
-          if ((state.eqtbRh[3418] ?? 0) !== 0) {
-            ops.beginTokenList(state.eqtbRh[3418] ?? 0, 11);
+          state.curList.modeField = -1;
+          state.curList.auxField.int = -65536000;
+          if ((state.eqtb[3418].hh.rh ?? 0) !== 0) {
+            ops.beginTokenList(state.eqtb[3418].hh.rh ?? 0, 11);
           }
           break;
         case 256:
-          state.memRh[state.curListTailField] = ops.newStyle(state.curChr);
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
+          state.mem[state.curList.tailField].hh.rh = ops.newStyle(state.curChr);
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
           break;
         case 258:
-          state.memRh[state.curListTailField] = ops.newGlue(0);
-          state.curListTailField = state.memRh[state.curListTailField] ?? 0;
-          state.memB1[state.curListTailField] = 98;
+          state.mem[state.curList.tailField].hh.rh = ops.newGlue(0);
+          state.curList.tailField = state.mem[state.curList.tailField].hh.rh ?? 0;
+          state.mem[state.curList.tailField].hh.b1 = 98;
           break;
         case 257:
           ops.appendChoices();
@@ -8155,30 +7331,30 @@ export function mainControl(state: MainControlState, ops: MainControlOps): void 
     }
 
     if (label === 70) {
-      ops.mainControlCharacter();
-      label = 60;
+      const resumeAtCurrentToken = ops.mainControlCharacter();
+      label = resumeAtCurrentToken ? 21 : 60;
       continue;
     }
 
     if (label === 120) {
       let tempPtr: number;
-      if ((state.eqtbRh[2894] ?? 0) === 0) {
-        const curFont = state.eqtbRh[3939] ?? 0;
+      if ((state.eqtb[2894].hh.rh ?? 0) === 0) {
+        const curFont = state.eqtb[3939].hh.rh ?? 0;
         let mainP = state.fontGlue[curFont] ?? 0;
         if (mainP === 0) {
           mainP = ops.newSpec(0);
           const mainK = (state.paramBase[curFont] ?? 0) + 2;
-          state.memInt[mainP + 1] = state.fontInfoInt[mainK] ?? 0;
-          state.memInt[mainP + 2] = state.fontInfoInt[mainK + 1] ?? 0;
-          state.memInt[mainP + 3] = state.fontInfoInt[mainK + 2] ?? 0;
+          state.mem[mainP + 1].int = state.fontInfo[mainK].int ?? 0;
+          state.mem[mainP + 2].int = state.fontInfo[mainK + 1].int ?? 0;
+          state.mem[mainP + 3].int = state.fontInfo[mainK + 2].int ?? 0;
           state.fontGlue[curFont] = mainP;
         }
         tempPtr = ops.newGlue(mainP);
       } else {
         tempPtr = ops.newParamGlue(12);
       }
-      state.memRh[state.curListTailField] = tempPtr;
-      state.curListTailField = tempPtr;
+      state.mem[state.curList.tailField].hh.rh = tempPtr;
+      state.curList.tailField = tempPtr;
       label = 60;
       continue;
     }

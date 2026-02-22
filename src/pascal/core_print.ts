@@ -1,21 +1,8 @@
-export interface CorePrintState {
-  selector: number;
-  termOffset: number;
-  fileOffset: number;
-  maxPrintLine: number;
-  tally: number;
-  trickCount: number;
-  errorLine: number;
-  trickBuf: number[];
-  poolPtr: number;
-  poolSize: number;
-  strPool: number[];
-  strPtr: number;
-  strStart: number[];
-  xchr: string[];
+import type { TeXStateSlice } from "./state_slices";
+export interface CorePrintState extends TeXStateSlice<"selector" | "termOffset" | "fileOffset" | "maxPrintLine" | "tally" | "trickCount" | "errorLine" | "trickBuf" | "poolPtr" | "poolSize" | "strPool" | "strPtr" | "strStart" | "xchr">{
   eqtb5317: number;
   eqtb5313: number;
-  termOut: string;
+  termOutBuffer: string;
   logOut: string;
   writeOut: Record<number, string>;
 }
@@ -26,7 +13,7 @@ export function createCorePrintState(): CorePrintState {
     xchr[i] = String.fromCharCode(i);
   }
 
-  return {
+  const state: CorePrintState = {
     selector: 17,
     termOffset: 0,
     fileOffset: 0,
@@ -43,10 +30,23 @@ export function createCorePrintState(): CorePrintState {
     xchr,
     eqtb5317: -1,
     eqtb5313: 92,
-    termOut: "",
+    termOutBuffer: "",
     logOut: "",
     writeOut: {},
   };
+
+  Object.defineProperty(state as CorePrintState & { termOut: string }, "termOut", {
+    get() {
+      return state.termOutBuffer;
+    },
+    set(value: string) {
+      state.termOutBuffer = value;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  return state;
 }
 
 function writeWriteFile(selector: number, s: string, state: CorePrintState): void {
@@ -57,7 +57,7 @@ function writeWriteFile(selector: number, s: string, state: CorePrintState): voi
 export function printLnCore(state: CorePrintState): void {
   switch (state.selector) {
     case 19:
-      state.termOut += "\n";
+      state.termOutBuffer += "\n";
       state.logOut += "\n";
       state.termOffset = 0;
       state.fileOffset = 0;
@@ -67,7 +67,7 @@ export function printLnCore(state: CorePrintState): void {
       state.fileOffset = 0;
       break;
     case 17:
-      state.termOut += "\n";
+      state.termOutBuffer += "\n";
       state.termOffset = 0;
       break;
     case 16:
@@ -86,15 +86,37 @@ export function printCharCore(s: number, state: CorePrintState): void {
     return;
   }
 
+  if (state.selector <= 20 && (s < 32 || s > 126)) {
+    if (s < 64) {
+      printCharCore(94, state);
+      printCharCore(94, state);
+      printCharCore(s + 64, state);
+    } else if (s < 128) {
+      printCharCore(94, state);
+      printCharCore(94, state);
+      printCharCore(s - 64, state);
+    } else if (s <= 255) {
+      const hi = Math.trunc(s / 16);
+      const lo = s % 16;
+      printCharCore(94, state);
+      printCharCore(94, state);
+      printCharCore(hi < 10 ? hi + 48 : hi + 87, state);
+      printCharCore(lo < 10 ? lo + 48 : lo + 87, state);
+    } else {
+      printCharCore(63, state);
+    }
+    return;
+  }
+
   switch (state.selector) {
     case 19: {
       const ch = state.xchr[s];
-      state.termOut += ch;
+      state.termOutBuffer += ch;
       state.logOut += ch;
       state.termOffset += 1;
       state.fileOffset += 1;
       if (state.termOffset === state.maxPrintLine) {
-        state.termOut += "\n";
+        state.termOutBuffer += "\n";
         state.termOffset = 0;
       }
       if (state.fileOffset === state.maxPrintLine) {
@@ -111,7 +133,7 @@ export function printCharCore(s: number, state: CorePrintState): void {
       }
       break;
     case 17:
-      state.termOut += state.xchr[s];
+      state.termOutBuffer += state.xchr[s];
       state.termOffset += 1;
       if (state.termOffset === state.maxPrintLine) {
         printLnCore(state);

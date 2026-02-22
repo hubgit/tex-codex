@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -44,10 +45,14 @@ test("beginTokenList matches Pascal probe trace", () => {
       stackSize: 10,
       inputStack: new Array(24).fill(null).map(() => makeInputRecord(0, 0, 0, 0, 0, 0)),
       curInput: makeInputRecord(9, 8, 70, 71, 72, 73),
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
       paramPtr: 0,
-      eqtbInt: new Array(7000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(7000).fill(0),
+        }),
     };
 
     let p = 100;
@@ -66,8 +71,8 @@ test("beginTokenList matches Pascal probe trace", () => {
       state.maxInStack = 1;
       state.stackSize = 10;
       state.paramPtr = 44;
-      state.memLh[p] = 7;
-      state.memRh[p] = 888;
+      state.mem[p].hh.lh = 7;
+      state.mem[p].hh.rh = 888;
       state.curInput = makeInputRecord(6, 4, 80, 81, 82, 83);
     } else if (scenario === 3) {
       p = 120;
@@ -75,9 +80,9 @@ test("beginTokenList matches Pascal probe trace", () => {
       state.inputPtr = 1;
       state.maxInStack = 0;
       state.stackSize = 10;
-      state.eqtbInt[5298] = 2;
-      state.memLh[p] = 2;
-      state.memRh[p] = 777;
+      state.eqtb[5298].int = 2;
+      state.mem[p].hh.lh = 2;
+      state.mem[p].hh.rh = 777;
       state.curInput = makeInputRecord(5, 4, 90, 91, 92, 93);
     } else if (scenario === 4) {
       p = 130;
@@ -85,9 +90,9 @@ test("beginTokenList matches Pascal probe trace", () => {
       state.inputPtr = 1;
       state.maxInStack = 0;
       state.stackSize = 10;
-      state.eqtbInt[5298] = 2;
-      state.memLh[p] = 4;
-      state.memRh[p] = 666;
+      state.eqtb[5298].int = 2;
+      state.mem[p].hh.lh = 4;
+      state.mem[p].hh.rh = 666;
       state.curInput = makeInputRecord(5, 4, 91, 92, 93, 94);
     } else if (scenario === 5) {
       p = 140;
@@ -95,9 +100,9 @@ test("beginTokenList matches Pascal probe trace", () => {
       state.inputPtr = 1;
       state.maxInStack = 0;
       state.stackSize = 10;
-      state.eqtbInt[5298] = 2;
-      state.memLh[p] = 3;
-      state.memRh[p] = 555;
+      state.eqtb[5298].int = 2;
+      state.mem[p].hh.lh = 3;
+      state.mem[p].hh.rh = 555;
       state.curInput = makeInputRecord(5, 4, 92, 93, 94, 95);
     } else {
       p = 150;
@@ -137,8 +142,8 @@ test("beginTokenList matches Pascal probe trace", () => {
       `MI${state.maxInStack}`,
       `CI${state.curInput.stateField},${state.curInput.indexField},${state.curInput.startField},${state.curInput.locField},${state.curInput.limitField},${state.curInput.nameField}`,
       `SI${saved.stateField},${saved.indexField},${saved.startField},${saved.locField},${saved.limitField},${saved.nameField}`,
-      `MLH${state.memLh[p]}`,
-      `MRH${state.memRh[p]}`,
+      `MLH${state.mem[p].hh.lh}`,
+      `MRH${state.mem[p].hh.rh}`,
       `OVC${overflowCalls}`,
       `OVS${overflowS}`,
       `OVN${overflowN}`,
@@ -156,13 +161,15 @@ test("showTokenList matches Pascal probe trace", () => {
     const state = {
       hiMemMin: 30000,
       memEnd: 32000,
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
-      tally: 99,
+      tally: 0,
       trickCount: 0,
       firstCount: 0,
       errorLine: 79,
       halfErrorLine: 50,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
     const trace = [];
 
@@ -172,54 +179,66 @@ test("showTokenList matches Pascal probe trace", () => {
 
     if (scenario === 1) {
       p = 30000;
-      state.memLh[30000] = 321;
-      state.memRh[30000] = 30001;
-      state.memLh[30001] = 4695;
-      state.memRh[30001] = 30002;
-      state.memLh[30002] = 1569;
-      state.memRh[30002] = 0;
+      state.mem[30000].hh.lh = 321;
+      state.mem[30000].hh.rh = 30001;
+      state.mem[30001].hh.lh = 4695;
+      state.mem[30001].hh.rh = 30002;
+      state.mem[30002].hh.lh = 1569;
+      state.mem[30002].hh.rh = 0;
     } else if (scenario === 2) {
       p = 30010;
       q = 30010;
       l = 1;
-      state.memLh[30010] = 321;
-      state.memRh[30010] = 30011;
-      state.memLh[30011] = 322;
-      state.memRh[30011] = 0;
+      state.mem[30010].hh.lh = 321;
+      state.mem[30010].hh.rh = 30011;
+      state.mem[30011].hh.lh = 322;
+      state.mem[30011].hh.rh = 0;
     } else if (scenario === 3) {
       p = 200;
-      state.memLh[200] = 321;
-      state.memRh[200] = 0;
+      state.mem[200].hh.lh = 321;
+      state.mem[200].hh.rh = 0;
     } else if (scenario === 4) {
       p = 30020;
-      state.memLh[30020] = -5;
-      state.memRh[30020] = 0;
+      state.mem[30020].hh.lh = -5;
+      state.mem[30020].hh.rh = 0;
     } else if (scenario === 5) {
       p = 30030;
-      state.memLh[30030] = 1288;
-      state.memRh[30030] = 0;
+      state.mem[30030].hh.lh = 1288;
+      state.mem[30030].hh.rh = 0;
     } else if (scenario === 6) {
       p = 30040;
-      state.memLh[30040] = 1290;
-      state.memRh[30040] = 30041;
-      state.memLh[30041] = 321;
-      state.memRh[30041] = 0;
+      state.mem[30040].hh.lh = 1290;
+      state.mem[30040].hh.rh = 30041;
+      state.mem[30041].hh.lh = 321;
+      state.mem[30041].hh.rh = 0;
     } else {
       p = 30100;
       let cur = p;
       for (let i = 0; i < 10; i += 1) {
-        state.memLh[cur] = 13 * 256 + 64;
-        state.memRh[cur] = cur + 1;
+        state.mem[cur].hh.lh = 13 * 256 + 64;
+        state.mem[cur].hh.rh = cur + 1;
         cur += 1;
       }
-      state.memRh[cur - 1] = 0;
+      state.mem[cur - 1].hh.rh = 0;
     }
 
     const rendered = showTokenList(p, q, l, state, {
-      printEsc: (s) => trace.push(`E${s}`),
-      printCs: (s) => trace.push(`CS${s}`),
-      print: (s) => trace.push(`P${s}`),
-      printChar: (c) => trace.push(`C${c}`),
+      printEsc: (s) => {
+        trace.push(`E${s}`);
+        state.tally += 1;
+      },
+      printCs: (s) => {
+        trace.push(`CS${s}`);
+        state.tally += 1;
+      },
+      print: (s) => {
+        trace.push(`P${s}`);
+        state.tally += 1;
+      },
+      printChar: (c) => {
+        trace.push(`C${c}`);
+        state.tally += 1;
+      },
     });
 
     const actual = `${trace.join(" ")} M${state.tally},${state.firstCount},${state.trickCount},R${rendered.join(",")}`;
@@ -303,7 +322,9 @@ test("backInput matches Pascal probe trace", () => {
       inputStack: new Array(24).fill(null).map(() => makeInputRecord(0, 0, 0, 0, 0, 0)),
       curTok: 300,
       alignState: 10,
-      memLh: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
     state.inputStack[1] = makeInputRecord(8, 7, 70, 71, 72, 73);
 
@@ -367,7 +388,7 @@ test("backInput matches Pascal probe trace", () => {
       `AS${state.alignState}`,
       `CI${state.curInput.stateField},${state.curInput.indexField},${state.curInput.startField},${state.curInput.locField},${state.curInput.limitField},${state.curInput.nameField}`,
       `SI${saved.stateField},${saved.indexField},${saved.startField},${saved.locField},${saved.limitField},${saved.nameField}`,
-      `MLH${state.memLh[getAvailResult]}`,
+      `MLH${state.mem[getAvailResult].hh.lh}`,
       `ETC${endCalls}`,
       `OVC${overflowCalls}`,
       `OVS${overflowS}`,

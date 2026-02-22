@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -29,13 +30,15 @@ test("newSaveLevel matches Pascal probe trace", () => {
       saveSize,
       eTeXMode,
       line,
-      saveStackInt: new Array(200).fill(-1),
-      saveStackB0: new Array(200).fill(-1),
-      saveStackB1: new Array(200).fill(-1),
-      saveStackRh: new Array(200).fill(-1),
       curGroup,
       curBoundary,
       curLevel,
+      saveStack: memoryWordsFromComponents({
+        b0: new Array(200).fill(-1),
+        b1: new Array(200).fill(-1),
+        int: new Array(200).fill(-1),
+        rh: new Array(200).fill(-1),
+        }),
     };
     const oldSavePtr = savePtr;
     let overflowCalls = 0;
@@ -50,7 +53,7 @@ test("newSaveLevel matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `SP${state.savePtr} MS${state.maxSaveStack} CB${state.curBoundary} CG${state.curGroup} CL${state.curLevel} I0${state.saveStackInt[oldSavePtr]} B0${state.saveStackB0[oldSavePtr]} B1${state.saveStackB1[oldSavePtr]} RH0${state.saveStackRh[oldSavePtr]} I1${state.saveStackInt[oldSavePtr + 1]} B01${state.saveStackB0[oldSavePtr + 1]} B11${state.saveStackB1[oldSavePtr + 1]} RH1${state.saveStackRh[oldSavePtr + 1]} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
+    const actual = `SP${state.savePtr} MS${state.maxSaveStack} CB${state.curBoundary} CG${state.curGroup} CL${state.curLevel} I0${state.saveStack[oldSavePtr].int} B0${state.saveStack[oldSavePtr].hh.b0} B1${state.saveStack[oldSavePtr].hh.b1} RH0${state.saveStack[oldSavePtr].hh.rh} I1${state.saveStack[oldSavePtr + 1].int} B01${state.saveStack[oldSavePtr + 1].hh.b0} B11${state.saveStack[oldSavePtr + 1].hh.b1} RH1${state.saveStack[oldSavePtr + 1].hh.rh} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
     const expected = runProbeText("NEW_SAVE_LEVEL_TRACE", c);
     assert.equal(actual, expected, `NEW_SAVE_LEVEL_TRACE mismatch for ${c.join(",")}`);
   }
@@ -70,9 +73,11 @@ test("saveForAfter matches Pascal probe trace", () => {
       savePtr,
       maxSaveStack,
       saveSize,
-      saveStackB0: new Array(200).fill(-1),
-      saveStackB1: new Array(200).fill(-1),
-      saveStackRh: new Array(200).fill(-1),
+      saveStack: memoryWordsFromComponents({
+        b0: new Array(200).fill(-1),
+        b1: new Array(200).fill(-1),
+        rh: new Array(200).fill(-1),
+        }),
     };
     const oldSavePtr = savePtr;
     let overflowCalls = 0;
@@ -87,7 +92,7 @@ test("saveForAfter matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `SP${state.savePtr} MS${state.maxSaveStack} S0${state.saveStackB0[oldSavePtr]},${state.saveStackB1[oldSavePtr]},${state.saveStackRh[oldSavePtr]} IDX${oldSavePtr} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
+    const actual = `SP${state.savePtr} MS${state.maxSaveStack} S0${state.saveStack[oldSavePtr].hh.b0},${state.saveStack[oldSavePtr].hh.b1},${state.saveStack[oldSavePtr].hh.rh} IDX${oldSavePtr} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
     const expected = runProbeText("SAVE_FOR_AFTER_TRACE", c);
     assert.equal(actual, expected, `SAVE_FOR_AFTER_TRACE mismatch for ${c.join(",")}`);
   }

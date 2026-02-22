@@ -20,7 +20,7 @@ function makeIdentityXord() {
 function formatOutcome(result, state, overflowCalls) {
   const firstOverflow = overflowCalls[0] ?? { s: -1, n: -1 };
   const buf = state.buffer.slice(state.first, state.last).join(",");
-  return `R=${result ? 1 : 0};LAST=${state.last};MAX=${state.maxBufStack};LOC=${state.curInputLocField};LIMIT=${state.curInputLimitField};OVC=${overflowCalls.length};OVS=${firstOverflow.s};OVN=${firstOverflow.n};BUF=${buf}`;
+  return `R=${result ? 1 : 0};LAST=${state.last};MAX=${state.maxBufStack};LOC=${state.curInput.locField};LIMIT=${state.curInput.limitField};OVC=${overflowCalls.length};OVS=${firstOverflow.s};OVN=${firstOverflow.n};BUF=${buf}`;
 }
 
 test("inputLn matches Pascal probe trace", () => {
@@ -72,8 +72,10 @@ test("inputLn matches Pascal probe trace", () => {
       formatIdent: c.formatIdent,
       buffer: new Array(4096).fill(0),
       xord: makeIdentityXord(),
-      curInputLocField: 0,
-      curInputLimitField: 0,
+      curInput: {
+        locField: 0,
+        limitField: 0,
+      },
     };
     const overflowCalls = [];
     const result = inputLn(stream, c.bypass !== 0, state, {
@@ -129,7 +131,9 @@ test("initTerminal matches Pascal probe trace", () => {
       first: 0,
       last: 0,
       buffer: new Array(64).fill(0),
-      curInputLocField: -1,
+      curInput: {
+        locField: -1,
+      },
     };
     const tokens = [];
     let step = 0;
@@ -165,7 +169,7 @@ test("initTerminal matches Pascal probe trace", () => {
       },
     });
 
-    tokens.push(`STATE${result ? 1 : 0},${state.curInputLocField}`);
+    tokens.push(`STATE${result ? 1 : 0},${state.curInput.locField}`);
     const actual = tokens.join(" ");
     const expected = runProbeText("INIT_TERMINAL_TRACE", [scenario]);
     assert.equal(

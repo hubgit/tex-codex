@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -36,10 +37,12 @@ test("eqDestroy matches Pascal probe trace", () => {
   for (const c of cases) {
     const [b0, rh, lhQ] = c;
     const state = {
-      memLh: new Array(200).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(200).fill(0),
+        }, { minSize: 30001 }),
     };
-    if (rh >= 0 && rh < state.memLh.length) {
-      state.memLh[rh] = lhQ;
+    if (rh >= 0 && rh < state.mem.length) {
+      state.mem[rh].hh.lh = lhQ;
     }
     const calls = [];
     eqDestroy({ b0, rh }, state, {
@@ -68,16 +71,22 @@ test("eqSave matches Pascal probe trace", () => {
       savePtr,
       maxSaveStack,
       saveSize,
-      saveStackB0: new Array(200).fill(-1),
-      saveStackB1: new Array(200).fill(-1),
-      saveStackRh: new Array(200).fill(-1),
-      eqtbB0: new Array(200).fill(0),
-      eqtbB1: new Array(200).fill(0),
-      eqtbRh: new Array(200).fill(0),
+      eqtb: memoryWordsFromComponents({
+        b0: new Array(200).fill(0),
+        b1: new Array(200).fill(0),
+        int: new Array(200).fill(0),
+        rh: new Array(200).fill(0),
+        }),
+      saveStack: memoryWordsFromComponents({
+        b0: new Array(200).fill(-1),
+        b1: new Array(200).fill(-1),
+        int: new Array(200).fill(-1),
+        rh: new Array(200).fill(-1),
+        }),
     };
-    state.eqtbB0[p] = eqtbB0;
-    state.eqtbB1[p] = eqtbB1;
-    state.eqtbRh[p] = eqtbRh;
+    state.eqtb[p].hh.b0 = eqtbB0;
+    state.eqtb[p].hh.b1 = eqtbB1;
+    state.eqtb[p].hh.rh = eqtbRh;
     const oldSavePtr = savePtr;
     let overflowCalls = 0;
     let overflowS = -1;
@@ -91,7 +100,7 @@ test("eqSave matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `SP${state.savePtr} MS${state.maxSaveStack} S0${state.saveStackB0[oldSavePtr]},${state.saveStackB1[oldSavePtr]},${state.saveStackRh[oldSavePtr]} S1${state.saveStackB0[oldSavePtr + 1]},${state.saveStackB1[oldSavePtr + 1]},${state.saveStackRh[oldSavePtr + 1]} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
+    const actual = `SP${state.savePtr} MS${state.maxSaveStack} S0${state.saveStack[oldSavePtr].hh.b0},${state.saveStack[oldSavePtr].hh.b1},${state.saveStack[oldSavePtr].hh.rh} S1${state.saveStack[oldSavePtr + 1].hh.b0},${state.saveStack[oldSavePtr + 1].hh.b1},${state.saveStack[oldSavePtr + 1].hh.rh} OVC${overflowCalls} OVS${overflowS} OVN${overflowN}`;
     const expected = runProbeText("EQ_SAVE_TRACE", c);
     assert.equal(actual, expected, `EQ_SAVE_TRACE mismatch for ${c.join(",")}`);
   }
@@ -108,15 +117,17 @@ test("eqDefine matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initB0, initB1, initRh, p, t, e, eTeXMode, curLevel] = c;
     const state = {
-      eqtbB0: new Array(200).fill(0),
-      eqtbB1: new Array(200).fill(0),
-      eqtbRh: new Array(200).fill(0),
       eTeXMode,
       curLevel,
+      eqtb: memoryWordsFromComponents({
+        b0: new Array(200).fill(0),
+        b1: new Array(200).fill(0),
+        rh: new Array(200).fill(0),
+        }),
     };
-    state.eqtbB0[p] = initB0;
-    state.eqtbB1[p] = initB1;
-    state.eqtbRh[p] = initRh;
+    state.eqtb[p].hh.b0 = initB0;
+    state.eqtb[p].hh.b1 = initB1;
+    state.eqtb[p].hh.rh = initRh;
     const trace = [];
 
     eqDefine(p, t, e, state, {
@@ -124,7 +135,7 @@ test("eqDefine matches Pascal probe trace", () => {
       eqSave: (sp, l) => trace.push(`ES${sp},${l};`),
     });
 
-    const actual = `${trace.join("")} B0${state.eqtbB0[p]} B1${state.eqtbB1[p]} RH${state.eqtbRh[p]}`;
+    const actual = `${trace.join("")} B0${state.eqtb[p].hh.b0} B1${state.eqtb[p].hh.b1} RH${state.eqtb[p].hh.rh}`;
     const expected = runProbeText("EQ_DEFINE_TRACE", c);
     assert.equal(actual, expected, `EQ_DEFINE_TRACE mismatch for ${c.join(",")}`);
   }
@@ -140,12 +151,14 @@ test("eqWordDefine matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initInt, initXeq, p, w, eTeXMode, curLevel] = c;
     const state = {
-      eqtbInt: new Array(200).fill(0),
       xeqLevel: new Array(200).fill(0),
       eTeXMode,
       curLevel,
+      eqtb: memoryWordsFromComponents({
+        int: new Array(200).fill(0),
+        }),
     };
-    state.eqtbInt[p] = initInt;
+    state.eqtb[p].int = initInt;
     state.xeqLevel[p] = initXeq;
     const trace = [];
 
@@ -153,7 +166,7 @@ test("eqWordDefine matches Pascal probe trace", () => {
       eqSave: (sp, l) => trace.push(`ES${sp},${l};`),
     });
 
-    const actual = `${trace.join("")} EQ${state.eqtbInt[p]} XL${state.xeqLevel[p]}`;
+    const actual = `${trace.join("")} EQ${state.eqtb[p].int} XL${state.xeqLevel[p]}`;
     const expected = runProbeText("EQ_WORD_DEFINE_TRACE", c);
     assert.equal(actual, expected, `EQ_WORD_DEFINE_TRACE mismatch for ${c.join(",")}`);
   }
@@ -169,20 +182,22 @@ test("geqDefine matches Pascal probe trace", () => {
     const [initB0, initB1, initRh, t, e] = c;
     const p = 20;
     const state = {
-      eqtbB0: new Array(200).fill(0),
-      eqtbB1: new Array(200).fill(0),
-      eqtbRh: new Array(200).fill(0),
+      eqtb: memoryWordsFromComponents({
+        b0: new Array(200).fill(0),
+        b1: new Array(200).fill(0),
+        rh: new Array(200).fill(0),
+        }),
     };
-    state.eqtbB0[p] = initB0;
-    state.eqtbB1[p] = initB1;
-    state.eqtbRh[p] = initRh;
+    state.eqtb[p].hh.b0 = initB0;
+    state.eqtb[p].hh.b1 = initB1;
+    state.eqtb[p].hh.rh = initRh;
     const trace = [];
 
     geqDefine(p, t, e, state, {
       eqDestroy: (w) => trace.push(`ED${w.b0},${w.rh};`),
     });
 
-    const actual = `${trace.join("")} B0${state.eqtbB0[p]} B1${state.eqtbB1[p]} RH${state.eqtbRh[p]}`;
+    const actual = `${trace.join("")} B0${state.eqtb[p].hh.b0} B1${state.eqtb[p].hh.b1} RH${state.eqtb[p].hh.rh}`;
     const expected = runProbeText("GEQ_DEFINE_TRACE", c);
     assert.equal(actual, expected, `GEQ_DEFINE_TRACE mismatch for ${c.join(",")}`);
   }
@@ -197,13 +212,15 @@ test("geqWordDefine matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initInt, initXeq, p, w] = c;
     const state = {
-      eqtbInt: new Array(200).fill(0),
       xeqLevel: new Array(200).fill(0),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(200).fill(0),
+        }),
     };
-    state.eqtbInt[p] = initInt;
+    state.eqtb[p].int = initInt;
     state.xeqLevel[p] = initXeq;
     geqWordDefine(p, w, state);
-    const actual = ` EQ${state.eqtbInt[p]} XL${state.xeqLevel[p]}`;
+    const actual = ` EQ${state.eqtb[p].int} XL${state.xeqLevel[p]}`;
     const expected = runProbeText("GEQ_WORD_DEFINE_TRACE", c);
     assert.equal(actual, expected, `GEQ_WORD_DEFINE_TRACE mismatch for ${c.join(",")}`);
   }

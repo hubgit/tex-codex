@@ -1,13 +1,5 @@
-export interface MemoryAllocatorState {
-  memLh: number[];
-  memRh: number[];
-  avail: number;
-  memEnd: number;
-  memMax: number;
-  memMin: number;
-  hiMemMin: number;
-  loMemMax: number;
-  rover: number;
+import type { TeXStateSlice } from "./state_slices";
+export interface MemoryAllocatorState extends TeXStateSlice<"mem" | "mem" | "avail" | "memEnd" | "memMax" | "memMin" | "hiMemMin" | "loMemMax" | "rover">{
 }
 
 export function getAvail(
@@ -17,7 +9,7 @@ export function getAvail(
 ): number {
   let p = state.avail;
   if (p !== 0) {
-    state.avail = state.memRh[state.avail];
+    state.avail = state.mem[state.avail].hh.rh;
   } else if (state.memEnd < state.memMax) {
     state.memEnd += 1;
     p = state.memEnd;
@@ -35,7 +27,7 @@ export function getAvail(
     }
   }
 
-  state.memRh[p] = 0;
+  state.mem[p].hh.rh = 0;
   return p;
 }
 
@@ -45,26 +37,26 @@ export function flushList(p: number, state: MemoryAllocatorState): void {
     let q = p;
     while (true) {
       q = r;
-      r = state.memRh[r];
+      r = state.mem[r].hh.rh;
       if (r === 0) {
         break;
       }
     }
 
-    state.memRh[q] = state.avail;
+    state.mem[q].hh.rh = state.avail;
     state.avail = p;
   }
 }
 
 export function freeNode(p: number, s: number, state: MemoryAllocatorState): void {
-  state.memLh[p] = s;
-  state.memRh[p] = 65535;
+  state.mem[p].hh.lh = s;
+  state.mem[p].hh.rh = 65535;
 
-  const q = state.memLh[state.rover + 1];
-  state.memLh[p + 1] = q;
-  state.memRh[p + 1] = state.rover;
-  state.memLh[state.rover + 1] = p;
-  state.memRh[q + 1] = p;
+  const q = state.mem[state.rover + 1].hh.lh;
+  state.mem[p + 1].hh.lh = q;
+  state.mem[p + 1].hh.rh = state.rover;
+  state.mem[state.rover + 1].hh.lh = p;
+  state.mem[q + 1].hh.rh = p;
 }
 
 export function getNode(
@@ -81,36 +73,36 @@ export function getNode(
   while (true) {
     p = state.rover;
     do {
-      q = p + state.memLh[p];
-      while (state.memRh[q] === 65535) {
-        t = state.memRh[q + 1];
+      q = p + state.mem[p].hh.lh;
+      while (state.mem[q].hh.rh === 65535) {
+        t = state.mem[q + 1].hh.rh;
         if (q === state.rover) {
           state.rover = t;
         }
-        state.memLh[t + 1] = state.memLh[q + 1];
-        state.memRh[state.memLh[q + 1] + 1] = t;
-        q = q + state.memLh[q];
+        state.mem[t + 1].hh.lh = state.mem[q + 1].hh.lh;
+        state.mem[state.mem[q + 1].hh.lh + 1].hh.rh = t;
+        q = q + state.mem[q].hh.lh;
       }
 
       r = q - s;
       if (r > p + 1) {
-        state.memLh[p] = r - p;
+        state.mem[p].hh.lh = r - p;
         state.rover = p;
-        state.memRh[r] = 0;
+        state.mem[r].hh.rh = 0;
         return r;
       }
 
-      if (r === p && state.memRh[p + 1] !== p) {
-        state.rover = state.memRh[p + 1];
-        t = state.memLh[p + 1];
-        state.memLh[state.rover + 1] = t;
-        state.memRh[t + 1] = state.rover;
-        state.memRh[r] = 0;
+      if (r === p && state.mem[p + 1].hh.rh !== p) {
+        state.rover = state.mem[p + 1].hh.rh;
+        t = state.mem[p + 1].hh.lh;
+        state.mem[state.rover + 1].hh.lh = t;
+        state.mem[t + 1].hh.rh = state.rover;
+        state.mem[r].hh.rh = 0;
         return r;
       }
 
-      state.memLh[p] = q - p;
-      p = state.memRh[p + 1];
+      state.mem[p].hh.lh = q - p;
+      p = state.mem[p + 1].hh.rh;
     } while (p !== state.rover);
 
     if (s === 1073741824) {
@@ -124,20 +116,20 @@ export function getNode(
         t = state.loMemMax + 1 + Math.trunc((state.hiMemMin - state.loMemMax) / 2);
       }
 
-      p = state.memLh[state.rover + 1];
+      p = state.mem[state.rover + 1].hh.lh;
       q = state.loMemMax;
-      state.memRh[p + 1] = q;
-      state.memLh[state.rover + 1] = q;
+      state.mem[p + 1].hh.rh = q;
+      state.mem[state.rover + 1].hh.lh = q;
       if (t > 65535) {
         t = 65535;
       }
-      state.memRh[q + 1] = state.rover;
-      state.memLh[q + 1] = p;
-      state.memRh[q] = 65535;
-      state.memLh[q] = t - state.loMemMax;
+      state.mem[q + 1].hh.rh = state.rover;
+      state.mem[q + 1].hh.lh = p;
+      state.mem[q].hh.rh = 65535;
+      state.mem[q].hh.lh = t - state.loMemMax;
       state.loMemMax = t;
-      state.memRh[state.loMemMax] = 0;
-      state.memLh[state.loMemMax] = 0;
+      state.mem[state.loMemMax].hh.rh = 0;
+      state.mem[state.loMemMax].hh.lh = 0;
       state.rover = q;
       continue;
     }
@@ -159,49 +151,49 @@ export function sortAvail(state: MemoryAllocatorState): void {
   let oldRover: number;
 
   getNode(1073741824, state);
-  p = state.memRh[state.rover + 1];
-  state.memRh[state.rover + 1] = 65535;
+  p = state.mem[state.rover + 1].hh.rh;
+  state.mem[state.rover + 1].hh.rh = 65535;
   oldRover = state.rover;
 
   while (p !== oldRover) {
     if (p < state.rover) {
       q = p;
-      p = state.memRh[q + 1];
-      state.memRh[q + 1] = state.rover;
+      p = state.mem[q + 1].hh.rh;
+      state.mem[q + 1].hh.rh = state.rover;
       state.rover = q;
     } else {
       q = state.rover;
-      while (state.memRh[q + 1] < p) {
-        q = state.memRh[q + 1];
+      while (state.mem[q + 1].hh.rh < p) {
+        q = state.mem[q + 1].hh.rh;
       }
-      r = state.memRh[p + 1];
-      state.memRh[p + 1] = state.memRh[q + 1];
-      state.memRh[q + 1] = p;
+      r = state.mem[p + 1].hh.rh;
+      state.mem[p + 1].hh.rh = state.mem[q + 1].hh.rh;
+      state.mem[q + 1].hh.rh = p;
       p = r;
     }
   }
 
   p = state.rover;
-  while (state.memRh[p + 1] !== 65535) {
-    state.memLh[state.memRh[p + 1] + 1] = p;
-    p = state.memRh[p + 1];
+  while (state.mem[p + 1].hh.rh !== 65535) {
+    state.mem[state.mem[p + 1].hh.rh + 1].hh.lh = p;
+    p = state.mem[p + 1].hh.rh;
   }
-  state.memRh[p + 1] = state.rover;
-  state.memLh[state.rover + 1] = p;
+  state.mem[p + 1].hh.rh = state.rover;
+  state.mem[state.rover + 1].hh.lh = p;
 }
 
 export function deleteTokenRef(p: number, state: MemoryAllocatorState): void {
-  if (state.memLh[p] === 0) {
+  if (state.mem[p].hh.lh === 0) {
     flushList(p, state);
   } else {
-    state.memLh[p] -= 1;
+    state.mem[p].hh.lh -= 1;
   }
 }
 
 export function deleteGlueRef(p: number, state: MemoryAllocatorState): void {
-  if (state.memRh[p] === 0) {
+  if (state.mem[p].hh.rh === 0) {
     freeNode(p, 4, state);
   } else {
-    state.memRh[p] -= 1;
+    state.mem[p].hh.rh -= 1;
   }
 }

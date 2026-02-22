@@ -1,34 +1,27 @@
 import { copyInStateRecord, InStateRecord } from "./input_state";
+import type { TeXStateSlice } from "./state_slices";
 
-export interface DateTimeState {
-  sysTime: number;
-  sysDay: number;
-  sysMonth: number;
-  sysYear: number;
-  eqtbInt: number[];
+export interface DateTimeState extends TeXStateSlice<"sysTime" | "sysDay" | "sysMonth" | "sysYear" | "eqtb">{
 }
 
 export function fixDateAndTime(state: DateTimeState): void {
-  state.sysTime = 12 * 60;
-  state.sysDay = 4;
-  state.sysMonth = 7;
-  state.sysYear = 1776;
-  state.eqtbInt[5288] = state.sysTime;
-  state.eqtbInt[5289] = state.sysDay;
-  state.eqtbInt[5290] = state.sysMonth;
-  state.eqtbInt[5291] = state.sysYear;
+  const now = new Date();
+  state.sysTime = now.getHours() * 60 + now.getMinutes();
+  state.sysDay = now.getDate();
+  state.sysMonth = now.getMonth() + 1;
+  state.sysYear = now.getFullYear();
+  state.eqtb[5288].int = state.sysTime;
+  state.eqtb[5289].int = state.sysDay;
+  state.eqtb[5290].int = state.sysMonth;
+  state.eqtb[5291].int = state.sysYear;
 }
 
-export interface BeginDiagnosticState {
-  oldSetting: number;
-  selector: number;
-  eqtbInt: number[];
-  history: number;
+export interface BeginDiagnosticState extends TeXStateSlice<"oldSetting" | "selector" | "eqtb" | "history">{
 }
 
 export function beginDiagnostic(state: BeginDiagnosticState): void {
   state.oldSetting = state.selector;
-  if (state.eqtbInt[5297] <= 0 && state.selector === 19) {
+  if (state.eqtb[5297].int <= 0 && state.selector === 19) {
     state.selector -= 1;
     if (state.history === 0) {
       state.history = 1;
@@ -36,9 +29,7 @@ export function beginDiagnostic(state: BeginDiagnosticState): void {
   }
 }
 
-export interface EndDiagnosticState {
-  oldSetting: number;
-  selector: number;
+export interface EndDiagnosticState extends TeXStateSlice<"oldSetting" | "selector">{
 }
 
 export interface EndDiagnosticOps {
@@ -99,11 +90,7 @@ export function printParam(n: number, ops: ParamOps): void {
   }
 }
 
-export interface PrintGroupState {
-  curGroup: number;
-  curLevel: number;
-  savePtr: number;
-  saveStackInt: number[];
+export interface PrintGroupState extends TeXStateSlice<"curGroup" | "curLevel" | "savePtr" | "saveStack">{
 }
 
 export interface PrintGroupOps {
@@ -180,13 +167,13 @@ export function printGroup(
   ops.print(1338);
   ops.printInt(state.curLevel);
   ops.printChar(41);
-  if (state.saveStackInt[state.savePtr - 1] !== 0) {
+  if (state.saveStack[state.savePtr - 1].int !== 0) {
     if (e) {
       ops.print(367);
     } else {
       ops.print(267);
     }
-    ops.printInt(state.saveStackInt[state.savePtr - 1]);
+    ops.printInt(state.saveStack[state.savePtr - 1].int);
   }
 }
 
@@ -229,13 +216,7 @@ export function printMode(m: number, ops: PrintModeOps): void {
   ops.print(364);
 }
 
-export interface PrintCmdChrState {
-  memLh: number[];
-  memB0: number[];
-  memRh: number[];
-  fontName: number[];
-  fontSize: number[];
-  fontDsize: number[];
+export interface PrintCmdChrState extends TeXStateSlice<"mem" | "mem" | "mem" | "fontName" | "fontSize" | "fontDsize">{
 }
 
 export interface PrintCmdChrOps {
@@ -588,7 +569,7 @@ export function printCmdChr(
       break;
     case 89:
       if (chrCode < 0 || chrCode > 19) {
-        cmd = Math.trunc((state.memB0[chrCode] ?? 0) / 16);
+        cmd = Math.trunc((state.mem[chrCode].hh.b0 ?? 0) / 16);
       } else {
         cmd = chrCode;
         chrCode = 0;
@@ -747,11 +728,12 @@ export function printCmdChr(
           break;
       }
       break;
-    case 105:
+    case 105: {
       if (chrCode >= 32) {
         ops.printEsc(784);
       }
-      switch (chrCode % 32) {
+      const condCode = chrCode % 32;
+      switch (condCode) {
         case 1:
           ops.printEsc(768);
           break;
@@ -814,6 +796,7 @@ export function printCmdChr(
           break;
       }
       break;
+    }
     case 106:
       if (chrCode === 2) {
         ops.printEsc(785);
@@ -1268,7 +1251,7 @@ export function printCmdChr(
     case 113:
     case 114:
       n = cmd - 111;
-      if ((state.memLh[state.memRh[chrCode] ?? 0] ?? 0) === 3585) {
+      if ((state.mem[state.mem[chrCode].hh.rh ?? 0].hh.lh ?? 0) === 3585) {
         n += 4;
       }
       if (Math.trunc(n / 4) % 2 === 1) {
@@ -1319,17 +1302,7 @@ export function printCmdChr(
   }
 }
 
-export interface ShowCurCmdChrState {
-  curListModeField: number;
-  shownMode: number;
-  curCmd: number;
-  curChr: number;
-  eqtbInt: number[];
-  curIf: number;
-  ifLine: number;
-  line: number;
-  condPtr: number;
-  memRh: number[];
+export interface ShowCurCmdChrState extends TeXStateSlice<"curList" | "shownMode" | "curCmd" | "curChr" | "eqtb" | "curIf" | "ifLine" | "line" | "condPtr" | "mem">{
 }
 
 export interface ShowCurCmdChrOps {
@@ -1349,15 +1322,15 @@ export function showCurCmdChr(
 ): void {
   ops.beginDiagnostic();
   ops.printNl(123);
-  if (state.curListModeField !== state.shownMode) {
-    ops.printMode(state.curListModeField);
+  if (state.curList.modeField !== state.shownMode) {
+    ops.printMode(state.curList.modeField);
     ops.print(575);
-    state.shownMode = state.curListModeField;
+    state.shownMode = state.curList.modeField;
   }
 
   ops.printCmdChr(state.curCmd, state.curChr);
 
-  if (state.eqtbInt[5325] > 0 && state.curCmd >= 105 && state.curCmd <= 106) {
+  if (state.eqtb[5325].int > 0 && state.curCmd >= 105 && state.curCmd <= 106) {
     ops.print(575);
 
     let n: number;
@@ -1375,7 +1348,7 @@ export function showCurCmdChr(
     let p = state.condPtr;
     while (p !== 0) {
       n += 1;
-      p = state.memRh[p];
+      p = state.mem[p].hh.rh;
     }
 
     ops.print(576);
@@ -1391,24 +1364,7 @@ export function showCurCmdChr(
   ops.endDiagnostic(false);
 }
 
-export interface ShowContextState {
-  basePtr: number;
-  inputPtr: number;
-  inputStack: InStateRecord[];
-  curInput: InStateRecord;
-  eqtbInt: number[];
-  inOpen: number;
-  line: number;
-  lineStack: number[];
-  buffer: number[];
-  memRh: number[];
-  selector: number;
-  tally: number;
-  trickBuf: number[];
-  trickCount: number;
-  firstCount: number;
-  errorLine: number;
-  halfErrorLine: number;
+export interface ShowContextState extends TeXStateSlice<"basePtr" | "inputPtr" | "inputStack" | "curInput" | "eqtb" | "inOpen" | "line" | "lineStack" | "buffer" | "mem" | "selector" | "tally" | "trickBuf" | "trickCount" | "firstCount" | "errorLine" | "halfErrorLine">{
   contextNn: number;
 }
 
@@ -1422,40 +1378,27 @@ export interface ShowContextOps {
   showTokenList: (p: number, q: number, l: number) => number[];
 }
 
-function trickPrint(c: number, state: ShowContextState): void {
-  if (state.tally < state.trickCount) {
-    state.trickBuf[state.tally % state.errorLine] = c;
-  }
-  state.tally += 1;
-}
-
 export function showContext(
   state: ShowContextState,
   ops: ShowContextOps,
 ): void {
   const emitNl = (s: number) => {
     ops.printNl(s);
-    state.tally += 1;
   };
   const emit = (s: number) => {
     ops.print(s);
-    state.tally += 1;
   };
   const emitInt = (n: number) => {
     ops.printInt(n);
-    state.tally += 1;
   };
   const emitChar = (c: number) => {
     ops.printChar(c);
-    state.tally += 1;
   };
   const emitLn = () => {
     ops.printLn();
-    state.tally += 1;
   };
   const emitCs = (p: number) => {
     ops.printCs(p);
-    state.tally += 1;
   };
 
   state.basePtr = state.inputPtr;
@@ -1476,7 +1419,7 @@ export function showContext(
     if (
       state.basePtr === state.inputPtr ||
       bottomLine ||
-      nn < state.eqtbInt[5322]
+      nn < state.eqtb[5322].int
     ) {
       if (
         state.basePtr === state.inputPtr ||
@@ -1521,7 +1464,7 @@ export function showContext(
           state.trickCount = 1000000;
 
           const j =
-            state.buffer[state.curInput.limitField] === state.eqtbInt[5316]
+            state.buffer[state.curInput.limitField] === state.eqtb[5316].int
               ? state.curInput.limitField
               : state.curInput.limitField + 1;
           if (j > 0) {
@@ -1534,7 +1477,7 @@ export function showContext(
                   state.trickCount = state.errorLine;
                 }
               }
-              trickPrint(state.buffer[i], state);
+              ops.print(state.buffer[i]);
             }
           }
         } else {
@@ -1602,20 +1545,18 @@ export function showContext(
           state.tally = 0;
           state.selector = 20;
           state.trickCount = 1000000;
-          const tokenChars =
-            state.curInput.indexField < 5
-              ? ops.showTokenList(
-                  state.curInput.startField,
-                  state.curInput.locField,
-                  100000,
-                )
-              : ops.showTokenList(
-                  state.memRh[state.curInput.startField],
-                  state.curInput.locField,
-                  100000,
-                );
-          for (const c of tokenChars) {
-            trickPrint(c, state);
+          if (state.curInput.indexField < 5) {
+            ops.showTokenList(
+              state.curInput.startField,
+              state.curInput.locField,
+              100000,
+            );
+          } else {
+            ops.showTokenList(
+              state.mem[state.curInput.startField].hh.rh,
+              state.curInput.locField,
+              100000,
+            );
           }
         }
 
@@ -1671,7 +1612,7 @@ export function showContext(
 
         nn += 1;
       }
-    } else if (nn === state.eqtbInt[5322]) {
+    } else if (nn === state.eqtb[5322].int) {
       emitNl(278);
       nn += 1;
     }

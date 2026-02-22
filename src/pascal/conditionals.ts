@@ -1,21 +1,12 @@
-export interface ChangeIfLimitState {
-  ifLimit: number;
-  condPtr: number;
-  memB0: number[];
-  memRh: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface ChangeIfLimitState extends TeXStateSlice<"ifLimit" | "condPtr" | "mem" | "mem">{
 }
 
 export interface ChangeIfLimitOps {
   confusion: (s: number) => void;
 }
 
-export interface PassTextState {
-  scannerStatus: number;
-  skipLine: number;
-  line: number;
-  curCmd: number;
-  curChr: number;
-  eqtbInt: number[];
+export interface PassTextState extends TeXStateSlice<"scannerStatus" | "skipLine" | "line" | "curCmd" | "curChr" | "eqtb">{
 }
 
 export interface PassTextOps {
@@ -23,41 +14,7 @@ export interface PassTextOps {
   showCurCmdChr: () => void;
 }
 
-export interface ConditionalState {
-  eqtbInt: number[];
-  eqtbB0: number[];
-  eqtbRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  readOpen: number[];
-  ifStack: number[];
-  buffer: number[];
-  fontBc: number[];
-  fontEc: number[];
-  charBase: number[];
-  fontInfoB0: number[];
-  scannerStatus: number;
-  curCmd: number;
-  curChr: number;
-  curTok: number;
-  curCs: number;
-  curVal: number;
-  curPtr: number;
-  condPtr: number;
-  ifLimit: number;
-  curIf: number;
-  ifLine: number;
-  line: number;
-  inOpen: number;
-  first: number;
-  maxBufStack: number;
-  bufSize: number;
-  helpPtr: number;
-  helpLine: number[];
-  curListModeField: number;
+export interface ConditionalState extends TeXStateSlice<"eqtb" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem" | "readOpen" | "ifStack" | "buffer" | "fontBc" | "fontEc" | "charBase" | "fontInfo" | "scannerStatus" | "curCmd" | "curChr" | "curTok" | "curCs" | "curVal" | "curPtr" | "condPtr" | "ifLimit" | "curIf" | "ifLine" | "line" | "inOpen" | "first" | "maxBufStack" | "bufSize" | "helpPtr" | "helpLine" | "curList">{
 }
 
 export interface ConditionalOps {
@@ -110,11 +67,11 @@ export function changeIfLimit(
       ops.confusion(767);
       return;
     }
-    if (state.memRh[q] === p) {
-      state.memB0[q] = l;
+    if (state.mem[q].hh.rh === p) {
+      state.mem[q].hh.b0 = l;
       return;
     }
-    q = state.memRh[q];
+    q = state.mem[q].hh.rh;
   }
 }
 
@@ -139,7 +96,7 @@ export function passText(state: PassTextState, ops: PassTextOps): void {
   }
 
   state.scannerStatus = saveScannerStatus;
-  if (state.eqtbInt[5325] > 0) {
+  if (state.eqtb[5325].int > 0) {
     ops.showCurCmdChr();
   }
 }
@@ -149,10 +106,10 @@ function popConditionalNode(state: ConditionalState, ops: ConditionalOps): void 
     ops.ifWarning();
   }
   const p = state.condPtr;
-  state.ifLine = state.memInt[p + 1];
-  state.curIf = state.memB1[p];
-  state.ifLimit = state.memB0[p];
-  state.condPtr = state.memRh[p];
+  state.ifLine = state.mem[p + 1].int;
+  state.curIf = state.mem[p].hh.b1;
+  state.ifLimit = state.mem[p].hh.b0;
+  state.condPtr = state.mem[p].hh.rh;
   ops.freeNode(p, 2);
 }
 
@@ -165,17 +122,17 @@ function normalizeRelationToken(state: ConditionalState, ops: ConditionalOps): v
 }
 
 export function conditional(state: ConditionalState, ops: ConditionalOps): void {
-  if (state.eqtbInt[5325] > 0) {
-    if (state.eqtbInt[5304] <= 1) {
+  if (state.eqtb[5325].int > 0) {
+    if (state.eqtb[5304].int <= 1) {
       ops.showCurCmdChr();
     }
   }
 
   const p = ops.getNode(2);
-  state.memRh[p] = state.condPtr;
-  state.memB0[p] = state.ifLimit;
-  state.memB1[p] = state.curIf;
-  state.memInt[p + 1] = state.ifLine;
+  state.mem[p].hh.rh = state.condPtr;
+  state.mem[p].hh.b0 = state.ifLimit;
+  state.mem[p].hh.b1 = state.curIf;
+  state.mem[p + 1].int = state.ifLine;
   state.condPtr = p;
   state.curIf = state.curChr;
   state.ifLimit = 1;
@@ -251,16 +208,16 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       b = (state.curVal & 1) !== 0;
       break;
     case 5:
-      b = Math.abs(state.curListModeField) === 1;
+      b = Math.abs(state.curList.modeField) === 1;
       break;
     case 6:
-      b = Math.abs(state.curListModeField) === 102;
+      b = Math.abs(state.curList.modeField) === 102;
       break;
     case 7:
-      b = Math.abs(state.curListModeField) === 203;
+      b = Math.abs(state.curList.modeField) === 203;
       break;
     case 8:
-      b = state.curListModeField < 0;
+      b = state.curList.modeField < 0;
       break;
     case 9:
     case 10:
@@ -268,11 +225,11 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       ops.scanRegisterNum();
       let q = 0;
       if (state.curVal < 256) {
-        q = state.eqtbRh[3683 + state.curVal];
+        q = state.eqtb[3683 + state.curVal].hh.rh;
       } else {
         ops.findSaElement(4, state.curVal, false);
         if (state.curPtr !== 0) {
-          q = state.memRh[state.curPtr + 1];
+          q = state.mem[state.curPtr + 1].hh.rh;
         }
       }
       if (thisIf === 9) {
@@ -280,9 +237,9 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       } else if (q === 0) {
         b = false;
       } else if (thisIf === 10) {
-        b = state.memB0[q] === 0;
+        b = state.mem[q].hh.b0 === 0;
       } else {
-        b = state.memB0[q] === 1;
+        b = state.mem[q].hh.b0 === 1;
       }
       break;
     }
@@ -299,17 +256,17 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       } else if (state.curCmd < 111) {
         b = state.curChr === q;
       } else {
-        p1 = state.memRh[state.curChr];
-        q = state.memRh[state.eqtbRh[n]];
+        p1 = state.mem[state.curChr].hh.rh;
+        q = state.mem[state.eqtb[n].hh.rh].hh.rh;
         if (p1 === q) {
           b = true;
         } else {
           while (p1 !== 0 && q !== 0) {
-            if (state.memLh[p1] !== state.memLh[q]) {
+            if (state.mem[p1].hh.lh !== state.mem[q].hh.lh) {
               p1 = 0;
             } else {
-              p1 = state.memRh[p1];
-              q = state.memRh[q];
+              p1 = state.mem[p1].hh.rh;
+              q = state.mem[q].hh.rh;
             }
           }
           b = p1 === 0 && q === 0;
@@ -331,7 +288,7 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
     case 16: {
       ops.scanInt();
       let n = state.curVal;
-      if (state.eqtbInt[5304] > 1) {
+      if (state.eqtb[5304].int > 1) {
         ops.beginDiagnostic();
         ops.print(794);
         ops.printInt(n);
@@ -372,8 +329,8 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
         ops.getXToken();
         if (state.curCs === 0) {
           const q = ops.getAvail();
-          state.memRh[p1] = q;
-          state.memLh[q] = state.curTok;
+          state.mem[p1].hh.rh = q;
+          state.mem[q].hh.lh = state.curTok;
           p1 = q;
         }
       } while (state.curCs === 0);
@@ -390,7 +347,7 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       }
 
       let m = state.first;
-      p1 = state.memRh[n];
+      p1 = state.mem[n].hh.rh;
       while (p1 !== 0) {
         if (m >= state.maxBufStack) {
           state.maxBufStack = m + 1;
@@ -398,9 +355,9 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
             ops.overflow(257, state.bufSize);
           }
         }
-        state.buffer[m] = state.memLh[p1] % 256;
+        state.buffer[m] = state.mem[p1].hh.lh % 256;
         m += 1;
-        p1 = state.memRh[p1];
+        p1 = state.mem[p1].hh.rh;
       }
       if (m > state.first + 1) {
         state.curCs = ops.idLookup(state.first, m - state.first);
@@ -410,7 +367,7 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
         state.curCs = 257 + state.buffer[state.first];
       }
       ops.flushList(n);
-      b = state.eqtbB0[state.curCs] !== 101;
+      b = state.eqtb[state.curCs].hh.b0 !== 101;
       break;
     }
     case 19: {
@@ -418,7 +375,7 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
       const n = state.curVal;
       ops.scanCharNum();
       if (state.fontBc[n] <= state.curVal && state.fontEc[n] >= state.curVal) {
-        b = state.fontInfoB0[state.charBase[n] + state.curVal] > 0;
+        b = state.fontInfo[state.charBase[n] + state.curVal].qqqq.b0 > 0;
       } else {
         b = false;
       }
@@ -442,7 +399,7 @@ export function conditional(state: ConditionalState, ops: ConditionalOps): void 
     b = !b;
   }
 
-  if (state.eqtbInt[5304] > 1) {
+  if (state.eqtb[5304].int > 1) {
     ops.beginDiagnostic();
     if (b) {
       ops.print(790);

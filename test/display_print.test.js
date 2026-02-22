@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents, twoHalvesFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -49,73 +50,77 @@ function makeShortDisplayScenario(id) {
     memEnd: 2000,
     fontInShortDisplay: -1,
     fontMax: 63,
-    memB0: new Array(5000).fill(0),
-    memB1: new Array(5000).fill(0),
-    memLh: new Array(5000).fill(0),
-    memRh: new Array(5000).fill(0),
-    hashRh: new Array(10000).fill(0),
+    mem: memoryWordsFromComponents({
+      b0: new Array(5000).fill(0),
+      b1: new Array(5000).fill(0),
+      lh: new Array(5000).fill(0),
+      rh: new Array(5000).fill(0),
+      }, { minSize: 30001 }),
+    hash: twoHalvesFromComponents({
+      rh: new Array(10000).fill(0),
+      }),
   };
 
   let p = 0;
   switch (id) {
     case 1:
       p = 1000;
-      state.memB0[1000] = 5;
-      state.memB1[1000] = 65;
-      state.memRh[1000] = 1001;
-      state.memB0[1001] = 5;
-      state.memB1[1001] = 66;
-      state.memRh[1001] = 1002;
-      state.memB0[1002] = 7;
-      state.memB1[1002] = 67;
-      state.hashRh[2629] = 111;
-      state.hashRh[2631] = 222;
+      state.mem[1000].hh.b0 = 5;
+      state.mem[1000].hh.b1 = 65;
+      state.mem[1000].hh.rh = 1001;
+      state.mem[1001].hh.b0 = 5;
+      state.mem[1001].hh.b1 = 66;
+      state.mem[1001].hh.rh = 1002;
+      state.mem[1002].hh.b0 = 7;
+      state.mem[1002].hh.b1 = 67;
+      state.hash[2629].rh = 111;
+      state.hash[2631].rh = 222;
       break;
     case 2:
       p = 100;
-      state.memB0[100] = 0;
-      state.memRh[100] = 101;
-      state.memB0[101] = 2;
-      state.memRh[101] = 102;
-      state.memB0[102] = 10;
-      state.memRh[102] = 103;
-      state.memLh[103] = 1;
-      state.memB0[103] = 9;
-      state.memB1[103] = 3;
-      state.memRh[103] = 104;
-      state.memB0[104] = 9;
-      state.memB1[104] = 4;
+      state.mem[100].hh.b0 = 0;
+      state.mem[100].hh.rh = 101;
+      state.mem[101].hh.b0 = 2;
+      state.mem[101].hh.rh = 102;
+      state.mem[102].hh.b0 = 10;
+      state.mem[102].hh.rh = 103;
+      state.mem[103].hh.lh = 1;
+      state.mem[103].hh.b0 = 9;
+      state.mem[103].hh.b1 = 3;
+      state.mem[103].hh.rh = 104;
+      state.mem[104].hh.b0 = 9;
+      state.mem[104].hh.b1 = 4;
       break;
     case 3:
       p = 200;
-      state.memB0[200] = 6;
-      state.memRh[200] = 202;
-      state.memRh[201] = 1000;
+      state.mem[200].hh.b0 = 6;
+      state.mem[200].hh.rh = 202;
+      state.mem[201].hh.rh = 1000;
 
-      state.memB0[1000] = 3;
-      state.memB1[1000] = 70;
+      state.mem[1000].hh.b0 = 3;
+      state.mem[1000].hh.b1 = 70;
 
-      state.memB0[202] = 7;
-      state.memB1[202] = 1;
-      state.memRh[202] = 204;
-      state.memLh[203] = 1001;
-      state.memRh[203] = 1002;
+      state.mem[202].hh.b0 = 7;
+      state.mem[202].hh.b1 = 1;
+      state.mem[202].hh.rh = 204;
+      state.mem[203].hh.lh = 1001;
+      state.mem[203].hh.rh = 1002;
 
-      state.memB0[1001] = 3;
-      state.memB1[1001] = 71;
-      state.memB0[1002] = 4;
-      state.memB1[1002] = 72;
+      state.mem[1001].hh.b0 = 3;
+      state.mem[1001].hh.b1 = 71;
+      state.mem[1002].hh.b0 = 4;
+      state.mem[1002].hh.b1 = 72;
 
-      state.hashRh[2627] = 301;
-      state.hashRh[2628] = 302;
+      state.hash[2627].rh = 301;
+      state.hash[2628].rh = 302;
       break;
     case 4:
       p = 1100;
-      state.memB0[1100] = 100;
-      state.memB1[1100] = 10;
-      state.memRh[1100] = 1101;
-      state.memB0[1101] = 100;
-      state.memB1[1101] = 11;
+      state.mem[1100].hh.b0 = 100;
+      state.mem[1100].hh.b1 = 10;
+      state.mem[1100].hh.rh = 1101;
+      state.mem[1101].hh.b0 = 100;
+      state.mem[1101].hh.b1 = 11;
       break;
     default:
       throw new Error(`unknown short-display scenario ${id}`);
@@ -140,13 +145,17 @@ test("printCs matches Pascal probe trace", () => {
   for (const c of cases) {
     const [p, strPtr, hashVal, eqtbVal] = c;
     const state = {
-      eqtbRh: new Array(8000).fill(0),
-      hashRh: new Array(4000).fill(0),
       strPtr,
+      eqtb: memoryWordsFromComponents({
+        rh: new Array(8000).fill(0),
+        }),
+      hash: twoHalvesFromComponents({
+        rh: new Array(4000).fill(0),
+        }),
     };
-    state.hashRh[p] = hashVal;
+    state.hash[p].rh = hashVal;
     if (p >= 257 && p < 513) {
-      state.eqtbRh[3988 + p - 257] = eqtbVal;
+      state.eqtb[3988 + p - 257].hh.rh = eqtbVal;
     }
 
     const ops = makeTraceOps();
@@ -168,11 +177,15 @@ test("sprintCs matches Pascal probe trace", () => {
   for (const c of cases) {
     const [p, strPtr, hashVal] = c;
     const state = {
-      eqtbRh: [],
-      hashRh: new Array(4000).fill(0),
       strPtr,
+      eqtb: memoryWordsFromComponents({
+        rh: [],
+        }),
+      hash: twoHalvesFromComponents({
+        rh: new Array(4000).fill(0),
+        }),
     };
-    state.hashRh[p] = hashVal;
+    state.hash[p].rh = hashVal;
     const ops = makeTraceOps();
     sprintCs(p, state, ops);
     const actual = ops.tokens.join(" ");
@@ -191,11 +204,13 @@ test("printFamAndChar matches Pascal probe trace", () => {
   for (const c of cases) {
     const [p, b0, b1] = c;
     const state = {
-      memB0: new Array(2000).fill(0),
-      memB1: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        b1: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memB0[p] = b0;
-    state.memB1[p] = b1;
+    state.mem[p].hh.b0 = b0;
+    state.mem[p].hh.b1 = b1;
     const ops = makeTraceOps();
     printFamAndChar(p, state, ops);
     const actual = ops.tokens.join(" ");
@@ -220,15 +235,19 @@ test("printFontAndChar matches Pascal probe trace", () => {
     const [p, b0, b1, memEnd, fontMax, hashVal] = c;
     const state = {
       memEnd,
-      memB0: new Array(3000).fill(0),
-      memB1: new Array(3000).fill(0),
       fontMax,
-      hashRh: new Array(8000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(3000).fill(0),
+        b1: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
+      hash: twoHalvesFromComponents({
+        rh: new Array(8000).fill(0),
+        }),
     };
-    state.memB0[p] = b0;
-    state.memB1[p] = b1;
-    if (2624 + b0 >= 0 && 2624 + b0 < state.hashRh.length) {
-      state.hashRh[2624 + b0] = hashVal;
+    state.mem[p].hh.b0 = b0;
+    state.mem[p].hh.b1 = b1;
+    if (2624 + b0 >= 0 && 2624 + b0 < state.hash.length) {
+      state.hash[2624 + b0].rh = hashVal;
     }
     const ops = makeTraceOps();
     printFontAndChar(p, state, ops);
@@ -253,15 +272,17 @@ test("printDelimiter matches Pascal probe trace", () => {
   for (const c of cases) {
     const [p, b0, b1, b2, b3] = c;
     const state = {
-      memB0: new Array(2000).fill(0),
-      memB1: new Array(2000).fill(0),
-      memB2: new Array(2000).fill(0),
-      memB3: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        b1: new Array(2000).fill(0),
+        b2: new Array(2000).fill(0),
+        b3: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memB0[p] = b0;
-    state.memB1[p] = b1;
-    state.memB2[p] = b2;
-    state.memB3[p] = b3;
+    state.mem[p].hh.b0 = b0;
+    state.mem[p].hh.b1 = b1;
+    state.mem[p].qqqq.b2 = b2;
+    state.mem[p].qqqq.b3 = b3;
     const ops = makeTraceOps();
     printDelimiter(p, state, ops);
     const actual = ops.tokens.join(" ");
@@ -310,8 +331,6 @@ test("printSubsidiaryData matches Pascal probe trace", () => {
 
   for (const c of cases) {
     const [p, ch, poolPtr, strPtr, depthThreshold, strStartAtPtr, tempPtr, rh, lh, b0, b1] = c;
-    const memB0 = new Array(3000).fill(0);
-    const memB1 = new Array(3000).fill(0);
     const state = {
       poolPtr,
       strPtr,
@@ -319,14 +338,16 @@ test("printSubsidiaryData matches Pascal probe trace", () => {
       depthThreshold,
       strPool: new Array(3000).fill(0),
       tempPtr,
-      memRh: new Array(3000).fill(0),
-      memLh: new Array(3000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(3000).fill(0),
+        rh: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
     };
     state.strStart[strPtr] = strStartAtPtr;
-    state.memRh[p] = rh;
-    state.memLh[p] = lh;
-    memB0[p] = b0;
-    memB1[p] = b1;
+    state.mem[p].hh.rh = rh;
+    state.mem[p].hh.lh = lh;
+    state.mem[p].hh.b0 = b0;
+    state.mem[p].hh.b1 = b1;
 
     const trace = makeTraceOps();
     const ops = {
@@ -336,7 +357,7 @@ test("printSubsidiaryData matches Pascal probe trace", () => {
       printFamAndChar: (node) =>
         printFamAndChar(
           node,
-          { memB0, memB1 },
+          state,
           {
             printEsc: (s) => trace.tokens.push(`E${s}`),
             printInt: (n) => trace.tokens.push(`I${n}`),
@@ -393,10 +414,12 @@ test("printMark matches Pascal probe trace", () => {
     const state = {
       hiMemMin,
       memEnd,
-      memRh: new Array(2000).fill(0),
       maxPrintLine,
+      mem: memoryWordsFromComponents({
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[p] = memRhP;
+    state.mem[p].hh.rh = memRhP;
     const ops = makeTraceOps();
     printMark(p, state, ops);
     const actual = ops.tokens.join(" ");
@@ -415,9 +438,11 @@ test("tokenShow matches Pascal probe trace", () => {
   for (const c of cases) {
     const [p, memRhP] = c;
     const state = {
-      memRh: new Array(3000).fill(0),
+      mem: memoryWordsFromComponents({
+        rh: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[p] = memRhP;
+    state.mem[p].hh.rh = memRhP;
     const trace = makeTraceOps();
     tokenShow(p, state, {
       showTokenList: (a, b, l) => trace.tokens.push(`T${a},${b},${l}`),
@@ -476,15 +501,17 @@ test("printSpec matches Pascal probe trace", () => {
     const state = {
       memMin,
       loMemMax,
-      memInt: new Array(2000).fill(0),
-      memB0: new Array(2000).fill(0),
-      memB1: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        b1: new Array(2000).fill(0),
+        int: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memInt[p + 1] = width;
-    state.memInt[p + 2] = stretch;
-    state.memInt[p + 3] = shrink;
-    state.memB0[p] = b0;
-    state.memB1[p] = b1;
+    state.mem[p + 1].int = width;
+    state.mem[p + 2].int = stretch;
+    state.mem[p + 3].int = shrink;
+    state.mem[p].hh.b0 = b0;
+    state.mem[p].hh.b1 = b1;
     const ops = makeTraceOps();
     printSpec(p, s, state, ops);
     const actual = ops.tokens.join(" ");

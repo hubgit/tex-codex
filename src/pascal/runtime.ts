@@ -1,7 +1,5 @@
-export interface ArithmeticState {
-  arithError: boolean;
-  remainder: number;
-  dig: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface ArithmeticState extends TeXStateSlice<"arithError" | "remainder" | "dig">{
 }
 
 export function createArithmeticState(): ArithmeticState {

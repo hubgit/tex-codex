@@ -1,32 +1,13 @@
 import { makeString, StringBuilderState } from "./string_pool";
+import type { TeXStateSlice } from "./state_slices";
 
-export interface NameProcessingState extends StringBuilderState {
-  areaDelimiter: number;
-  extDelimiter: number;
-  curArea: number;
-  curName: number;
-  curExt: number;
-  poolSize: number;
-  initPoolPtr: number;
-  fileNameSize: number;
-  nameOfFile: string[];
-  nameLength: number;
-  xchr: string[];
-  xord: number[];
-  texFormatDefault: string;
-  jobName: number;
+export interface NameProcessingState extends StringBuilderState, TeXStateSlice<"areaDelimiter" | "extDelimiter" | "curArea" | "curName" | "curExt" | "poolSize" | "initPoolPtr" | "fileNameSize" | "nameOfFile" | "nameLength" | "xchr" | "xord" | "texFormatDefault" | "jobName">{
 }
 
-export interface ScanFileNameState extends NameProcessingState {
-  nameInProgress: boolean;
-  curCmd: number;
-  curChr: number;
+export interface ScanFileNameState extends NameProcessingState, TeXStateSlice<"nameInProgress" | "curCmd" | "curChr">{
 }
 
-export interface PromptFileNameState extends NameProcessingState {
-  interaction: number;
-  first: number;
-  last: number;
+export interface PromptFileNameState extends NameProcessingState, TeXStateSlice<"interaction" | "first" | "last">{
 }
 
 export interface NameInputRecord {
@@ -38,35 +19,10 @@ export interface NameInputRecord {
   nameField: number;
 }
 
-export interface OpenLogFileState extends NameProcessingState {
-  selector: number;
-  logName: number;
-  logOpened: boolean;
-  formatIdent: number;
-  sysDay: number;
-  sysMonth: number;
-  sysYear: number;
-  sysTime: number;
-  eTeXMode: number;
-  inputStack: NameInputRecord[];
-  inputPtr: number;
-  curInput: NameInputRecord;
-  buffer: number[];
-  eqtbInt: number[];
+export interface OpenLogFileState extends NameProcessingState, TeXStateSlice<"selector" | "logName" | "logOpened" | "formatIdent" | "sysDay" | "sysMonth" | "sysYear" | "sysTime" | "eTeXMode" | "inputStack" | "inputPtr" | "curInput" | "buffer" | "eqtb">{
 }
 
-export interface StartInputState extends NameProcessingState {
-  curInput: NameInputRecord;
-  inputFile: number[];
-  jobName: number;
-  termOffset: number;
-  maxPrintLine: number;
-  fileOffset: number;
-  openParens: number;
-  line: number;
-  first: number;
-  buffer: number[];
-  eqtbInt: number[];
+export interface StartInputState extends NameProcessingState, TeXStateSlice<"curInput" | "inputFile" | "jobName" | "termOffset" | "maxPrintLine" | "fileOffset" | "openParens" | "line" | "first" | "buffer" | "eqtb">{
 }
 
 export interface ScanFileNameOps {
@@ -435,7 +391,7 @@ export function openLogFile(state: OpenLogFileState, ops: OpenLogFileOps): void 
 
   ops.printNl(809);
   let l = state.inputStack[0].limitField;
-  if (state.buffer[l] === state.eqtbInt[5316]) {
+  if (state.buffer[l] === state.eqtb[5316].int) {
     l -= 1;
   }
   for (let k = 1; k <= l; k += 1) {
@@ -497,10 +453,10 @@ export function startInput(state: StartInputState, ops: StartInputOps): void {
   state.line = 1;
   ops.inputLn(state.inputFile[state.curInput.indexField], false);
   ops.firmUpTheLine();
-  if (state.eqtbInt[5316] < 0 || state.eqtbInt[5316] > 255) {
+  if (state.eqtb[5316].int < 0 || state.eqtb[5316].int > 255) {
     state.curInput.limitField -= 1;
   } else {
-    state.buffer[state.curInput.limitField] = state.eqtbInt[5316];
+    state.buffer[state.curInput.limitField] = state.eqtb[5316].int;
   }
   state.first = state.curInput.limitField + 1;
   state.curInput.locField = state.curInput.startField;

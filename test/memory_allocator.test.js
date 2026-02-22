@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -31,8 +32,6 @@ test("getAvail matches Pascal probe", () => {
   for (const c of cases) {
     const [avail, memEnd, memMax, hiMemMin, loMemMax, nextOfAvail] = c;
     const state = {
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
       avail,
       memEnd,
       memMax,
@@ -40,11 +39,15 @@ test("getAvail matches Pascal probe", () => {
       hiMemMin,
       loMemMax,
       rover: 0,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[avail] = nextOfAvail;
+    state.mem[avail].hh.rh = nextOfAvail;
 
     const p = getAvail(state);
-    const actual = `${p} ${state.avail} ${state.memEnd} ${state.hiMemMin} ${state.memRh[p]} 0`;
+    const actual = `${p} ${state.avail} ${state.memEnd} ${state.hiMemMin} ${state.mem[p].hh.rh} 0`;
     const expected = runProbeText("GET_AVAIL", c);
     assert.equal(actual, expected, `GET_AVAIL mismatch for ${c.join(",")}`);
   }
@@ -59,8 +62,6 @@ test("flushList matches Pascal probe", () => {
   for (const c of cases) {
     const [p, avail, count, ...pairs] = c;
     const state = {
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
       avail,
       memEnd: 0,
       memMax: 0,
@@ -68,19 +69,23 @@ test("flushList matches Pascal probe", () => {
       hiMemMin: 0,
       loMemMax: 0,
       rover: 0,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
 
     for (let i = 0; i < count; i += 1) {
       const node = pairs[i * 2];
       const next = pairs[i * 2 + 1];
-      state.memRh[node] = next;
+      state.mem[node].hh.rh = next;
     }
 
     flushList(p, state);
     const values = [String(state.avail)];
     for (let i = 0; i < count; i += 1) {
       const node = pairs[i * 2];
-      values.push(String(state.memRh[node]));
+      values.push(String(state.mem[node].hh.rh));
     }
     const actual = values.join(" ");
   const expected = runProbeText("FLUSH_LIST", c);
@@ -97,8 +102,6 @@ test("deleteTokenRef matches Pascal probe", () => {
   for (const c of cases) {
     const [p, lhInit, avail, count, ...pairs] = c;
     const state = {
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
       avail,
       memEnd: 0,
       memMax: 0,
@@ -106,20 +109,24 @@ test("deleteTokenRef matches Pascal probe", () => {
       hiMemMin: 0,
       loMemMax: 0,
       rover: 0,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[p] = lhInit;
+    state.mem[p].hh.lh = lhInit;
 
     for (let i = 0; i < count; i += 1) {
       const node = pairs[i * 2];
       const next = pairs[i * 2 + 1];
-      state.memRh[node] = next;
+      state.mem[node].hh.rh = next;
     }
 
     deleteTokenRef(p, state);
-    const values = [String(state.memLh[p]), String(state.avail)];
+    const values = [String(state.mem[p].hh.lh), String(state.avail)];
     for (let i = 0; i < count; i += 1) {
       const node = pairs[i * 2];
-      values.push(String(state.memRh[node]));
+      values.push(String(state.mem[node].hh.rh));
     }
     const actual = values.join(" ");
   const expected = runProbeText("DELETE_TOKEN_REF", c);
@@ -136,8 +143,6 @@ test("deleteGlueRef matches Pascal probe", () => {
   for (const c of cases) {
     const [p, rhInit, rover, q] = c;
     const state = {
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
       avail: 0,
       memEnd: 0,
       memMax: 0,
@@ -145,18 +150,22 @@ test("deleteGlueRef matches Pascal probe", () => {
       hiMemMin: 0,
       loMemMax: 0,
       rover,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[p] = rhInit;
-    state.memLh[rover + 1] = q;
+    state.mem[p].hh.rh = rhInit;
+    state.mem[rover + 1].hh.lh = q;
 
     deleteGlueRef(p, state);
     const actual = [
-      state.memLh[p],
-      state.memRh[p],
-      state.memLh[p + 1],
-      state.memRh[p + 1],
-      state.memLh[rover + 1],
-      state.memRh[q + 1],
+      state.mem[p].hh.lh,
+      state.mem[p].hh.rh,
+      state.mem[p + 1].hh.lh,
+      state.mem[p + 1].hh.rh,
+      state.mem[rover + 1].hh.lh,
+      state.mem[q + 1].hh.rh,
     ].join(" ");
     const expected = runProbeText("DELETE_GLUE_REF", c);
     assert.equal(actual, expected, `DELETE_GLUE_REF mismatch for ${c.join(",")}`);
@@ -172,8 +181,6 @@ test("freeNode matches Pascal probe", () => {
   for (const c of cases) {
     const [p, s, rover, q] = c;
     const state = {
-      memLh: new Array(40000).fill(0),
-      memRh: new Array(40000).fill(0),
       avail: 0,
       memEnd: 0,
       memMax: 0,
@@ -181,17 +188,21 @@ test("freeNode matches Pascal probe", () => {
       hiMemMin: 0,
       loMemMax: 0,
       rover,
+      mem: memoryWordsFromComponents({
+        lh: new Array(40000).fill(0),
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[rover + 1] = q;
+    state.mem[rover + 1].hh.lh = q;
 
     freeNode(p, s, state);
     const actual = [
-      state.memLh[p],
-      state.memRh[p],
-      state.memLh[p + 1],
-      state.memRh[p + 1],
-      state.memLh[rover + 1],
-      state.memRh[q + 1],
+      state.mem[p].hh.lh,
+      state.mem[p].hh.rh,
+      state.mem[p + 1].hh.lh,
+      state.mem[p + 1].hh.rh,
+      state.mem[rover + 1].hh.lh,
+      state.mem[q + 1].hh.rh,
     ].join(" ");
     const expected = runProbeText("FREE_NODE", c);
     assert.equal(actual, expected, `FREE_NODE mismatch for ${c.join(",")}`);
@@ -237,8 +248,6 @@ test("getNode matches Pascal probe scenarios", () => {
 
   for (const t of cases) {
     const state = {
-      memLh: new Array(80000).fill(0),
-      memRh: new Array(80000).fill(0),
       avail: 0,
       memEnd: 0,
       memMax: t.memMax,
@@ -246,20 +255,24 @@ test("getNode matches Pascal probe scenarios", () => {
       hiMemMin: t.hiMemMin,
       loMemMax: t.loMemMax,
       rover: t.rover,
+      mem: memoryWordsFromComponents({
+        lh: new Array(80000).fill(0),
+        rh: new Array(80000).fill(0),
+        }, { minSize: 30001 }),
     };
 
     for (const [p, size, next, prev, qRh] of t.blocks) {
-      state.memLh[p] = size;
-      state.memRh[p] = 65535;
-      state.memRh[p + 1] = next;
-      state.memLh[p + 1] = prev;
-      state.memRh[p + size] = qRh;
+      state.mem[p].hh.lh = size;
+      state.mem[p].hh.rh = 65535;
+      state.mem[p + 1].hh.rh = next;
+      state.mem[p + 1].hh.lh = prev;
+      state.mem[p + size].hh.rh = qRh;
     }
 
     const result = getNode(t.s, state);
     const parts = [`${result}`, `${state.rover}`, `${state.loMemMax}`, `${state.hiMemMin}`, "0"];
     for (const idx of t.inspect) {
-      parts.push(`${idx}`, `${state.memLh[idx]}`, `${state.memRh[idx]}`);
+      parts.push(`${idx}`, `${state.mem[idx].hh.lh}`, `${state.mem[idx].hh.rh}`);
     }
     const actual = parts.join(" ");
 
@@ -296,8 +309,6 @@ test("sortAvail matches Pascal probe scenario", () => {
   };
 
   const state = {
-    memLh: new Array(80000).fill(0),
-    memRh: new Array(80000).fill(0),
     avail: 0,
     memEnd: 0,
     memMax: t.memMax,
@@ -305,20 +316,24 @@ test("sortAvail matches Pascal probe scenario", () => {
     hiMemMin: t.hiMemMin,
     loMemMax: t.loMemMax,
     rover: t.rover,
+    mem: memoryWordsFromComponents({
+      lh: new Array(80000).fill(0),
+      rh: new Array(80000).fill(0),
+      }, { minSize: 30001 }),
   };
 
   for (const [p, size, next, prev, qRh] of t.blocks) {
-    state.memLh[p] = size;
-    state.memRh[p] = 65535;
-    state.memRh[p + 1] = next;
-    state.memLh[p + 1] = prev;
-    state.memRh[p + size] = qRh;
+    state.mem[p].hh.lh = size;
+    state.mem[p].hh.rh = 65535;
+    state.mem[p + 1].hh.rh = next;
+    state.mem[p + 1].hh.lh = prev;
+    state.mem[p + size].hh.rh = qRh;
   }
 
   sortAvail(state);
   const parts = [`${state.rover}`, `${state.loMemMax}`, `${state.hiMemMin}`, "0"];
   for (const idx of t.inspect) {
-    parts.push(`${idx}`, `${state.memLh[idx]}`, `${state.memRh[idx]}`);
+    parts.push(`${idx}`, `${state.mem[idx].hh.lh}`, `${state.mem[idx].hh.rh}`);
   }
   const actual = parts.join(" ");
 

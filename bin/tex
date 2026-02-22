@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+CLI_MODULE="$ROOT_DIR/dist/src/cli.js"
+TEXMFDIST_DEFAULT="/opt/homebrew/Cellar/texlive/20250308_2/share/texmf-dist"
+
+if [ ! -f "$CLI_MODULE" ]; then
+  echo "Missing compiled CLI module: $CLI_MODULE" >&2
+  echo "Run: npm run build" >&2
+  exit 1
+fi
+
+# Prefer the Homebrew TeX Live indexed tree when available.
+if [ -f "$TEXMFDIST_DEFAULT/ls-R" ]; then
+  : "${TEXMFDIST:=$TEXMFDIST_DEFAULT}"
+  : "${TEXMFDBS:=$TEXMFDIST_DEFAULT}"
+  export TEXMFDIST TEXMFDBS
+fi
+
+case "${1-}" in
+  -ini|--ini|--initex|\&*)
+    exec node "$CLI_MODULE" "$@"
+    ;;
+  *)
+    exec node "$CLI_MODULE" "&tex" "$@"
+    ;;
+esac

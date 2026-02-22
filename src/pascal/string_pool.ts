@@ -1,14 +1,7 @@
-export interface StringPoolState {
-  strStart: number[];
-  strPool: number[];
-  buffer: number[];
+export interface StringPoolState extends TeXStateSlice<"strStart" | "strPool" | "buffer">{
 }
 
-export interface StringBuilderState extends StringPoolState {
-  strPtr: number;
-  poolPtr: number;
-  maxStrings: number;
-  initStrPtr: number;
+export interface StringBuilderState extends StringPoolState, TeXStateSlice<"strPtr" | "poolPtr" | "maxStrings" | "initStrPtr">{
 }
 
 export function strEqBuf(state: StringPoolState, s: number, k: number): boolean {
@@ -65,9 +58,7 @@ export function makeString(
   return state.strPtr - 1;
 }
 
-export interface GetStringsStartedState extends StringBuilderState {
-  poolSize: number;
-  stringVacancies: number;
+export interface GetStringsStartedState extends StringBuilderState, TeXStateSlice<"poolSize" | "stringVacancies">{
 }
 
 export interface GetStringsStartedOps {
@@ -177,6 +168,7 @@ export function getStringsStarted(
 }
 
 import { PrintState, printChar } from "./print";
+import type { TeXStateSlice } from "./state_slices";
 
 export function printCurrentString(
   state: StringBuilderState,

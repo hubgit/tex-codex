@@ -1,7 +1,5 @@
-export interface CharWarningState {
-  eqtbInt: number[];
-  eTeXMode: number;
-  fontName: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface CharWarningState extends TeXStateSlice<"eqtb" | "eTeXMode" | "fontName">{
 }
 
 export interface CharWarningOps {
@@ -19,10 +17,10 @@ export function charWarning(
   state: CharWarningState,
   ops: CharWarningOps,
 ): void {
-  if (state.eqtbInt[5303] > 0) {
-    const oldSetting = state.eqtbInt[5297];
-    if (state.eTeXMode === 1 && state.eqtbInt[5303] > 1) {
-      state.eqtbInt[5297] = 1;
+  if (state.eqtb[5303].int > 0) {
+    const oldSetting = state.eqtb[5297].int;
+    if (state.eTeXMode === 1 && state.eqtb[5303].int > 1) {
+      state.eqtb[5297].int = 1;
     }
     ops.beginDiagnostic();
     ops.printNl(836);
@@ -31,17 +29,11 @@ export function charWarning(
     ops.slowPrint(state.fontName[f]);
     ops.printChar(33);
     ops.endDiagnostic(false);
-    state.eqtbInt[5297] = oldSetting;
+    state.eqtb[5297].int = oldSetting;
   }
 }
 
-export interface NewCharacterState {
-  fontBc: number[];
-  fontEc: number[];
-  charBase: number[];
-  fontInfoB0: number[];
-  memB0: number[];
-  memB1: number[];
+export interface NewCharacterState extends TeXStateSlice<"fontBc" | "fontEc" | "charBase" | "fontInfo" | "mem" | "mem">{
 }
 
 export interface NewCharacterOps {
@@ -58,11 +50,11 @@ export function newCharacter(
   if (
     state.fontBc[f] <= c &&
     state.fontEc[f] >= c &&
-    state.fontInfoB0[state.charBase[f] + c] > 0
+    state.fontInfo[state.charBase[f] + c].qqqq.b0 > 0
   ) {
     const p = ops.getAvail();
-    state.memB0[p] = f;
-    state.memB1[p] = c;
+    state.mem[p].hh.b0 = f;
+    state.mem[p].hh.b1 = c;
     return p;
   }
   ops.charWarning(f, c);

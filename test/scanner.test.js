@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { listStateArrayFromComponents, listStateRecordFromComponents, memoryWordsFromComponents, twoHalvesFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -31,9 +32,6 @@ function makeBaseState() {
     curCmd: 0,
     curChr: 0,
     buffer: new Array(4096).fill(0),
-    eqtbRh: new Array(9000).fill(0),
-    eqtbB0: new Array(9000).fill(0),
-    eqtbInt: new Array(7000).fill(0),
     first: 100,
     line: 10,
     forceEof: false,
@@ -56,11 +54,18 @@ function makeBaseState() {
     alignState: 1,
     scannerStatus: 0,
     curAlign: 0,
-    memLh: new Array(9000).fill(0),
-    memRh: new Array(9000).fill(0),
-    memInt: new Array(9000).fill(0),
     paramStack: new Array(9000).fill(0),
     parLoc: 1000,
+    mem: memoryWordsFromComponents({
+      int: new Array(9000).fill(0),
+      lh: new Array(9000).fill(0),
+      rh: new Array(9000).fill(0),
+      }, { minSize: 30001 }),
+    eqtb: memoryWordsFromComponents({
+      b0: new Array(9000).fill(0),
+      int: new Array(7000).fill(0),
+      rh: new Array(9000).fill(0),
+      }),
   };
 }
 
@@ -69,82 +74,82 @@ function setupScenario(scenario, state) {
     state.curInput = makeInputRecord(1, 0, 0, 0, 1, 20);
     state.buffer[0] = 65;
     state.buffer[1] = 66;
-    state.eqtbRh[3988 + 65] = 9;
-    state.eqtbRh[3988 + 66] = 13;
-    state.eqtbB0[67] = 50;
-    state.eqtbRh[67] = 500;
+    state.eqtb[3988 + 65].hh.rh = 9;
+    state.eqtb[3988 + 66].hh.rh = 13;
+    state.eqtb[67].hh.b0 = 50;
+    state.eqtb[67].hh.rh = 500;
   } else if (scenario === 2) {
     state.curInput = makeInputRecord(1, 0, 0, 0, 3, 20);
     state.buffer[0] = 92;
     state.buffer[1] = 97;
     state.buffer[2] = 98;
     state.buffer[3] = 32;
-    state.eqtbRh[3988 + 92] = 0;
-    state.eqtbRh[3988 + 97] = 11;
-    state.eqtbRh[3988 + 98] = 11;
-    state.eqtbRh[3988 + 32] = 10;
-    state.eqtbB0[700] = 110;
-    state.eqtbRh[700] = 44;
+    state.eqtb[3988 + 92].hh.rh = 0;
+    state.eqtb[3988 + 97].hh.rh = 11;
+    state.eqtb[3988 + 98].hh.rh = 11;
+    state.eqtb[3988 + 32].hh.rh = 10;
+    state.eqtb[700].hh.b0 = 110;
+    state.eqtb[700].hh.rh = 44;
   } else if (scenario === 3) {
     state.curInput = makeInputRecord(1, 0, 0, 0, 3, 20);
     state.buffer[0] = 92;
     state.buffer[1] = 94;
     state.buffer[2] = 94;
     state.buffer[3] = 97;
-    state.eqtbRh[3988 + 92] = 0;
-    state.eqtbRh[3988 + 94] = 7;
-    state.eqtbRh[3988 + 33] = 12;
-    state.eqtbB0[290] = 20;
-    state.eqtbRh[290] = 7;
+    state.eqtb[3988 + 92].hh.rh = 0;
+    state.eqtb[3988 + 94].hh.rh = 7;
+    state.eqtb[3988 + 33].hh.rh = 12;
+    state.eqtb[290].hh.b0 = 20;
+    state.eqtb[290].hh.rh = 7;
   } else if (scenario === 4) {
     state.curInput = makeInputRecord(1, 0, 0, 0, 3, 20);
     state.buffer[0] = 94;
     state.buffer[1] = 94;
     state.buffer[2] = 97;
     state.buffer[3] = 102;
-    state.eqtbRh[3988 + 94] = 7;
-    state.eqtbRh[3988 + 175] = 12;
+    state.eqtb[3988 + 94].hh.rh = 7;
+    state.eqtb[3988 + 175].hh.rh = 12;
   } else if (scenario === 5) {
     state.curInput = makeInputRecord(33, 0, 0, 0, 0, 20);
     state.buffer[0] = 13;
-    state.eqtbRh[3988 + 13] = 5;
-    state.eqtbB0[1000] = 120;
-    state.eqtbRh[1000] = 77;
+    state.eqtb[3988 + 13].hh.rh = 5;
+    state.eqtb[1000].hh.b0 = 120;
+    state.eqtb[1000].hh.rh = 77;
   } else if (scenario === 6) {
     state.curInput = makeInputRecord(1, 0, 2, 5, 4, 5);
   } else if (scenario === 7) {
     state.curInput = makeInputRecord(0, 0, 0, 1, 0, 0);
-    state.memLh[1] = 4095 + 500;
-    state.memRh[1] = 2;
-    state.memLh[2] = 4095 + 600;
-    state.eqtbB0[500] = 116;
-    state.eqtbRh[500] = 1;
-    state.eqtbB0[600] = 101;
-    state.eqtbRh[600] = 123;
+    state.mem[1].hh.lh = 4095 + 500;
+    state.mem[1].hh.rh = 2;
+    state.mem[2].hh.lh = 4095 + 600;
+    state.eqtb[500].hh.b0 = 116;
+    state.eqtb[500].hh.rh = 1;
+    state.eqtb[600].hh.b0 = 101;
+    state.eqtb[600].hh.rh = 123;
   } else if (scenario === 8) {
     state.curInput = makeInputRecord(0, 0, 0, 1, 10, 0);
-    state.memLh[1] = 5 * 256 + 1;
-    state.memRh[1] = 0;
+    state.mem[1].hh.lh = 5 * 256 + 1;
+    state.mem[1].hh.rh = 0;
     state.paramStack[10] = 700;
-    state.memLh[700] = 1 * 256 + 7;
-    state.memRh[700] = 0;
+    state.mem[700].hh.lh = 1 * 256 + 7;
+    state.mem[700].hh.rh = 0;
     state.alignState = 10;
   } else if (scenario === 9) {
     state.curInput = makeInputRecord(0, 0, 0, 1, 0, 0);
-    state.memLh[1] = 4 * 256 + 88;
-    state.memRh[1] = 0;
+    state.mem[1].hh.lh = 4 * 256 + 88;
+    state.mem[1].hh.rh = 0;
     state.alignState = 0;
     state.curAlign = 200;
-    state.memLh[205] = 63;
-    state.memInt[202] = 444;
-    state.memLh[300] = 12 * 256 + 5;
-    state.memRh[300] = 0;
+    state.mem[205].hh.lh = 63;
+    state.mem[202].int = 444;
+    state.mem[300].hh.lh = 12 * 256 + 5;
+    state.mem[300].hh.rh = 0;
   } else if (scenario === 10) {
     state.curInput = makeInputRecord(1, 0, 0, 0, 1, 20);
     state.buffer[0] = 35;
     state.buffer[1] = 65;
-    state.eqtbRh[3988 + 35] = 15;
-    state.eqtbRh[3988 + 65] = 12;
+    state.eqtb[3988 + 35].hh.rh = 15;
+    state.eqtb[3988 + 65].hh.rh = 12;
   }
 }
 
@@ -209,7 +214,7 @@ test("getNext matches Pascal probe trace", () => {
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]}`,
       `OP${state.openParens}`,
-      `M205${state.memLh[205]}`,
+      `M205${state.mem[205].hh.lh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("GET_NEXT_TRACE", [scenario]);
@@ -267,10 +272,6 @@ function makeMacroState() {
     curTok: 0,
     longState: 0,
     alignState: 1,
-    eqtbInt: new Array(7000).fill(0),
-    eqtbB0: new Array(9000).fill(0),
-    memLh: new Array(40000).fill(0),
-    memRh: new Array(40000).fill(0),
     curInput: makeInputRecord(1, 0, 10, 11, 12, 13),
     paramPtr: 0,
     maxParamStack: 0,
@@ -280,36 +281,44 @@ function makeMacroState() {
     helpPtr: 0,
     helpLine: new Array(8).fill(0),
     parToken: 637,
+    mem: memoryWordsFromComponents({
+      lh: new Array(40000).fill(0),
+      rh: new Array(40000).fill(0),
+      }, { minSize: 30001 }),
+    eqtb: memoryWordsFromComponents({
+      b0: new Array(9000).fill(0),
+      int: new Array(7000).fill(0),
+      }),
   };
 }
 
 function setupMacroScenario(scenario, state) {
-  state.eqtbB0[state.curCs] = 111;
-  state.memRh[100] = 200;
+  state.eqtb[state.curCs].hh.b0 = 111;
+  state.mem[100].hh.rh = 200;
 
   if (scenario === 1) {
-    state.memLh[200] = 3584;
-    state.memRh[200] = 210;
+    state.mem[200].hh.lh = 3584;
+    state.mem[200].hh.rh = 210;
   } else if (scenario === 2) {
-    state.memLh[200] = 3000;
-    state.memRh[200] = 210;
+    state.mem[200].hh.lh = 3000;
+    state.mem[200].hh.rh = 210;
   } else if (scenario === 3) {
-    state.memLh[200] = 3328 + 35;
-    state.memRh[200] = 201;
-    state.memLh[201] = 3584;
-    state.memRh[201] = 220;
+    state.mem[200].hh.lh = 3328 + 35;
+    state.mem[200].hh.rh = 201;
+    state.mem[201].hh.lh = 3584;
+    state.mem[201].hh.rh = 220;
   } else if (scenario === 4) {
-    state.memLh[200] = 3328 + 35;
-    state.memRh[200] = 201;
-    state.memLh[201] = 3584;
-    state.memRh[201] = 220;
+    state.mem[200].hh.lh = 3328 + 35;
+    state.mem[200].hh.rh = 201;
+    state.mem[201].hh.lh = 3584;
+    state.mem[201].hh.rh = 220;
   } else if (scenario === 5) {
-    state.memLh[200] = 3328 + 35;
-    state.memRh[200] = 201;
-    state.memLh[201] = 700;
-    state.memRh[201] = 202;
-    state.memLh[202] = 3584;
-    state.memRh[202] = 220;
+    state.mem[200].hh.lh = 3328 + 35;
+    state.mem[200].hh.rh = 201;
+    state.mem[201].hh.lh = 700;
+    state.mem[201].hh.rh = 202;
+    state.mem[202].hh.lh = 3584;
+    state.mem[202].hh.rh = 220;
   }
 }
 
@@ -381,10 +390,10 @@ test("macroCall matches Pascal probe trace", () => {
       `AV${state.avail}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]},${state.helpLine[3]},${state.helpLine[4]},${state.helpLine[5]}`,
-      `TMP${state.memRh[29997]}`,
-      `M1000${state.memLh[1000]},${state.memRh[1000]}`,
-      `M1001${state.memLh[1001]},${state.memRh[1001]}`,
-      `M1002${state.memLh[1002]},${state.memRh[1002]}`,
+      `TMP${state.mem[29997].hh.rh}`,
+      `M1000${state.mem[1000].hh.lh},${state.mem[1000].hh.rh}`,
+      `M1001${state.mem[1001].hh.lh},${state.mem[1001].hh.rh}`,
+      `M1002${state.mem[1002].hh.lh},${state.mem[1002].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("MACRO_CALL_TRACE", [scenario]);
@@ -427,13 +436,6 @@ function makeExpandState() {
     curOrder: 4,
     scannerStatus: 2,
     saveScannerStatus: 0,
-    eqtbInt: new Array(7000).fill(0),
-    eqtbB0: new Array(10000).fill(0),
-    memLh: new Array(40000).fill(0),
-    memRh: new Array(40000).fill(0),
-    memB0: new Array(40000).fill(0),
-    memB1: new Array(40000).fill(0),
-    memInt: new Array(40000).fill(0),
     curInput: makeInputRecord(0, 0, 50, 60, 70, 0),
     curMark: new Array(5).fill(0),
     first: 10,
@@ -451,8 +453,19 @@ function makeExpandState() {
     nameInProgress: false,
     helpPtr: 0,
     helpLine: new Array(8).fill(0),
+    mem: memoryWordsFromComponents({
+      b0: new Array(40000).fill(0),
+      b1: new Array(40000).fill(0),
+      int: new Array(40000).fill(0),
+      lh: new Array(40000).fill(0),
+      rh: new Array(40000).fill(0),
+      }, { minSize: 30001 }),
+    eqtb: memoryWordsFromComponents({
+      b0: new Array(10000).fill(0),
+      int: new Array(7000).fill(0),
+      }),
   };
-  state.memRh[29987] = 777;
+  state.mem[29987].hh.rh = 777;
   return state;
 }
 
@@ -464,7 +477,7 @@ function setupExpandScenario(scenario, state) {
   } else if (scenario === 2) {
     state.curCmd = 110;
     state.curChr = 7;
-    state.memLh[502] = 888;
+    state.mem[502].hh.lh = 888;
   } else if (scenario === 3) {
     state.curCmd = 102;
     state.curChr = 0;
@@ -481,7 +494,7 @@ function setupExpandScenario(scenario, state) {
     state.curCmd = 107;
     state.first = 10;
     state.maxBufStack = 10;
-    state.eqtbB0[777] = 101;
+    state.eqtb[777].hh.b0 = 101;
   } else if (scenario === 8) {
     state.curCmd = 107;
     state.first = 12;
@@ -499,10 +512,10 @@ function setupExpandScenario(scenario, state) {
     state.ifLimit = 2;
     state.condPtr = 500;
     state.ifStack[0] = 500;
-    state.memInt[501] = 1234;
-    state.memB1[500] = 9;
-    state.memB0[500] = 7;
-    state.memRh[500] = 333;
+    state.mem[501].int = 1234;
+    state.mem[500].hh.b1 = 9;
+    state.mem[500].hh.b0 = 7;
+    state.mem[500].hh.rh = 333;
   } else if (scenario === 12) {
     state.curCmd = 104;
     state.curChr = 1;
@@ -646,7 +659,7 @@ test("expand matches Pascal probe trace", () => {
       `TOK${state.curTok}`,
       `CP${state.curPtr}`,
       `CV${state.curVal},${state.curValLevel},${state.radix},${state.curOrder}`,
-      `BK${state.memRh[29987]}`,
+      `BK${state.mem[29987].hh.rh}`,
       `CI${state.curInput.startField},${state.curInput.locField}`,
       `NS${state.noNewControlSequence ? 1 : 0}`,
       `IF${state.ifLimit},${state.condPtr},${state.ifLine},${state.curIf}`,
@@ -655,7 +668,7 @@ test("expand matches Pascal probe trace", () => {
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]},${state.helpLine[3]},${state.helpLine[4]}`,
       `MB${state.maxBufStack}`,
       `B10${state.buffer[10]},${state.buffer[11]}`,
-      `M1000${state.memLh[1000]},${state.memRh[1000]}`,
+      `M1000${state.mem[1000].hh.lh},${state.mem[1000].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("EXPAND_TRACE", [scenario]);
@@ -894,10 +907,12 @@ test("scanKeyword matches Pascal probe trace", () => {
       curChr: 0,
       curCs: 0,
       curTok: 0,
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
       strPool: new Array(10).fill(0),
       strStart: new Array(10).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
     state.strStart[1] = 0;
     state.strStart[2] = 2;
@@ -976,9 +991,9 @@ test("scanKeyword matches Pascal probe trace", () => {
       `OK${ok ? 1 : 0}`,
       `CC${state.curCmd},${state.curChr}`,
       `TOK${state.curTok}`,
-      `H${state.memRh[29987]}`,
-      `N100${state.memLh[100]},${state.memRh[100]}`,
-      `N101${state.memLh[101]},${state.memRh[101]}`,
+      `H${state.mem[29987].hh.rh}`,
+      `N100${state.mem[100].hh.lh},${state.mem[100].hh.rh}`,
+      `N101${state.mem[101].hh.lh},${state.mem[101].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("SCAN_KEYWORD_TRACE", [scenario]);
@@ -1257,13 +1272,15 @@ test("getXOrProtected matches Pascal probe trace", () => {
     const state = {
       curCmd: 0,
       curChr: 0,
-      memLh: new Array(3000).fill(0),
-      memRh: new Array(3000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(3000).fill(0),
+        rh: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[500] = 1000;
-    state.memLh[1000] = 3585;
-    state.memRh[501] = 1001;
-    state.memLh[1001] = 4000;
+    state.mem[500].hh.rh = 1000;
+    state.mem[1000].hh.lh = 3585;
+    state.mem[501].hh.rh = 1001;
+    state.mem[1001].hh.lh = 4000;
 
     const trace = [];
     let step = 0;
@@ -1315,12 +1332,14 @@ test("scanFontIdent matches Pascal probe trace", () => {
       curCmd: 0,
       curChr: 0,
       curVal: 0,
-      eqtbRh: new Array(5000).fill(0),
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
+      eqtb: memoryWordsFromComponents({
+        rh: new Array(5000).fill(0),
+        }),
     };
-    state.eqtbRh[3939] = 777;
-    state.eqtbRh[903] = 654;
+    state.eqtb[3939].hh.rh = 777;
+    state.eqtb[903].hh.rh = 654;
 
     const trace = [];
     let step = 0;
@@ -1388,10 +1407,14 @@ test("findFontDimen matches Pascal probe trace", () => {
       fontPtr: 10,
       fontGlue: new Array(3000).fill(0),
       paramBase: new Array(3000).fill(0),
-      fontInfoInt: new Array(3000).fill(-1),
-      hashRh: new Array(6000).fill(0),
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
+      fontInfo: memoryWordsFromComponents({
+        int: new Array(3000).fill(-1),
+        }),
+      hash: twoHalvesFromComponents({
+        rh: new Array(6000).fill(0),
+        }),
     };
 
     let cfg;
@@ -1414,7 +1437,7 @@ test("findFontDimen matches Pascal probe trace", () => {
     state.fontParams[cfg.f] = cfg.params;
     state.paramBase[cfg.f] = cfg.paramBase;
     state.fontGlue[cfg.f] = cfg.glue;
-    state.hashRh[2624 + cfg.f] = cfg.hash;
+    state.hash[2624 + cfg.f].rh = cfg.hash;
 
     const trace = [];
     const startPtr = state.fmemPtr;
@@ -1443,7 +1466,7 @@ test("findFontDimen matches Pascal probe trace", () => {
       `FP${state.fmemPtr}`,
       `FPA${state.fontParams[cfg.f]}`,
       `FG${state.fontGlue[cfg.f]}`,
-      `FI${state.fontInfoInt[startPtr]},${state.fontInfoInt[startPtr + 1]}`,
+      `FI${state.fontInfo[startPtr].int},${state.fontInfo[startPtr + 1].int}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]}`,
     ];
@@ -1463,21 +1486,6 @@ test("scanSomethingInternal matches Pascal probe trace", () => {
       curVal: 0,
       curValLevel: 0,
       curPtr: 0,
-      eqtbRh: new Array(9000).fill(0),
-      eqtbInt: new Array(9000).fill(0),
-      memB0: new Array(9000).fill(0),
-      memB1: new Array(9000).fill(0),
-      memLh: new Array(9000).fill(0),
-      memRh: new Array(9000).fill(0),
-      memInt: new Array(9000).fill(0),
-      curListModeField: 1,
-      curListAuxInt: 0,
-      curListAuxLh: 0,
-      curListPgField: 0,
-      curListHeadField: 0,
-      curListTailField: 0,
-      nestModeField: new Array(50).fill(0),
-      nestPgField: new Array(50).fill(0),
       nestPtr: 0,
       deadCycles: 0,
       interaction: 2,
@@ -1494,10 +1502,6 @@ test("scanSomethingInternal matches Pascal probe trace", () => {
       ifLimit: 1,
       hiMemMin: 8000,
       fmemPtr: 100,
-      fontInfoInt: new Array(9000).fill(0),
-      fontInfoB0: new Array(9000).fill(0),
-      fontInfoB1: new Array(9000).fill(0),
-      fontInfoB2: new Array(9000).fill(0),
       fontBc: new Array(100).fill(0),
       fontEc: new Array(100).fill(0),
       charBase: new Array(100).fill(0),
@@ -1513,16 +1517,45 @@ test("scanSomethingInternal matches Pascal probe trace", () => {
       lastNodeType: 0,
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(9000).fill(0),
+        b1: new Array(9000).fill(0),
+        int: new Array(9000).fill(0),
+        lh: new Array(9000).fill(0),
+        rh: new Array(9000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(9000).fill(0),
+        rh: new Array(9000).fill(0),
+        }),
+      fontInfo: memoryWordsFromComponents({
+        b0: new Array(9000).fill(0),
+        b1: new Array(9000).fill(0),
+        b2: new Array(9000).fill(0),
+        int: new Array(9000).fill(0),
+        }),
+      curList: listStateRecordFromComponents({
+        modeField: 1,
+        headField: 0,
+        tailField: 0,
+        pgField: 0,
+        auxInt: 0,
+        auxLh: 0,
+        }),
+      nest: listStateArrayFromComponents({
+        modeField: new Array(50).fill(0),
+        pgField: new Array(50).fill(0),
+        }, { nestPtr: 0 }),
     };
 
-    state.eqtbRh[5002] = 1234;
-    state.memRh[201] = 888;
-    state.memInt[301] = 50;
-    state.eqtbRh[50] = 400;
-    state.memRh[400] = 7;
-    state.memInt[501] = 5;
-    state.memInt[502] = 6;
-    state.memInt[503] = 7;
+    state.eqtb[5002].hh.rh = 1234;
+    state.mem[201].hh.rh = 888;
+    state.mem[301].int = 50;
+    state.eqtb[50].hh.rh = 400;
+    state.mem[400].hh.rh = 7;
+    state.mem[501].int = 5;
+    state.mem[502].int = 6;
+    state.mem[503].int = 7;
 
     const level = scenario === 1 ? 0
       : scenario === 2 ? 1
@@ -1596,8 +1629,8 @@ test("scanSomethingInternal matches Pascal probe trace", () => {
       `CV${state.curVal}`,
       `LV${state.curValLevel}`,
       `CP${state.curPtr}`,
-      `MR400${state.memRh[400]}`,
-      `MI501${state.memInt[501]},${state.memInt[502]},${state.memInt[503]}`,
+      `MR400${state.mem[400].hh.rh}`,
+      `MI501${state.mem[501].int},${state.mem[502].int},${state.mem[503].int}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]}`,
     ];
@@ -1745,17 +1778,23 @@ test("scanDimen matches Pascal probe trace", () => {
       curValLevel: 0,
       radix: 0,
       remainder: 0,
-      eqtbInt: new Array(9000).fill(1000),
-      eqtbRh: new Array(9000).fill(0),
-      memInt: new Array(9000).fill(0),
-      memRh: new Array(9000).fill(0),
       paramBase: new Array(9000).fill(0),
-      fontInfoInt: new Array(9000).fill(0),
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
       dig: new Array(20).fill(0),
+      mem: memoryWordsFromComponents({
+        int: new Array(9000).fill(0),
+        rh: new Array(9000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(9000).fill(1000),
+        rh: new Array(9000).fill(0),
+        }),
+      fontInfo: memoryWordsFromComponents({
+        int: new Array(9000).fill(0),
+        }),
     };
-    state.memInt[501] = 20;
+    state.mem[501].int = 20;
 
     let mu = false;
     let inf = false;
@@ -1885,9 +1924,11 @@ test("scanGlue matches Pascal probe trace", () => {
       curVal: 0,
       curValLevel: 0,
       curOrder: 0,
-      memInt: new Array(5000).fill(0),
-      memB0: new Array(5000).fill(0),
-      memB1: new Array(5000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(5000).fill(0),
+        b1: new Array(5000).fill(0),
+        int: new Array(5000).fill(0),
+        }, { minSize: 30001 }),
     };
     let level = 2;
     const xSeq = [];
@@ -1987,8 +2028,8 @@ test("scanGlue matches Pascal probe trace", () => {
     const parts = [
       ...trace,
       `Q${lastSpec}`,
-      `M${state.memInt[lastSpec + 1] || 0},${state.memInt[lastSpec + 2] || 0},${state.memInt[lastSpec + 3] || 0}`,
-      `B${state.memB0[lastSpec] || 0},${state.memB1[lastSpec] || 0}`,
+      `M${state.mem[lastSpec + 1].int || 0},${state.mem[lastSpec + 2].int || 0},${state.mem[lastSpec + 3].int || 0}`,
+      `B${state.mem[lastSpec].hh.b0 || 0},${state.mem[lastSpec].hh.b1 || 0}`,
       `CV${state.curVal}`,
       `CO${state.curOrder}`,
     ];
@@ -2025,7 +2066,9 @@ test("scanRuleSpec matches Pascal probe trace", () => {
     const state = {
       curCmd: scenario === 1 ? 35 : 20,
       curVal: 0,
-      memInt: new Array(5000).fill(0),
+      mem: memoryWordsFromComponents({
+        int: new Array(5000).fill(0),
+        }, { minSize: 30001 }),
     };
     const trace = [];
     const keywordQueues = {};
@@ -2068,7 +2111,7 @@ test("scanRuleSpec matches Pascal probe trace", () => {
     const parts = [
       ...trace,
       `Q${q}`,
-      `M${state.memInt[q + 1]},${state.memInt[q + 2]},${state.memInt[q + 3]}`,
+      `M${state.mem[q + 1].int},${state.mem[q + 2].int},${state.mem[q + 3].int}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("SCAN_RULE_SPEC_TRACE", [scenario]);
@@ -2081,9 +2124,11 @@ test("scanSpec matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      saveStack: new Array(100).fill(0),
       savePtr: scenario === 3 ? 3 : scenario === 4 ? 2 : 5,
       curVal: scenario === 4 ? 999 : 0,
+      saveStack: memoryWordsFromComponents({
+        int: new Array(100).fill(0),
+        }),
     };
     const trace = [];
     let c = 7;
@@ -2096,13 +2141,13 @@ test("scanSpec matches Pascal probe trace", () => {
     if (scenario === 1) {
       c = 11;
       threeCodes = true;
-      state.saveStack[state.savePtr] = 777;
+      state.saveStack[state.savePtr].int = 777;
       keywordQueues[853] = [true];
       keywordQueues[854] = [];
     } else if (scenario === 2) {
       c = 12;
       threeCodes = true;
-      state.saveStack[state.savePtr] = 888;
+      state.saveStack[state.savePtr].int = 888;
       keywordQueues[853] = [false];
       keywordQueues[854] = [true];
     } else if (scenario === 3) {
@@ -2113,7 +2158,7 @@ test("scanSpec matches Pascal probe trace", () => {
     } else if (scenario === 4) {
       c = 14;
       threeCodes = true;
-      state.saveStack[state.savePtr] = 444;
+      state.saveStack[state.savePtr].int = 444;
       keywordQueues[853] = [false];
       keywordQueues[854] = [false];
     }
@@ -2143,9 +2188,9 @@ test("scanSpec matches Pascal probe trace", () => {
     const actual = [
       ...trace,
       `SP${state.savePtr}`,
-      `S0${state.saveStack[base]}`,
-      `S1${state.saveStack[base + 1]}`,
-      `S2${state.saveStack[base + 2]}`,
+      `S0${state.saveStack[base].int}`,
+      `S1${state.saveStack[base + 1].int}`,
+      `S2${state.saveStack[base + 2].int}`,
       `CV${state.curVal}`,
     ].join(" ");
     const expected = runProbeText("SCAN_SPEC_TRACE", [scenario]);
@@ -2166,8 +2211,10 @@ test("scanGeneralText matches Pascal probe trace", () => {
       curTok: 0,
       curCmd: 0,
       avail: scenario === 1 ? 900 : 901,
-      memLh: new Array(5000).fill(0),
-      memRh: new Array(5000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(5000).fill(0),
+        rh: new Array(5000).fill(0),
+        }, { minSize: 30001 }),
     };
     const trace = [];
     const availQueue = scenario === 1 ? [100, 101, 102] : [200];
@@ -2209,10 +2256,10 @@ test("scanGeneralText matches Pascal probe trace", () => {
       `WI${state.warningIndex}`,
       `DR${state.defRef}`,
       `AV${state.avail}`,
-      `H${state.memRh[29997]}`,
-      `D${state.memLh[defNode]},${state.memRh[defNode]}`,
-      `N1${state.memLh[101] || 0},${state.memRh[101] || 0}`,
-      `N2${state.memLh[102] || 0},${state.memRh[102] || 0}`,
+      `H${state.mem[29997].hh.rh}`,
+      `D${state.mem[defNode].hh.lh},${state.mem[defNode].hh.rh}`,
+      `N1${state.mem[101].hh.lh || 0},${state.mem[101].hh.rh || 0}`,
+      `N2${state.mem[102].hh.lh || 0},${state.mem[102].hh.rh || 0}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("SCAN_GENERAL_TEXT_TRACE", [scenario]);
@@ -2235,12 +2282,14 @@ test("scanExpr matches Pascal probe trace", () => {
       interaction: 2,
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
-      memInt: new Array(10000).fill(0),
-      memRh: new Array(10000).fill(0),
-      memB0: new Array(10000).fill(0),
-      memB1: new Array(10000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(10000).fill(0),
+        b1: new Array(10000).fill(0),
+        int: new Array(10000).fill(0),
+        rh: new Array(10000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[0] = 5;
+    state.mem[0].hh.rh = 5;
 
     const trace = [];
     const tokens = [];
@@ -2264,16 +2313,16 @@ test("scanExpr matches Pascal probe trace", () => {
       tokens.push([20, 3000], [20, 3115], [20, 3001], [0, 0]);
       glues.push(200, 300);
       specQueue.push(400);
-      state.memB0[200] = 0;
-      state.memB1[200] = 0;
-      state.memInt[201] = 5;
-      state.memInt[202] = 10;
-      state.memInt[203] = 20;
-      state.memB0[300] = 2;
-      state.memB1[300] = 1;
-      state.memInt[301] = 7;
-      state.memInt[302] = 30;
-      state.memInt[303] = 40;
+      state.mem[200].hh.b0 = 0;
+      state.mem[200].hh.b1 = 0;
+      state.mem[201].int = 5;
+      state.mem[202].int = 10;
+      state.mem[203].int = 20;
+      state.mem[300].hh.b0 = 2;
+      state.mem[300].hh.b1 = 1;
+      state.mem[301].int = 7;
+      state.mem[302].int = 30;
+      state.mem[303].int = 40;
     } else {
       tokens.push([20, 3000], [0, 0]);
       ints.push(3000000000);
@@ -2325,11 +2374,11 @@ test("scanExpr matches Pascal probe trace", () => {
         if (specQueue.length === 0) {
           nextNode += 4;
         }
-        state.memB0[q] = state.memB0[p];
-        state.memB1[q] = state.memB1[p];
-        state.memInt[q + 1] = state.memInt[p + 1];
-        state.memInt[q + 2] = state.memInt[p + 2];
-        state.memInt[q + 3] = state.memInt[p + 3];
+        state.mem[q].hh.b0 = state.mem[p].hh.b0;
+        state.mem[q].hh.b1 = state.mem[p].hh.b1;
+        state.mem[q + 1].int = state.mem[p + 1].int;
+        state.mem[q + 2].int = state.mem[p + 2].int;
+        state.mem[q + 3].int = state.mem[p + 3].int;
         trace.push(`NS${p}=${q}`);
         return q;
       },
@@ -2384,8 +2433,8 @@ test("scanExpr matches Pascal probe trace", () => {
       `AE${state.arithError ? 1 : 0}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]}`,
-      `M400${state.memInt[401]},${state.memInt[402]},${state.memInt[403]},${state.memB0[400]},${state.memB1[400]}`,
-      `R0${state.memRh[0]}`,
+      `M400${state.mem[401].int},${state.mem[402].int},${state.mem[403].int},${state.mem[400].hh.b0},${state.mem[400].hh.b1}`,
+      `R0${state.mem[0].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("SCAN_EXPR_TRACE", [scenario]);
@@ -2405,13 +2454,6 @@ test("pseudoStart matches Pascal probe trace", () => {
       strPool: new Array(2000).fill(0),
       strStart: new Array(2000).fill(0),
       strPtr: 1,
-      eqtbInt: new Array(6000).fill(0),
-      memLh: new Array(10000).fill(0),
-      memRh: new Array(10000).fill(0),
-      memB0: new Array(10000).fill(0),
-      memB1: new Array(10000).fill(0),
-      memB2: new Array(10000).fill(0),
-      memB3: new Array(10000).fill(0),
       pseudoFiles: 800,
       line: 99,
       curInput: makeInputRecord(0, 0, 50, 60, 70, 17),
@@ -2419,11 +2461,22 @@ test("pseudoStart matches Pascal probe trace", () => {
       maxPrintLine: 80,
       fileOffset: scenario === 2 ? 1 : 0,
       openParens: 2,
+      mem: memoryWordsFromComponents({
+        b0: new Array(10000).fill(0),
+        b1: new Array(10000).fill(0),
+        b2: new Array(10000).fill(0),
+        b3: new Array(10000).fill(0),
+        lh: new Array(10000).fill(0),
+        rh: new Array(10000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     };
     state.strStart[1] = 100;
-    state.eqtbInt[5317] = 10;
-    state.eqtbInt[5326] = scenario === 3 ? 0 : 1;
-    state.memRh[29997] = 555;
+    state.eqtb[5317].int = 10;
+    state.eqtb[5326].int = scenario === 3 ? 0 : 1;
+    state.mem[29997].hh.rh = 555;
 
     const trace = [];
     const nodeQueue = [700, 710];
@@ -2472,10 +2525,10 @@ test("pseudoStart matches Pascal probe trace", () => {
       `LN${state.line}`,
       `CI${state.curInput.startField},${state.curInput.limitField},${state.curInput.locField},${state.curInput.nameField}`,
       `OP${state.openParens}`,
-      `L600${state.memLh[600]},${state.memRh[600]}`,
-      `L700${state.memLh[700]},${state.memRh[700]}`,
-      `B701${state.memB0[701]},${state.memB1[701]},${state.memB2[701]},${state.memB3[701]}`,
-      `B711${state.memB0[711]},${state.memB1[711]},${state.memB2[711]},${state.memB3[711]}`,
+      `L600${state.mem[600].hh.lh},${state.mem[600].hh.rh}`,
+      `L700${state.mem[700].hh.lh},${state.mem[700].hh.rh}`,
+      `B701${state.mem[701].hh.b0},${state.mem[701].hh.b1},${state.mem[701].qqqq.b2},${state.mem[701].qqqq.b3}`,
+      `B711${state.mem[711].hh.b0},${state.mem[711].hh.b1},${state.mem[711].qqqq.b2},${state.mem[711].qqqq.b3}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("PSEUDO_START_TRACE", [scenario]);
@@ -2493,15 +2546,17 @@ test("strToks matches Pascal probe trace", () => {
       initPoolPtr: 0,
       strPool: new Array(2000).fill(0),
       avail: scenario === 1 ? 900 : 0,
-      memLh: new Array(5000).fill(0),
-      memRh: new Array(5000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(5000).fill(0),
+        rh: new Array(5000).fill(0),
+        }, { minSize: 30001 }),
     };
     const b = 10;
     if (scenario === 1) {
       state.strPool[10] = 32;
       state.strPool[11] = 65;
-      state.memRh[900] = 901;
-      state.memRh[901] = 0;
+      state.mem[900].hh.rh = 901;
+      state.mem[901].hh.rh = 0;
     } else {
       state.strPool[10] = 66;
     }
@@ -2521,10 +2576,10 @@ test("strToks matches Pascal probe trace", () => {
     const parts = [
       ...trace,
       `P${p}`,
-      `H${state.memRh[29997]}`,
-      `N900${state.memLh[900]},${state.memRh[900]}`,
-      `N901${state.memLh[901]},${state.memRh[901]}`,
-      `N700${state.memLh[700]},${state.memRh[700]}`,
+      `H${state.mem[29997].hh.rh}`,
+      `N900${state.mem[900].hh.lh},${state.mem[900].hh.rh}`,
+      `N901${state.mem[901].hh.lh},${state.mem[901].hh.rh}`,
+      `N700${state.mem[700].hh.lh},${state.mem[700].hh.rh}`,
       `AV${state.avail}`,
       `PP${state.poolPtr}`,
     ];
@@ -2545,9 +2600,12 @@ test("theToks matches Pascal probe trace", () => {
       avail: 0,
       curVal: 0,
       curValLevel: 0,
-      memLh: new Array(6000).fill(0),
-      memRh: new Array(6000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(6000).fill(0),
+        rh: new Array(6000).fill(0),
+        }, { minSize: 30001 }),
     };
+    state.mem[29997].hh.rh = undefined;
     const trace = [];
     let nextAvail = 700;
 
@@ -2556,19 +2614,19 @@ test("theToks matches Pascal probe trace", () => {
     } else if (scenario === 2) {
       state.curChr = 3;
       state.poolPtr = 50;
-      state.memRh[29997] = 777;
+      state.mem[29997].hh.rh = 777;
     } else {
       state.curChr = 2;
     }
 
     if (scenario === 4) {
       state.avail = 900;
-      state.memRh[900] = 0;
-      state.memRh[800] = 801;
-      state.memLh[801] = 5000;
-      state.memRh[801] = 802;
-      state.memLh[802] = 5001;
-      state.memRh[802] = 0;
+      state.mem[900].hh.rh = 0;
+      state.mem[800].hh.rh = 801;
+      state.mem[801].hh.lh = 5000;
+      state.mem[801].hh.rh = 802;
+      state.mem[802].hh.lh = 5001;
+      state.mem[802].hh.rh = 0;
     }
 
     const p = theToks(state, {
@@ -2629,10 +2687,10 @@ test("theToks matches Pascal probe trace", () => {
       ...trace,
       `P${p}`,
       `SEL${state.selector}`,
-      `H${state.memRh[29997]}`,
-      `N700${state.memLh[700]},${state.memRh[700]}`,
-      `N900${state.memLh[900]},${state.memRh[900]}`,
-      `N901${state.memLh[901]},${state.memRh[901]}`,
+      `H${state.mem[29997].hh.rh}`,
+      `N700${state.mem[700].hh.lh},${state.mem[700].hh.rh}`,
+      `N900${state.mem[900].hh.lh},${state.mem[900].hh.rh}`,
+      `N901${state.mem[901].hh.lh},${state.mem[901].hh.rh}`,
       `AV${state.avail}`,
     ];
     const actual = parts.join(" ");
@@ -2643,9 +2701,11 @@ test("theToks matches Pascal probe trace", () => {
 
 test("insTheToks matches Pascal probe trace", () => {
   const state = {
-    memRh: new Array(40000).fill(0),
+    mem: memoryWordsFromComponents({
+      rh: new Array(40000).fill(0),
+      }, { minSize: 30001 }),
   };
-  state.memRh[29997] = 700;
+  state.mem[29997].hh.rh = 700;
 
   const trace = [];
   insTheToks(state, {
@@ -2658,8 +2718,8 @@ test("insTheToks matches Pascal probe trace", () => {
 
   const parts = [
     ...trace,
-    `M29988${state.memRh[29988]}`,
-    `M29997${state.memRh[29997]}`,
+    `M29988${state.mem[29988].hh.rh}`,
+    `M29997${state.mem[29997].hh.rh}`,
   ];
   const actual = parts.join(" ");
   const expected = runProbeText("INS_THE_TOKS_TRACE", [1]);
@@ -2682,9 +2742,11 @@ test("convToks matches Pascal probe trace", () => {
       fontName: new Array(1000).fill(0),
       fontSize: new Array(1000).fill(0),
       fontDsize: new Array(1000).fill(0),
-      memRh: new Array(40000).fill(0),
+      mem: memoryWordsFromComponents({
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[29997] = 700 + scenario;
+    state.mem[29997].hh.rh = 700 + scenario;
 
     if (scenario === 1) {
       state.curChr = 0;
@@ -2763,8 +2825,8 @@ test("convToks matches Pascal probe trace", () => {
       `CV${state.curVal}`,
       `CC${state.curCmd},${state.curChr}`,
       `JN${state.jobName}`,
-      `M29988${state.memRh[29988]}`,
-      `M29997${state.memRh[29997]}`,
+      `M29988${state.mem[29988].hh.rh}`,
+      `M29997${state.mem[29997].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("CONV_TOKS_TRACE", [scenario]);
@@ -2787,8 +2849,10 @@ test("scanToks matches Pascal probe trace", () => {
       alignState: 5,
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
-      memLh: new Array(50000).fill(0),
-      memRh: new Array(50000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(50000).fill(0),
+        rh: new Array(50000).fill(0),
+        }, { minSize: 30001 }),
     };
 
     let macroDef = false;
@@ -2848,8 +2912,8 @@ test("scanToks matches Pascal probe trace", () => {
       );
     } else if (scenario === 7) {
       xpand = true;
-      state.memRh[600] = 601;
-      state.memLh[601] = 3585;
+      state.mem[600].hh.rh = 601;
+      state.mem[601].hh.lh = 3585;
       nextQueue.push(
         { cmd: 112, chr: 600, tok: 0 },
         { cmd: 2, chr: 0, tok: 0 },
@@ -2914,14 +2978,14 @@ test("scanToks matches Pascal probe trace", () => {
       theToks: () => {
         trace.push("TT");
         if (scenario === 6) {
-          state.memRh[29997] = 900;
-          state.memLh[900] = 7000;
-          state.memRh[900] = 901;
-          state.memLh[901] = 7001;
-          state.memRh[901] = 0;
+          state.mem[29997].hh.rh = 900;
+          state.mem[900].hh.lh = 7000;
+          state.mem[900].hh.rh = 901;
+          state.mem[901].hh.lh = 7001;
+          state.mem[901].hh.rh = 0;
           return 901;
         }
-        state.memRh[29997] = 0;
+        state.mem[29997].hh.rh = 0;
         return 0;
       },
       xToken: () => {
@@ -2946,11 +3010,11 @@ test("scanToks matches Pascal probe trace", () => {
     });
 
     const toks = [];
-    let r = state.memRh[state.defRef] || 0;
+    let r = state.mem[state.defRef].hh.rh || 0;
     let guard = 0;
     while (r !== 0 && guard < 80) {
-      toks.push(state.memLh[r]);
-      r = state.memRh[r] || 0;
+      toks.push(state.mem[r].hh.lh);
+      r = state.mem[r].hh.rh || 0;
       guard += 1;
     }
 
@@ -2964,12 +3028,92 @@ test("scanToks matches Pascal probe trace", () => {
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]}`,
       `TOKS${toks.join(",")}`,
-      `H29997${state.memRh[29997]}`,
+      `H29997${state.mem[29997].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("SCAN_TOKS_TRACE", [scenario]);
     assert.equal(actual, expected, `SCAN_TOKS_TRACE mismatch for ${scenario}`);
   }
+});
+
+test("scanToks encodes #n and ## correctly in macro replacement text", () => {
+  const state = {
+    scannerStatus: 0,
+    warningIndex: 0,
+    curCs: 777,
+    defRef: 0,
+    curTok: 0,
+    curCmd: 0,
+    curChr: 0,
+    alignState: 0,
+    helpPtr: 0,
+    helpLine: new Array(6).fill(0),
+    mem: memoryWordsFromComponents({
+      lh: new Array(50000).fill(0),
+      rh: new Array(50000).fill(0),
+      }, { minSize: 30001 }),
+  };
+
+  const tokenQueue = [
+    // Parameter text: #1#2#3{
+    { cmd: 6, chr: 35, tok: 1571 },
+    { cmd: 12, chr: 49, tok: 3121 },
+    { cmd: 6, chr: 35, tok: 1571 },
+    { cmd: 12, chr: 50, tok: 3122 },
+    { cmd: 6, chr: 35, tok: 1571 },
+    { cmd: 12, chr: 51, tok: 3123 },
+    { cmd: 1, chr: 123, tok: 379 },
+    // Replacement text: #2##
+    { cmd: 6, chr: 35, tok: 1571 },
+    { cmd: 12, chr: 50, tok: 3122 },
+    { cmd: 6, chr: 35, tok: 1571 },
+    { cmd: 6, chr: 35, tok: 1571 },
+    // Closing "}"
+    { cmd: 2, chr: 125, tok: 637 },
+  ];
+  let tokenIndex = 0;
+  let nextAvail = 41000;
+
+  scanToks(true, false, state, {
+    getAvail: () => {
+      const q = nextAvail;
+      nextAvail += 1;
+      return q;
+    },
+    getToken: () => {
+      const t = tokenQueue[tokenIndex] ?? tokenQueue[tokenQueue.length - 1];
+      tokenIndex += 1;
+      state.curCmd = t.cmd;
+      state.curChr = t.chr;
+      state.curTok = t.tok;
+    },
+    printNl: () => {},
+    print: () => {},
+    error: () => {},
+    backError: () => {},
+    scanLeftBrace: () => {},
+    getNext: () => {},
+    expand: () => {},
+    theToks: () => 0,
+    xToken: () => {},
+    getXToken: () => {},
+    sprintCs: () => {},
+  });
+
+  const toks = [];
+  let p = state.mem[state.defRef].hh.rh ?? 0;
+  let guard = 0;
+  while (p !== 0 && guard < 16) {
+    toks.push(state.mem[p].hh.lh ?? 0);
+    p = state.mem[p].hh.rh ?? 0;
+    guard += 1;
+  }
+
+  assert.deepEqual(
+    toks,
+    [3363, 3363, 3363, 3584, 1282, 1571],
+    "replacement text should encode #2 as parameter token and ## as literal #",
+  );
 });
 
 test("readToks matches Pascal probe trace", () => {
@@ -2980,15 +3124,12 @@ test("readToks matches Pascal probe trace", () => {
       scannerStatus: 0,
       warningIndex: 0,
       defRef: 0,
-      memLh: new Array(50000).fill(0),
-      memRh: new Array(50000).fill(0),
       alignState: 7,
       curInput: makeInputRecord(1, 0, 10, 0, 0, 0),
       readOpen: new Array(32).fill(0),
       interaction: 2,
       readFile: new Array(32).fill(0),
       last: 10,
-      eqtbInt: new Array(6000).fill(0),
       buffer: new Array(5000).fill(0),
       first: 0,
       curChr: 0,
@@ -2996,6 +3137,13 @@ test("readToks matches Pascal probe trace", () => {
       curVal: 0,
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(50000).fill(0),
+        rh: new Array(50000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     };
 
     let n = -1;
@@ -3008,11 +3156,11 @@ test("readToks matches Pascal probe trace", () => {
       n = -1;
       j = 1;
       state.readOpen[16] = 2;
-      state.eqtbInt[5316] = 300;
+      state.eqtb[5316].int = 300;
     } else if (scenario === 2) {
       n = 3;
       state.readOpen[3] = 2;
-      state.eqtbInt[5316] = 35;
+      state.eqtb[5316].int = 35;
       tokenQueue.push(
         { cmd: 11, chr: 0, tok: 5000 },
         { cmd: 0, chr: 0, tok: 0 },
@@ -3020,7 +3168,7 @@ test("readToks matches Pascal probe trace", () => {
     } else if (scenario === 3) {
       n = 1;
       state.readOpen[1] = 1;
-      state.eqtbInt[5316] = -1;
+      state.eqtb[5316].int = -1;
       inputLnResults.push(false);
       tokenQueue.push(
         { cmd: 11, chr: 0, tok: 7000 },
@@ -3029,13 +3177,13 @@ test("readToks matches Pascal probe trace", () => {
     } else if (scenario === 4) {
       n = 2;
       state.readOpen[2] = 0;
-      state.eqtbInt[5316] = -1;
+      state.eqtb[5316].int = -1;
       inputLnResults.push(false);
       tokenQueue.push({ cmd: 0, chr: 0, tok: 0 });
     } else if (scenario === 5) {
       n = 4;
       state.readOpen[4] = 0;
-      state.eqtbInt[5316] = -1;
+      state.eqtb[5316].int = -1;
       inputLnResults.push(true);
       tokenQueue.push(
         { cmd: 11, chr: 0, tok: 5000 },
@@ -3116,11 +3264,11 @@ test("readToks matches Pascal probe trace", () => {
     });
 
     const toks = [];
-    let p = state.memRh[state.defRef] || 0;
+    let p = state.mem[state.defRef].hh.rh || 0;
     let guard = 0;
     while (p !== 0 && guard < 80) {
-      toks.push(state.memLh[p]);
-      p = state.memRh[p] || 0;
+      toks.push(state.mem[p].hh.lh);
+      p = state.mem[p].hh.rh || 0;
       guard += 1;
     }
 

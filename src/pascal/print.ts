@@ -1,7 +1,7 @@
 import { pascalDiv, pascalMod } from "./runtime";
+import type { TeXStateSlice } from "./state_slices";
 
-export interface PrintState {
-  dig: number[];
+export interface PrintState extends TeXStateSlice<"dig">{
   output: number[];
 }
 

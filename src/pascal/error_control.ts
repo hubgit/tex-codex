@@ -1,3 +1,4 @@
+import type { TeXStateSlice } from "./state_slices";
 export class JumpOutSignal extends Error {
   constructor() {
     super("JUMP_OUT");
@@ -18,27 +19,7 @@ export interface ErrorCurInputRecord {
   limitField: number;
 }
 
-export interface ErrorState {
-  history: number;
-  interaction: number;
-  errorCount: number;
-  helpPtr: number;
-  helpLine: number[];
-  useErrHelp: boolean;
-  deletionsAllowed: boolean;
-  curTok: number;
-  curCmd: number;
-  curChr: number;
-  alignState: number;
-  okToInterrupt: boolean;
-  basePtr: number;
-  inputStack: ErrorInputStateRecord[];
-  line: number;
-  first: number;
-  last: number;
-  buffer: number[];
-  curInput: ErrorCurInputRecord;
-  selector: number;
+export interface ErrorState extends TeXStateSlice<"history" | "interaction" | "errorCount" | "helpPtr" | "helpLine" | "useErrHelp" | "deletionsAllowed" | "curTok" | "curCmd" | "curChr" | "alignState" | "okToInterrupt" | "basePtr" | "inputStack" | "line" | "first" | "last" | "buffer" | "curInput" | "selector">{
 }
 
 export interface ErrorOps {
@@ -226,12 +207,7 @@ export function error(state: ErrorState, ops: ErrorOps): void {
   ops.printLn();
 }
 
-export interface FatalErrorState {
-  interaction: number;
-  logOpened: boolean;
-  history: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface FatalErrorState extends TeXStateSlice<"interaction" | "logOpened" | "history" | "helpPtr" | "helpLine">{
 }
 
 export interface FatalErrorOps {
@@ -264,12 +240,7 @@ export function fatalError(
   return ops.jumpOut();
 }
 
-export interface OverflowState {
-  interaction: number;
-  logOpened: boolean;
-  history: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface OverflowState extends TeXStateSlice<"interaction" | "logOpened" | "history" | "helpPtr" | "helpLine">{
 }
 
 export interface OverflowOps {
@@ -310,12 +281,7 @@ export function overflow(
   return ops.jumpOut();
 }
 
-export interface ConfusionState {
-  interaction: number;
-  logOpened: boolean;
-  history: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ConfusionState extends TeXStateSlice<"interaction" | "logOpened" | "history" | "helpPtr" | "helpLine">{
 }
 
 export interface ConfusionOps {
@@ -358,11 +324,7 @@ export function confusion(
   return ops.jumpOut();
 }
 
-export interface NormalizeSelectorState {
-  logOpened: boolean;
-  selector: number;
-  jobName: number;
-  interaction: number;
+export interface NormalizeSelectorState extends TeXStateSlice<"logOpened" | "selector" | "jobName" | "interaction">{
 }
 
 export interface NormalizeSelectorOps {
@@ -396,12 +358,7 @@ export function intError(n: number, ops: IntErrorOps): void {
   ops.error();
 }
 
-export interface PrepareMagState {
-  magSet: number;
-  eqtbInt: number[];
-  xeqLevel: number[];
-  helpPtr: number;
-  helpLine: number[];
+export interface PrepareMagState extends TeXStateSlice<"magSet" | "eqtb" | "xeqLevel" | "helpPtr" | "helpLine">{
 }
 
 export interface PrepareMagOps {
@@ -413,10 +370,10 @@ export interface PrepareMagOps {
 }
 
 export function prepareMag(state: PrepareMagState, ops: PrepareMagOps): void {
-  if (state.magSet > 0 && state.eqtbInt[5285] !== state.magSet) {
+  if (state.magSet > 0 && state.eqtb[5285].int !== state.magSet) {
     ops.printNl(263);
     ops.print(555);
-    ops.printInt(state.eqtbInt[5285]);
+    ops.printInt(state.eqtb[5285].int);
     ops.print(556);
     ops.printNl(557);
     state.helpPtr = 2;
@@ -426,26 +383,19 @@ export function prepareMag(state: PrepareMagState, ops: PrepareMagOps): void {
     ops.geqWordDefine(5285, state.magSet);
   }
 
-  if (state.eqtbInt[5285] <= 0 || state.eqtbInt[5285] > 32768) {
+  if (state.eqtb[5285].int <= 0 || state.eqtb[5285].int > 32768) {
     ops.printNl(263);
     ops.print(560);
     state.helpPtr = 1;
     state.helpLine[0] = 561;
-    ops.intError(state.eqtbInt[5285]);
+    ops.intError(state.eqtb[5285].int);
     ops.geqWordDefine(5285, 1000);
   }
 
-  state.magSet = state.eqtbInt[5285];
+  state.magSet = state.eqtb[5285].int;
 }
 
-export interface PauseForInstructionsState {
-  okToInterrupt: boolean;
-  interaction: number;
-  selector: number;
-  helpPtr: number;
-  helpLine: number[];
-  deletionsAllowed: boolean;
-  interrupt: number;
+export interface PauseForInstructionsState extends TeXStateSlice<"okToInterrupt" | "interaction" | "selector" | "helpPtr" | "helpLine" | "deletionsAllowed" | "interrupt">{
 }
 
 export interface PauseForInstructionsOps {

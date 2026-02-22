@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { listStateRecordFromComponents, memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -36,13 +37,15 @@ test("changeIfLimit matches Pascal probe trace", () => {
     const state = {
       ifLimit: ifLimitInit,
       condPtr,
-      memB0: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[q1] = q1Next;
-    state.memB0[q1] = q1B0;
-    state.memRh[q2] = q2Next;
-    state.memB0[q2] = q2B0;
+    state.mem[q1].hh.rh = q1Next;
+    state.mem[q1].hh.b0 = q1B0;
+    state.mem[q2].hh.rh = q2Next;
+    state.mem[q2].hh.b0 = q2B0;
     let confusionArg = -1;
 
     changeIfLimit(l, p, state, {
@@ -51,7 +54,7 @@ test("changeIfLimit matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `${state.ifLimit} ${state.memB0[q1]} ${state.memB0[q2]} ${confusionArg}`;
+    const actual = `${state.ifLimit} ${state.mem[q1].hh.b0} ${state.mem[q2].hh.b0} ${confusionArg}`;
     const expected = runProbeText("CHANGE_IF_LIMIT_TRACE", c);
     assert.equal(actual, expected, `CHANGE_IF_LIMIT_TRACE mismatch for ${c.join(",")}`);
   }
@@ -96,9 +99,11 @@ test("passText matches Pascal probe trace", () => {
       line,
       curCmd: 0,
       curChr: 0,
-      eqtbInt: new Array(6000).fill(0),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     };
-    state.eqtbInt[5325] = eqtb5325;
+    state.eqtb[5325].int = eqtb5325;
 
     let step = 0;
     let shown = 0;
@@ -125,21 +130,12 @@ test("conditional matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      eqtbInt: new Array(7000).fill(0),
-      eqtbB0: new Array(8000).fill(0),
-      eqtbRh: new Array(8000).fill(0),
-      memB0: new Array(50000).fill(0),
-      memB1: new Array(50000).fill(0),
-      memLh: new Array(50000).fill(0),
-      memRh: new Array(50000).fill(0),
-      memInt: new Array(50000).fill(0),
       readOpen: new Array(32).fill(2),
       ifStack: new Array(32).fill(0),
       buffer: new Array(6000).fill(0),
       fontBc: new Array(512).fill(0),
       fontEc: new Array(512).fill(0),
       charBase: new Array(512).fill(0),
-      fontInfoB0: new Array(12000).fill(0),
       scannerStatus: 9,
       curCmd: 0,
       curChr: 0,
@@ -158,7 +154,24 @@ test("conditional matches Pascal probe trace", () => {
       bufSize: 200,
       helpPtr: 0,
       helpLine: new Array(6).fill(0),
-      curListModeField: 1,
+      mem: memoryWordsFromComponents({
+        b0: new Array(50000).fill(0),
+        b1: new Array(50000).fill(0),
+        int: new Array(50000).fill(0),
+        lh: new Array(50000).fill(0),
+        rh: new Array(50000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        b0: new Array(8000).fill(0),
+        int: new Array(7000).fill(0),
+        rh: new Array(8000).fill(0),
+        }),
+      fontInfo: memoryWordsFromComponents({
+        b0: new Array(12000).fill(0),
+        }),
+      curList: listStateRecordFromComponents({
+        modeField: 1,
+        }),
     };
 
     const trace = [];
@@ -190,7 +203,7 @@ test("conditional matches Pascal probe trace", () => {
       );
     } else if (scenario === 5) {
       state.curChr = 16;
-      state.eqtbInt[5304] = 2;
+      state.eqtb[5304].int = 2;
     } else if (scenario === 6) {
       state.curChr = 18;
       xQueue.push(
@@ -198,28 +211,28 @@ test("conditional matches Pascal probe trace", () => {
         { cmd: 11, chr: 0, tok: 5001, cs: 0 },
         { cmd: 67, chr: 0, tok: 0, cs: 700 },
       );
-      state.eqtbB0[777] = 100;
+      state.eqtb[777].hh.b0 = 100;
     } else if (scenario === 7) {
       state.curChr = 12;
       nextQueue.push(
         { cmd: 111, chr: 901, tok: 0, cs: 50 },
         { cmd: 111, chr: 902, tok: 0, cs: 0 },
       );
-      state.eqtbRh[50] = 950;
-      state.memRh[950] = 1000;
-      state.memLh[1000] = 11;
-      state.memRh[1000] = 1001;
-      state.memLh[1001] = 12;
-      state.memRh[1001] = 0;
-      state.memRh[902] = 1100;
-      state.memLh[1100] = 11;
-      state.memRh[1100] = 1101;
-      state.memLh[1101] = 12;
-      state.memRh[1101] = 0;
+      state.eqtb[50].hh.rh = 950;
+      state.mem[950].hh.rh = 1000;
+      state.mem[1000].hh.lh = 11;
+      state.mem[1000].hh.rh = 1001;
+      state.mem[1001].hh.lh = 12;
+      state.mem[1001].hh.rh = 0;
+      state.mem[902].hh.rh = 1100;
+      state.mem[1100].hh.lh = 11;
+      state.mem[1100].hh.rh = 1101;
+      state.mem[1101].hh.lh = 12;
+      state.mem[1101].hh.rh = 0;
     } else if (scenario === 8) {
       state.curChr = 11;
-      state.eqtbRh[3688] = 400;
-      state.memB0[400] = 1;
+      state.eqtb[3688].hh.rh = 400;
+      state.mem[400].hh.b0 = 1;
     }
 
     const shiftOr = (queue, fallback) => {
@@ -309,7 +322,7 @@ test("conditional matches Pascal probe trace", () => {
         state.fontBc[10] = 1;
         state.fontEc[10] = 6;
         state.charBase[10] = 200;
-        state.fontInfoB0[204] = 1;
+        state.fontInfo[204].qqqq.b0 = 1;
         trace.push("SCN4");
       },
       beginDiagnostic: () => trace.push("BD"),
@@ -341,11 +354,11 @@ test("conditional matches Pascal probe trace", () => {
         }
         let q = state.condPtr;
         while (q !== 0) {
-          if (state.memRh[q] === p) {
-            state.memB0[q] = l;
+          if (state.mem[q].hh.rh === p) {
+            state.mem[q].hh.b0 = l;
             return;
           }
-          q = state.memRh[q];
+          q = state.mem[q].hh.rh;
         }
       },
       error: () => trace.push("ER"),
@@ -362,9 +375,9 @@ test("conditional matches Pascal probe trace", () => {
       `SS${state.scannerStatus}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]}`,
-      `MB300${state.memB0[300]},${state.memB1[300]}`,
-      `MR300${state.memRh[300]}`,
-      `MI301${state.memInt[301]}`,
+      `MB300${state.mem[300].hh.b0},${state.mem[300].hh.b1}`,
+      `MR300${state.mem[300].hh.rh}`,
+      `MI301${state.mem[301].int}`,
       `BUF10${state.buffer[10]},${state.buffer[11]},${state.buffer[12]}`,
       `MBS${state.maxBufStack}`,
     ].join(" ");

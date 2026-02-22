@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -64,9 +65,11 @@ test("printWriteWhatsit matches Pascal probe", () => {
   for (const c of cases) {
     const [s, lh] = c;
     const state = {
-      memLh: new Array(1000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(1000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[101] = lh;
+    state.mem[101].hh.lh = lh;
     let out = "";
     printWriteWhatsit(
       s,
@@ -95,19 +98,21 @@ test("printSANum matches Pascal probe", () => {
 
   for (const c of cases) {
     const state = {
-      memB0: new Array(1000).fill(0),
-      memB1: new Array(1000).fill(0),
-      memRh: new Array(1000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(1000).fill(0),
+        b1: new Array(1000).fill(0),
+        rh: new Array(1000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memB0[100] = c[0];
-    state.memB1[100] = c[1];
-    state.memRh[100] = c[2];
-    state.memRh[101] = c[3];
-    state.memB0[200] = c[4];
-    state.memB1[200] = c[5];
-    state.memRh[200] = c[6];
-    state.memRh[201] = c[7];
-    state.memB0[300] = c[8];
+    state.mem[100].hh.b0 = c[0];
+    state.mem[100].hh.b1 = c[1];
+    state.mem[100].hh.rh = c[2];
+    state.mem[101].hh.rh = c[3];
+    state.mem[200].hh.b0 = c[4];
+    state.mem[200].hh.b1 = c[5];
+    state.mem[200].hh.rh = c[6];
+    state.mem[201].hh.rh = c[7];
+    state.mem[300].hh.b0 = c[8];
 
     let out = "";
     printSANum(

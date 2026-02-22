@@ -1,4 +1,5 @@
 import { InStateRecord } from "./input_state";
+import type { TeXStateSlice, SaveStackIntSlice } from "./state_slices";
 
 const CAT_ESCAPE = 0;
 const CAT_SUP_MARK = 7;
@@ -68,45 +69,10 @@ function tryReduceExpandedCode(
 }
 
 function endLineCharInactive(state: GetNextState): boolean {
-  return state.eqtbInt[5316] < 0 || state.eqtbInt[5316] > 255;
+  return state.eqtb[5316].int < 0 || state.eqtb[5316].int > 255;
 }
 
-export interface GetNextState {
-  curCs: number;
-  curInput: InStateRecord;
-  curCmd: number;
-  curChr: number;
-  buffer: number[];
-  eqtbRh: number[];
-  eqtbB0: number[];
-  eqtbInt: number[];
-  first: number;
-  line: number;
-  forceEof: boolean;
-  eofSeen: boolean[];
-  inputFile: number[];
-  inOpen: number;
-  grpStack: number[];
-  ifStack: number[];
-  curBoundary: number;
-  condPtr: number;
-  openParens: number;
-  inputPtr: number;
-  selector: number;
-  interaction: number;
-  last: number;
-  interrupt: number;
-  deletionsAllowed: boolean;
-  helpPtr: number;
-  helpLine: number[];
-  alignState: number;
-  scannerStatus: number;
-  curAlign: number;
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  paramStack: number[];
-  parLoc: number;
+export interface GetNextState extends TeXStateSlice<"curCs" | "curInput" | "curCmd" | "curChr" | "buffer" | "eqtb" | "eqtb" | "eqtb" | "first" | "line" | "forceEof" | "eofSeen" | "inputFile" | "inOpen" | "grpStack" | "ifStack" | "curBoundary" | "condPtr" | "openParens" | "inputPtr" | "selector" | "interaction" | "last" | "interrupt" | "deletionsAllowed" | "helpPtr" | "helpLine" | "alignState" | "scannerStatus" | "curAlign" | "mem" | "mem" | "mem" | "paramStack" | "parLoc">{
 }
 
 export interface GetNextOps {
@@ -145,7 +111,7 @@ export function getNext(
           state.curInput.locField += 1;
 
           reswitchLoop: while (true) {
-            state.curCmd = state.eqtbRh[3988 + state.curChr];
+            state.curCmd = state.eqtb[3988 + state.curChr].hh.rh;
 
             switch (state.curInput.stateField + state.curCmd) {
               case 10:
@@ -164,7 +130,7 @@ export function getNext(
                   startCsLoop: while (true) {
                     let k = state.curInput.locField;
                     state.curChr = state.buffer[k];
-                    let cat = state.eqtbRh[3988 + state.curChr];
+                    let cat = state.eqtb[3988 + state.curChr].hh.rh;
                     k += 1;
 
                     if (cat === CAT_LETTER || cat === CAT_SPACER) {
@@ -176,7 +142,7 @@ export function getNext(
                     if (cat === CAT_LETTER && k <= state.curInput.limitField) {
                       do {
                         state.curChr = state.buffer[k];
-                        cat = state.eqtbRh[3988 + state.curChr];
+                        cat = state.eqtb[3988 + state.curChr].hh.rh;
                         k += 1;
                       } while (cat === CAT_LETTER && k <= state.curInput.limitField);
 
@@ -205,8 +171,8 @@ export function getNext(
                   }
                 }
 
-                state.curCmd = state.eqtbB0[state.curCs];
-                state.curChr = state.eqtbRh[state.curCs];
+                state.curCmd = state.eqtb[state.curCs].hh.b0;
+                state.curChr = state.eqtb[state.curCs].hh.rh;
                 if (state.curCmd >= 113) {
                   ops.checkOuterValidity();
                 }
@@ -217,8 +183,8 @@ export function getNext(
               case 30:
               case 46:
                 state.curCs = state.curChr + 1;
-                state.curCmd = state.eqtbB0[state.curCs];
-                state.curChr = state.eqtbRh[state.curCs];
+                state.curCmd = state.eqtb[state.curCs].hh.b0;
+                state.curChr = state.eqtb[state.curCs].hh.rh;
                 state.curInput.stateField = 1;
                 if (state.curCmd >= 113) {
                   ops.checkOuterValidity();
@@ -288,8 +254,8 @@ export function getNext(
               case 38:
                 state.curInput.locField = state.curInput.limitField + 1;
                 state.curCs = state.parLoc;
-                state.curCmd = state.eqtbB0[state.curCs];
-                state.curChr = state.eqtbRh[state.curCs];
+                state.curCmd = state.eqtb[state.curCs].hh.b0;
+                state.curChr = state.eqtb[state.curCs].hh.rh;
                 if (state.curCmd >= 113) {
                   ops.checkOuterValidity();
                 }
@@ -347,12 +313,12 @@ export function getNext(
               if (ops.pseudoInput()) {
                 ops.firmUpTheLine();
               } else if (
-                state.eqtbRh[3422] !== 0 &&
+                state.eqtb[3422].hh.rh !== 0 &&
                 !state.eofSeen[state.curInput.indexField]
               ) {
                 state.curInput.limitField = state.first - 1;
                 state.eofSeen[state.curInput.indexField] = true;
-                ops.beginTokenList(state.eqtbRh[3422], 15);
+                ops.beginTokenList(state.eqtb[3422].hh.rh, 15);
                 continue restartLoop;
               } else {
                 state.forceEof = true;
@@ -360,12 +326,12 @@ export function getNext(
             } else if (ops.inputLn(state.inputFile[state.curInput.indexField], true)) {
               ops.firmUpTheLine();
             } else if (
-              state.eqtbRh[3422] !== 0 &&
+              state.eqtb[3422].hh.rh !== 0 &&
               !state.eofSeen[state.curInput.indexField]
             ) {
               state.curInput.limitField = state.first - 1;
               state.eofSeen[state.curInput.indexField] = true;
-              ops.beginTokenList(state.eqtbRh[3422], 15);
+              ops.beginTokenList(state.eqtb[3422].hh.rh, 15);
               continue restartLoop;
             } else {
               state.forceEof = true;
@@ -374,7 +340,7 @@ export function getNext(
 
           if (state.forceEof) {
             if (
-              state.eqtbInt[5327] > 0 &&
+              state.eqtb[5327].int > 0 &&
               (
                 state.grpStack[state.inOpen] !== state.curBoundary ||
                 state.ifStack[state.inOpen] !== state.condPtr
@@ -396,7 +362,7 @@ export function getNext(
           if (endLineCharInactive(state)) {
             state.curInput.limitField -= 1;
           } else {
-            state.buffer[state.curInput.limitField] = state.eqtbInt[5316];
+            state.buffer[state.curInput.limitField] = state.eqtb[5316].int;
           }
           state.first = state.curInput.limitField + 1;
           state.curInput.locField = state.curInput.startField;
@@ -430,7 +396,7 @@ export function getNext(
             if (endLineCharInactive(state)) {
               state.curInput.limitField -= 1;
             } else {
-              state.buffer[state.curInput.limitField] = state.eqtbInt[5316];
+              state.buffer[state.curInput.limitField] = state.eqtb[5316].int;
             }
             state.first = state.curInput.limitField + 1;
             state.curInput.locField = state.curInput.startField;
@@ -445,18 +411,18 @@ export function getNext(
         }
       }
     } else if (state.curInput.locField !== 0) {
-      const t = state.memLh[state.curInput.locField];
-      state.curInput.locField = state.memRh[state.curInput.locField];
+      const t = state.mem[state.curInput.locField].hh.lh;
+      state.curInput.locField = state.mem[state.curInput.locField].hh.rh;
       if (t >= CS_TOKEN_FLAG) {
         state.curCs = t - CS_TOKEN_FLAG;
-        state.curCmd = state.eqtbB0[state.curCs];
-        state.curChr = state.eqtbRh[state.curCs];
+        state.curCmd = state.eqtb[state.curCs].hh.b0;
+        state.curChr = state.eqtb[state.curCs].hh.rh;
         if (state.curCmd >= 113) {
           if (state.curCmd === 116) {
-            state.curCs = state.memLh[state.curInput.locField] - CS_TOKEN_FLAG;
+            state.curCs = state.mem[state.curInput.locField].hh.lh - CS_TOKEN_FLAG;
             state.curInput.locField = 0;
-            state.curCmd = state.eqtbB0[state.curCs];
-            state.curChr = state.eqtbRh[state.curCs];
+            state.curCmd = state.eqtb[state.curCs].hh.b0;
+            state.curChr = state.eqtb[state.curCs].hh.rh;
             if (state.curCmd > 100) {
               state.curCmd = 0;
               state.curChr = 257;
@@ -495,12 +461,12 @@ export function getNext(
         ops.fatalError(604);
         return;
       }
-      state.curCmd = state.memLh[state.curAlign + 5];
-      state.memLh[state.curAlign + 5] = state.curChr;
+      state.curCmd = state.mem[state.curAlign + 5].hh.lh;
+      state.mem[state.curAlign + 5].hh.lh = state.curChr;
       if (state.curCmd === 63) {
         ops.beginTokenList(29990, 2);
       } else {
-        ops.beginTokenList(state.memInt[state.curAlign + 2], 2);
+        ops.beginTokenList(state.mem[state.curAlign + 2].int, 2);
       }
       state.alignState = 1000000;
       continue restartLoop;
@@ -510,12 +476,7 @@ export function getNext(
   }
 }
 
-export interface GetTokenState {
-  noNewControlSequence: boolean;
-  curCs: number;
-  curCmd: number;
-  curChr: number;
-  curTok: number;
+export interface GetTokenState extends TeXStateSlice<"noNewControlSequence" | "curCs" | "curCmd" | "curChr" | "curTok">{
 }
 
 export interface GetTokenOps {
@@ -553,8 +514,8 @@ function storeNewToken(
   ops: MacroCallOps,
 ): number {
   const q = ops.getAvail();
-  state.memRh[p] = q;
-  state.memLh[q] = tok;
+  state.mem[p].hh.rh = q;
+  state.mem[q].hh.lh = tok;
   return q;
 }
 
@@ -568,35 +529,15 @@ function fastStoreCurTok(
     q = ops.getAvail();
   } else {
     q = state.avail;
-    state.avail = state.memRh[q];
-    state.memRh[q] = 0;
+    state.avail = state.mem[q].hh.rh;
+    state.mem[q].hh.rh = 0;
   }
-  state.memRh[p] = q;
-  state.memLh[q] = state.curTok;
+  state.mem[p].hh.rh = q;
+  state.mem[q].hh.lh = state.curTok;
   return q;
 }
 
-export interface MacroCallState {
-  scannerStatus: number;
-  warningIndex: number;
-  curCs: number;
-  curChr: number;
-  curTok: number;
-  longState: number;
-  alignState: number;
-  eqtbInt: number[];
-  eqtbB0: number[];
-  memLh: number[];
-  memRh: number[];
-  curInput: InStateRecord;
-  paramPtr: number;
-  maxParamStack: number;
-  paramSize: number;
-  paramStack: number[];
-  avail: number;
-  helpPtr: number;
-  helpLine: number[];
-  parToken: number;
+export interface MacroCallState extends TeXStateSlice<"scannerStatus" | "warningIndex" | "curCs" | "curChr" | "curTok" | "longState" | "alignState" | "eqtb" | "eqtb" | "mem" | "mem" | "curInput" | "paramPtr" | "maxParamStack" | "paramSize" | "paramStack" | "avail" | "helpPtr" | "helpLine" | "parToken">{
 }
 
 export interface MacroCallOps {
@@ -631,12 +572,12 @@ export function macroCall(
   const saveWarningIndex = state.warningIndex;
   state.warningIndex = state.curCs;
   const refCount = state.curChr;
-  let r = state.memRh[refCount];
+  let r = state.mem[refCount].hh.rh;
   let n = 0;
   const pstack = new Array<number>(64).fill(0);
   let aborted = false;
 
-  if (state.eqtbInt[5298] > 0) {
+  if (state.eqtb[5298].int > 0) {
     ops.beginDiagnostic();
     ops.printLn();
     ops.printCs(state.warningIndex);
@@ -644,31 +585,31 @@ export function macroCall(
     ops.endDiagnostic(false);
   }
 
-  if (state.memLh[r] === OUT_PARAM_TOKEN) {
-    r = state.memRh[r];
+  if (state.mem[r].hh.lh === OUT_PARAM_TOKEN) {
+    r = state.mem[r].hh.rh;
   }
 
-  if (state.memLh[r] !== END_MATCH_TOKEN) {
+  if (state.mem[r].hh.lh !== END_MATCH_TOKEN) {
     state.scannerStatus = 3;
     let unbalance = 0;
-    state.longState = state.eqtbB0[state.curCs];
+    state.longState = state.eqtb[state.curCs].hh.b0;
     if (state.longState >= 113) {
       state.longState -= 2;
     }
 
     do {
-      state.memRh[TEMP_HEAD] = 0;
+      state.mem[TEMP_HEAD].hh.rh = 0;
       let s = 0;
       let p = TEMP_HEAD;
       let m = 0;
       let rbracePtr = 0;
       let matchChr = 0;
 
-      if (state.memLh[r] > END_MATCH_TOKEN - 1 || state.memLh[r] < MATCH_TOKEN) {
+      if (state.mem[r].hh.lh > END_MATCH_TOKEN - 1 || state.mem[r].hh.lh < MATCH_TOKEN) {
         s = 0;
       } else {
-        matchChr = state.memLh[r] - MATCH_TOKEN;
-        s = state.memRh[r];
+        matchChr = state.mem[r].hh.lh - MATCH_TOKEN;
+        s = state.mem[r].hh.rh;
         r = s;
         p = TEMP_HEAD;
         m = 0;
@@ -677,9 +618,9 @@ export function macroCall(
       scanLoop: while (true) {
         ops.getToken();
 
-        if (state.curTok === state.memLh[r]) {
-          r = state.memRh[r];
-          if (state.memLh[r] >= MATCH_TOKEN && state.memLh[r] <= END_MATCH_TOKEN) {
+        if (state.curTok === state.mem[r].hh.lh) {
+          r = state.mem[r].hh.rh;
+          if (state.mem[r].hh.lh >= MATCH_TOKEN && state.mem[r].hh.lh <= END_MATCH_TOKEN) {
             if (state.curTok < LEFT_BRACE_LIMIT) {
               state.alignState -= 1;
             }
@@ -707,32 +648,32 @@ export function macroCall(
           let t = s;
           let continueScan = false;
           while (true) {
-            p = storeNewToken(p, state.memLh[t], state, ops);
+            p = storeNewToken(p, state.mem[t].hh.lh, state, ops);
             m += 1;
-            let u = state.memRh[t];
+            let u = state.mem[t].hh.rh;
             let v = s;
 
             while (true) {
               if (u === r) {
-                if (state.curTok !== state.memLh[v]) {
+                if (state.curTok !== state.mem[v].hh.lh) {
                   break;
                 }
-                r = state.memRh[v];
+                r = state.mem[v].hh.rh;
                 continueScan = true;
                 break;
               }
-              if (state.memLh[u] !== state.memLh[v]) {
+              if (state.mem[u].hh.lh !== state.mem[v].hh.lh) {
                 break;
               }
-              u = state.memRh[u];
-              v = state.memRh[v];
+              u = state.mem[u].hh.rh;
+              v = state.mem[v].hh.rh;
             }
 
             if (continueScan) {
               break;
             }
 
-            t = state.memRh[t];
+            t = state.mem[t].hh.rh;
             if (t === r) {
               break;
             }
@@ -757,7 +698,7 @@ export function macroCall(
             state.helpLine[0] = 658;
             ops.backError();
           }
-          pstack[n] = state.memRh[TEMP_HEAD];
+          pstack[n] = state.mem[TEMP_HEAD].hh.rh;
           state.alignState -= unbalance;
           for (let mm = 0; mm <= n; mm += 1) {
             ops.flushList(pstack[mm]);
@@ -786,7 +727,7 @@ export function macroCall(
                   state.helpLine[0] = 658;
                   ops.backError();
                 }
-                pstack[n] = state.memRh[TEMP_HEAD];
+                pstack[n] = state.mem[TEMP_HEAD].hh.rh;
                 state.alignState -= unbalance;
                 for (let mm = 0; mm <= n; mm += 1) {
                   ops.flushList(pstack[mm]);
@@ -835,8 +776,8 @@ export function macroCall(
         } else {
           if (
             state.curTok === SPACE_TOKEN &&
-            state.memLh[r] <= END_MATCH_TOKEN &&
-            state.memLh[r] >= MATCH_TOKEN
+            state.mem[r].hh.lh <= END_MATCH_TOKEN &&
+            state.mem[r].hh.lh >= MATCH_TOKEN
           ) {
             continue;
           }
@@ -844,7 +785,7 @@ export function macroCall(
         }
 
         m += 1;
-        if (state.memLh[r] > END_MATCH_TOKEN || state.memLh[r] < MATCH_TOKEN) {
+        if (state.mem[r].hh.lh > END_MATCH_TOKEN || state.mem[r].hh.lh < MATCH_TOKEN) {
           continue;
         }
         break scanLoop;
@@ -855,19 +796,19 @@ export function macroCall(
       }
 
       if (s !== 0) {
-        if (m === 1 && state.memLh[p] < RIGHT_BRACE_LIMIT) {
-          state.memRh[rbracePtr] = 0;
-          state.memRh[p] = state.avail;
+        if (m === 1 && state.mem[p].hh.lh < RIGHT_BRACE_LIMIT) {
+          state.mem[rbracePtr].hh.rh = 0;
+          state.mem[p].hh.rh = state.avail;
           state.avail = p;
-          p = state.memRh[TEMP_HEAD];
-          pstack[n] = state.memRh[p];
-          state.memRh[p] = state.avail;
+          p = state.mem[TEMP_HEAD].hh.rh;
+          pstack[n] = state.mem[p].hh.rh;
+          state.mem[p].hh.rh = state.avail;
           state.avail = p;
         } else {
-          pstack[n] = state.memRh[TEMP_HEAD];
+          pstack[n] = state.mem[TEMP_HEAD].hh.rh;
         }
         n += 1;
-        if (state.eqtbInt[5298] > 0) {
+        if (state.eqtb[5298].int > 0) {
           ops.beginDiagnostic();
           ops.printNl(matchChr);
           ops.printInt(n);
@@ -876,7 +817,7 @@ export function macroCall(
           ops.endDiagnostic(false);
         }
       }
-    } while (state.memLh[r] !== END_MATCH_TOKEN);
+    } while (state.mem[r].hh.lh !== END_MATCH_TOKEN);
   }
 
   if (!aborted) {
@@ -889,7 +830,7 @@ export function macroCall(
     }
     ops.beginTokenList(refCount, 5);
     state.curInput.nameField = state.warningIndex;
-    state.curInput.locField = state.memRh[r];
+    state.curInput.locField = state.mem[r].hh.rh;
     if (n > 0) {
       if (state.paramPtr + n > state.maxParamStack) {
         state.maxParamStack = state.paramPtr + n;
@@ -908,10 +849,7 @@ export function macroCall(
   state.warningIndex = saveWarningIndex;
 }
 
-export interface InsertRelaxState {
-  curTok: number;
-  curCs: number;
-  curInput: InStateRecord;
+export interface InsertRelaxState extends TeXStateSlice<"curTok" | "curCs" | "curInput">{
 }
 
 export interface InsertRelaxOps {
@@ -931,42 +869,8 @@ export function insertRelax(
 
 const BACKUP_HEAD = 29987;
 
-export interface ExpandState {
-  curCmd: number;
-  curChr: number;
-  curCs: number;
-  curTok: number;
-  curPtr: number;
-  curVal: number;
-  curValLevel: number;
-  radix: number;
-  curOrder: number;
-  scannerStatus: number;
+export interface ExpandState extends TeXStateSlice<"curCmd" | "curChr" | "curCs" | "curTok" | "curPtr" | "curVal" | "curValLevel" | "radix" | "curOrder" | "scannerStatus" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem" | "curInput" | "curMark" | "first" | "maxBufStack" | "bufSize" | "buffer" | "noNewControlSequence" | "ifLimit" | "ifStack" | "inOpen" | "condPtr" | "ifLine" | "curIf" | "forceEof" | "nameInProgress" | "helpPtr" | "helpLine">{
   saveScannerStatus: number;
-  eqtbInt: number[];
-  eqtbB0: number[];
-  memLh: number[];
-  memRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-  curInput: InStateRecord;
-  curMark: number[];
-  first: number;
-  maxBufStack: number;
-  bufSize: number;
-  buffer: number[];
-  noNewControlSequence: boolean;
-  ifLimit: number;
-  ifStack: number[];
-  inOpen: number;
-  condPtr: number;
-  ifLine: number;
-  curIf: number;
-  forceEof: boolean;
-  nameInProgress: boolean;
-  helpPtr: number;
-  helpLine: number[];
 }
 
 export interface ExpandOps {
@@ -1008,8 +912,8 @@ function storeCsNameToken(
   ops: ExpandOps,
 ): number {
   const q = ops.getAvail();
-  state.memRh[p] = q;
-  state.memLh[q] = tok;
+  state.mem[p].hh.rh = q;
+  state.mem[q].hh.lh = tok;
   return q;
 }
 
@@ -1021,11 +925,11 @@ export function expand(
   const cvlBackup = state.curValLevel;
   const radixBackup = state.radix;
   const coBackup = state.curOrder;
-  const backupBackup = state.memRh[BACKUP_HEAD];
+  const backupBackup = state.mem[BACKUP_HEAD].hh.rh;
 
   dispatchLoop: while (true) {
     if (state.curCmd < 111) {
-      if (state.eqtbInt[5304] > 1) {
+      if (state.eqtb[5304].int > 1) {
         ops.showCurCmdChr();
       }
 
@@ -1043,9 +947,9 @@ export function expand(
             ops.findSaElement(6, state.curVal, false);
             if (state.curPtr !== 0) {
               if (t % 2 !== 0) {
-                state.curPtr = state.memRh[state.curPtr + Math.trunc(t / 2) + 1];
+                state.curPtr = state.mem[state.curPtr + Math.trunc(t / 2) + 1].hh.rh;
               } else {
-                state.curPtr = state.memLh[state.curPtr + Math.trunc(t / 2) + 1];
+                state.curPtr = state.mem[state.curPtr + Math.trunc(t / 2) + 1].hh.lh;
               }
             }
           }
@@ -1095,8 +999,8 @@ export function expand(
           ops.backInput();
           if (t >= 4095) {
             const p = ops.getAvail();
-            state.memLh[p] = 6718;
-            state.memRh[p] = state.curInput.locField;
+            state.mem[p].hh.lh = 6718;
+            state.mem[p].hh.rh = state.curInput.locField;
             state.curInput.startField = p;
             state.curInput.locField = p;
           }
@@ -1126,7 +1030,7 @@ export function expand(
           }
 
           let j = state.first;
-          p = state.memRh[r];
+          p = state.mem[r].hh.rh;
           while (p !== 0) {
             if (j >= state.maxBufStack) {
               state.maxBufStack = j + 1;
@@ -1134,9 +1038,9 @@ export function expand(
                 ops.overflow(257, state.bufSize);
               }
             }
-            state.buffer[j] = state.memLh[p] % 256;
+            state.buffer[j] = state.mem[p].hh.lh % 256;
             j += 1;
-            p = state.memRh[p];
+            p = state.mem[p].hh.rh;
           }
 
           if (j > state.first + 1) {
@@ -1150,7 +1054,7 @@ export function expand(
           }
 
           ops.flushList(r);
-          if (state.eqtbB0[state.curCs] === 101) {
+          if (state.eqtb[state.curCs].hh.b0 === 101) {
             ops.eqDefine(state.curCs, 0, 256);
           }
           state.curTok = state.curCs + 4095;
@@ -1171,7 +1075,7 @@ export function expand(
           break;
 
         case 106:
-          if (state.eqtbInt[5325] > 0 && state.eqtbInt[5304] <= 1) {
+          if (state.eqtb[5325].int > 0 && state.eqtb[5304].int <= 1) {
             ops.showCurCmdChr();
           }
           if (state.curChr > state.ifLimit) {
@@ -1193,10 +1097,10 @@ export function expand(
               ops.ifWarning();
             }
             const p = state.condPtr;
-            state.ifLine = state.memInt[p + 1];
-            state.curIf = state.memB1[p];
-            state.ifLimit = state.memB0[p];
-            state.condPtr = state.memRh[p];
+            state.ifLine = state.mem[p + 1].int;
+            state.curIf = state.mem[p].hh.b1;
+            state.ifLimit = state.mem[p].hh.b0;
+            state.condPtr = state.mem[p].hh.rh;
             ops.freeNode(p, 2);
           }
           break;
@@ -1238,14 +1142,10 @@ export function expand(
   state.curValLevel = cvlBackup;
   state.radix = radixBackup;
   state.curOrder = coBackup;
-  state.memRh[BACKUP_HEAD] = backupBackup;
+  state.mem[BACKUP_HEAD].hh.rh = backupBackup;
 }
 
-export interface GetXTokenState {
-  curCmd: number;
-  curChr: number;
-  curCs: number;
-  curTok: number;
+export interface GetXTokenState extends TeXStateSlice<"curCmd" | "curChr" | "curCs" | "curTok">{
 }
 
 export interface GetXTokenOps {
@@ -1282,11 +1182,7 @@ export function getXToken(
   }
 }
 
-export interface XTokenState {
-  curCmd: number;
-  curChr: number;
-  curCs: number;
-  curTok: number;
+export interface XTokenState extends TeXStateSlice<"curCmd" | "curChr" | "curCs" | "curTok">{
 }
 
 export interface XTokenOps {
@@ -1309,13 +1205,7 @@ export function xToken(
   }
 }
 
-export interface ScanLeftBraceState {
-  curCmd: number;
-  curChr: number;
-  curTok: number;
-  helpPtr: number;
-  helpLine: number[];
-  alignState: number;
+export interface ScanLeftBraceState extends TeXStateSlice<"curCmd" | "curChr" | "curTok" | "helpPtr" | "helpLine" | "alignState">{
 }
 
 export interface ScanLeftBraceOps {
@@ -1349,9 +1239,7 @@ export function scanLeftBrace(
   }
 }
 
-export interface ScanOptionalEqualsState {
-  curCmd: number;
-  curTok: number;
+export interface ScanOptionalEqualsState extends TeXStateSlice<"curCmd" | "curTok">{
 }
 
 export interface ScanOptionalEqualsOps {
@@ -1371,15 +1259,7 @@ export function scanOptionalEquals(
   }
 }
 
-export interface ScanKeywordState {
-  curCmd: number;
-  curChr: number;
-  curCs: number;
-  curTok: number;
-  memLh: number[];
-  memRh: number[];
-  strPool: number[];
-  strStart: number[];
+export interface ScanKeywordState extends TeXStateSlice<"curCmd" | "curChr" | "curCs" | "curTok" | "mem" | "mem" | "strPool" | "strStart">{
 }
 
 export interface ScanKeywordOps {
@@ -1396,7 +1276,7 @@ export function scanKeyword(
   ops: ScanKeywordOps,
 ): boolean {
   let p = BACKUP_HEAD;
-  state.memRh[p] = 0;
+  state.mem[p].hh.rh = 0;
   let k = state.strStart[s];
   while (k < state.strStart[s + 1]) {
     ops.getXToken();
@@ -1408,26 +1288,23 @@ export function scanKeyword(
       )
     ) {
       const q = ops.getAvail();
-      state.memRh[p] = q;
-      state.memLh[q] = state.curTok;
+      state.mem[p].hh.rh = q;
+      state.mem[q].hh.lh = state.curTok;
       p = q;
       k += 1;
     } else if (state.curCmd !== 10 || p !== BACKUP_HEAD) {
       ops.backInput();
       if (p !== BACKUP_HEAD) {
-        ops.beginTokenList(state.memRh[BACKUP_HEAD], 3);
+        ops.beginTokenList(state.mem[BACKUP_HEAD].hh.rh, 3);
       }
       return false;
     }
   }
-  ops.flushList(state.memRh[BACKUP_HEAD]);
+  ops.flushList(state.mem[BACKUP_HEAD].hh.rh);
   return true;
 }
 
-export interface MuErrorState {
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface MuErrorState extends TeXStateSlice<"interaction" | "helpPtr" | "helpLine">{
 }
 
 export interface MuErrorOps {
@@ -1444,10 +1321,7 @@ export function muError(state: MuErrorState, ops: MuErrorOps): void {
   ops.error();
 }
 
-export interface ScanEightBitIntState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanEightBitIntState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanEightBitIntOps {
@@ -1473,10 +1347,7 @@ export function scanEightBitInt(
   }
 }
 
-export interface ScanCharNumState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanCharNumState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanCharNumOps {
@@ -1499,10 +1370,7 @@ export function scanCharNum(state: ScanCharNumState, ops: ScanCharNumOps): void 
   }
 }
 
-export interface ScanFourBitIntState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanFourBitIntState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanFourBitIntOps {
@@ -1528,10 +1396,7 @@ export function scanFourBitInt(
   }
 }
 
-export interface ScanFifteenBitIntState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanFifteenBitIntState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanFifteenBitIntOps {
@@ -1557,10 +1422,7 @@ export function scanFifteenBitInt(
   }
 }
 
-export interface ScanTwentySevenBitIntState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanTwentySevenBitIntState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanTwentySevenBitIntOps {
@@ -1586,12 +1448,7 @@ export function scanTwentySevenBitInt(
   }
 }
 
-export interface ScanRegisterNumState {
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
-  maxRegNum: number;
-  maxRegHelpLine: number;
+export interface ScanRegisterNumState extends TeXStateSlice<"curVal" | "helpPtr" | "helpLine" | "maxRegNum" | "maxRegHelpLine">{
 }
 
 export interface ScanRegisterNumOps {
@@ -1617,11 +1474,7 @@ export function scanRegisterNum(
   }
 }
 
-export interface GetXOrProtectedState {
-  curCmd: number;
-  curChr: number;
-  memLh: number[];
-  memRh: number[];
+export interface GetXOrProtectedState extends TeXStateSlice<"curCmd" | "curChr" | "mem" | "mem">{
 }
 
 export interface GetXOrProtectedOps {
@@ -1641,7 +1494,7 @@ export function getXOrProtected(
     if (
       state.curCmd >= 111 &&
       state.curCmd < 115 &&
-      state.memLh[state.memRh[state.curChr]] === 3585
+      state.mem[state.mem[state.curChr].hh.rh].hh.lh === 3585
     ) {
       return;
     }
@@ -1649,13 +1502,7 @@ export function getXOrProtected(
   }
 }
 
-export interface ScanFontIdentState {
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  eqtbRh: number[];
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanFontIdentState extends TeXStateSlice<"curCmd" | "curChr" | "curVal" | "eqtb" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanFontIdentOps {
@@ -1676,13 +1523,13 @@ export function scanFontIdent(
   } while (state.curCmd === 10);
 
   if (state.curCmd === 88) {
-    f = state.eqtbRh[3939];
+    f = state.eqtb[3939].hh.rh;
   } else if (state.curCmd === 87) {
     f = state.curChr;
   } else if (state.curCmd === 86) {
     const m = state.curChr;
     ops.scanFourBitInt();
-    f = state.eqtbRh[m + state.curVal];
+    f = state.eqtb[m + state.curVal].hh.rh;
   } else {
     ops.printNl(263);
     ops.print(828);
@@ -1696,18 +1543,7 @@ export function scanFontIdent(
   state.curVal = f;
 }
 
-export interface FindFontDimenState {
-  curVal: number;
-  fmemPtr: number;
-  fontMemSize: number;
-  fontParams: number[];
-  fontPtr: number;
-  fontGlue: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  hashRh: number[];
-  helpPtr: number;
-  helpLine: number[];
+export interface FindFontDimenState extends TeXStateSlice<"curVal" | "fmemPtr" | "fontMemSize" | "fontParams" | "fontPtr" | "fontGlue" | "paramBase" | "fontInfo" | "hash" | "helpPtr" | "helpLine">{
 }
 
 export interface FindFontDimenOps {
@@ -1748,7 +1584,7 @@ export function findFontDimen(
           if (state.fmemPtr === state.fontMemSize) {
             ops.overflow(835, state.fontMemSize);
           }
-          state.fontInfoInt[state.fmemPtr] = 0;
+          state.fontInfo[state.fmemPtr].int = 0;
           state.fmemPtr += 1;
           state.fontParams[f] += 1;
         } while (n !== state.fontParams[f]);
@@ -1762,7 +1598,7 @@ export function findFontDimen(
   if (state.curVal === state.fmemPtr) {
     ops.printNl(263);
     ops.print(813);
-    ops.printEsc(state.hashRh[2624 + f]);
+    ops.printEsc(state.hash[2624 + f].rh);
     ops.print(831);
     ops.printInt(state.fontParams[f]);
     ops.print(832);
@@ -1773,62 +1609,7 @@ export function findFontDimen(
   }
 }
 
-export interface ScanSomethingInternalState {
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  curValLevel: number;
-  curPtr: number;
-  eqtbRh: number[];
-  eqtbInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  curListModeField: number;
-  curListAuxInt: number;
-  curListAuxLh: number;
-  curListPgField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  nestModeField: number[];
-  nestPgField: number[];
-  nestPtr: number;
-  deadCycles: number;
-  interaction: number;
-  insertPenalties: number;
-  pageContents: number;
-  outputActive: boolean;
-  pageSoFar: number[];
-  line: number;
-  lastBadness: number;
-  curLevel: number;
-  curGroup: number;
-  condPtr: number;
-  curIf: number;
-  ifLimit: number;
-  hiMemMin: number;
-  fmemPtr: number;
-  fontInfoInt: number[];
-  fontInfoB0: number[];
-  fontInfoB1: number[];
-  fontInfoB2: number[];
-  fontBc: number[];
-  fontEc: number[];
-  charBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  depthBase: number[];
-  italicBase: number[];
-  hyphenChar: number[];
-  skewChar: number[];
-  lastPenalty: number;
-  lastKern: number;
-  lastGlue: number;
-  lastNodeType: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanSomethingInternalState extends TeXStateSlice<"curCmd" | "curChr" | "curVal" | "curValLevel" | "curPtr" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "nest" | "nest" | "nestPtr" | "deadCycles" | "interaction" | "insertPenalties" | "pageContents" | "outputActive" | "pageSoFar" | "line" | "lastBadness" | "curLevel" | "curGroup" | "condPtr" | "curIf" | "ifLimit" | "hiMemMin" | "fmemPtr" | "fontInfo" | "fontInfo" | "fontInfo" | "fontInfo" | "fontBc" | "fontEc" | "charBase" | "widthBase" | "heightBase" | "depthBase" | "italicBase" | "hyphenChar" | "skewChar" | "lastPenalty" | "lastKern" | "lastGlue" | "lastNodeType" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanSomethingInternalOps {
@@ -1869,13 +1650,13 @@ export function scanSomethingInternal(
     case 85:
       ops.scanCharNum();
       if (m === 5012) {
-        state.curVal = state.eqtbRh[5012 + state.curVal];
+        state.curVal = state.eqtb[5012 + state.curVal].hh.rh;
         state.curValLevel = 0;
       } else if (m < 5012) {
-        state.curVal = state.eqtbRh[m + state.curVal];
+        state.curVal = state.eqtb[m + state.curVal].hh.rh;
         state.curValLevel = 0;
       } else {
-        state.curVal = state.eqtbInt[m + state.curVal];
+        state.curVal = state.eqtb[m + state.curVal].int;
         state.curValLevel = 0;
       }
       break;
@@ -1900,20 +1681,20 @@ export function scanSomethingInternal(
           if (m === 0) {
             ops.scanRegisterNum();
             if (state.curVal < 256) {
-              state.curVal = state.eqtbRh[3423 + state.curVal];
+              state.curVal = state.eqtb[3423 + state.curVal].hh.rh;
             } else {
               ops.findSaElement(5, state.curVal, false);
               if (state.curPtr === 0) {
                 state.curVal = 0;
               } else {
-                state.curVal = state.memRh[state.curPtr + 1];
+                state.curVal = state.mem[state.curPtr + 1].hh.rh;
               }
             }
           } else {
-            state.curVal = state.memRh[m + 1];
+            state.curVal = state.mem[m + 1].hh.rh;
           }
         } else {
-          state.curVal = state.eqtbRh[m];
+          state.curVal = state.eqtb[m].hh.rh;
         }
         state.curValLevel = 5;
       } else {
@@ -1925,27 +1706,27 @@ export function scanSomethingInternal(
       break;
 
     case 73:
-      state.curVal = state.eqtbInt[m];
+      state.curVal = state.eqtb[m].int;
       state.curValLevel = 0;
       break;
 
     case 74:
-      state.curVal = state.eqtbInt[m];
+      state.curVal = state.eqtb[m].int;
       state.curValLevel = 1;
       break;
 
     case 75:
-      state.curVal = state.eqtbRh[m];
+      state.curVal = state.eqtb[m].hh.rh;
       state.curValLevel = 2;
       break;
 
     case 76:
-      state.curVal = state.eqtbRh[m];
+      state.curVal = state.eqtb[m].hh.rh;
       state.curValLevel = 3;
       break;
 
     case 79:
-      if (Math.abs(state.curListModeField) !== m) {
+      if (Math.abs(state.curList.modeField) !== m) {
         ops.printNl(263);
         ops.print(689);
         ops.printCmdChr(79, m);
@@ -1963,24 +1744,24 @@ export function scanSomethingInternal(
           state.curValLevel = 0;
         }
       } else if (m === 1) {
-        state.curVal = state.curListAuxInt;
+        state.curVal = state.curList.auxField.int;
         state.curValLevel = 1;
       } else {
-        state.curVal = state.curListAuxLh;
+        state.curVal = state.curList.auxField.hh.lh;
         state.curValLevel = 0;
       }
       break;
 
     case 80:
-      if (state.curListModeField === 0) {
+      if (state.curList.modeField === 0) {
         state.curVal = 0;
         state.curValLevel = 0;
       } else {
         p = state.nestPtr;
-        while (Math.abs(state.nestModeField[p]) !== 1) {
+        while (Math.abs(state.nest[p].modeField) !== 1) {
           p -= 1;
         }
-        state.curVal = state.nestPgField[p];
+        state.curVal = state.nest[p].pgField;
         state.curValLevel = 0;
       }
       break;
@@ -2012,19 +1793,19 @@ export function scanSomethingInternal(
     case 84:
       if (m > 3412) {
         ops.scanInt();
-        if (state.eqtbRh[m] === 0 || state.curVal < 0) {
+        if (state.eqtb[m].hh.rh === 0 || state.curVal < 0) {
           state.curVal = 0;
         } else {
-          const base = state.eqtbRh[m];
-          if (state.curVal > state.memInt[base + 1]) {
-            state.curVal = state.memInt[base + 1];
+          const base = state.eqtb[m].hh.rh;
+          if (state.curVal > state.mem[base + 1].int) {
+            state.curVal = state.mem[base + 1].int;
           }
-          state.curVal = state.memInt[base + state.curVal + 1];
+          state.curVal = state.mem[base + state.curVal + 1].int;
         }
-      } else if (state.eqtbRh[3412] === 0) {
+      } else if (state.eqtb[3412].hh.rh === 0) {
         state.curVal = 0;
       } else {
-        state.curVal = state.memLh[state.eqtbRh[3412]];
+        state.curVal = state.mem[state.eqtb[3412].hh.rh].hh.lh;
       }
       state.curValLevel = 0;
       break;
@@ -2032,19 +1813,19 @@ export function scanSomethingInternal(
     case 83:
       ops.scanRegisterNum();
       if (state.curVal < 256) {
-        q = state.eqtbRh[3683 + state.curVal];
+        q = state.eqtb[3683 + state.curVal].hh.rh;
       } else {
         ops.findSaElement(4, state.curVal, false);
         if (state.curPtr === 0) {
           q = 0;
         } else {
-          q = state.memRh[state.curPtr + 1];
+          q = state.mem[state.curPtr + 1].hh.rh;
         }
       }
       if (q === 0) {
         state.curVal = 0;
       } else {
-        state.curVal = state.memInt[q + m];
+        state.curVal = state.mem[q + m].int;
       }
       state.curValLevel = 1;
       break;
@@ -2057,8 +1838,8 @@ export function scanSomethingInternal(
 
     case 77:
       ops.findFontDimen(false);
-      state.fontInfoInt[state.fmemPtr] = 0;
-      state.curVal = state.fontInfoInt[state.curVal];
+      state.fontInfo[state.fmemPtr].int = 0;
+      state.curVal = state.fontInfo[state.curVal].int;
       state.curValLevel = 1;
       break;
 
@@ -2074,11 +1855,11 @@ export function scanSomethingInternal(
 
     case 89:
       if (m < 0 || m > 19) {
-        state.curValLevel = Math.trunc((state.memB0[m] ?? 0) / 16);
+        state.curValLevel = Math.trunc((state.mem[m].hh.b0 ?? 0) / 16);
         if (state.curValLevel < 2) {
-          state.curVal = state.memInt[m + 2] ?? 0;
+          state.curVal = state.mem[m + 2].int ?? 0;
         } else {
-          state.curVal = state.memRh[m + 1] ?? 0;
+          state.curVal = state.mem[m + 1].hh.rh ?? 0;
         }
       } else {
         ops.scanRegisterNum();
@@ -2088,23 +1869,23 @@ export function scanSomethingInternal(
           if (state.curPtr === 0) {
             state.curVal = 0;
           } else if (state.curValLevel < 2) {
-            state.curVal = state.memInt[state.curPtr + 2];
+            state.curVal = state.mem[state.curPtr + 2].int;
           } else {
-            state.curVal = state.memRh[state.curPtr + 1];
+            state.curVal = state.mem[state.curPtr + 1].hh.rh;
           }
         } else {
           switch (state.curValLevel) {
             case 0:
-              state.curVal = state.eqtbInt[5333 + state.curVal];
+              state.curVal = state.eqtb[5333 + state.curVal].int;
               break;
             case 1:
-              state.curVal = state.eqtbInt[5866 + state.curVal];
+              state.curVal = state.eqtb[5866 + state.curVal].int;
               break;
             case 2:
-              state.curVal = state.eqtbRh[2900 + state.curVal];
+              state.curVal = state.eqtb[2900 + state.curVal].hh.rh;
               break;
             case 3:
-              state.curVal = state.eqtbRh[3156 + state.curVal];
+              state.curVal = state.eqtb[3156 + state.curVal].hh.rh;
               break;
             default:
               state.curVal = 0;
@@ -2130,7 +1911,7 @@ export function scanSomethingInternal(
           while (state.curValLevel > level) {
             if (state.curValLevel === 2) {
               m = state.curVal;
-              state.curVal = state.memInt[m + 1];
+              state.curVal = state.mem[m + 1].int;
               ops.deleteGlueRef(m);
             } else if (state.curValLevel === 3) {
               ops.muError();
@@ -2142,9 +1923,9 @@ export function scanSomethingInternal(
               m = state.curVal;
               state.curVal = ops.newSpec(m);
               ops.deleteGlueRef(m);
-              state.memInt[state.curVal + 1] = -state.memInt[state.curVal + 1];
-              state.memInt[state.curVal + 2] = -state.memInt[state.curVal + 2];
-              state.memInt[state.curVal + 3] = -state.memInt[state.curVal + 3];
+              state.mem[state.curVal + 1].int = -state.mem[state.curVal + 1].int;
+              state.mem[state.curVal + 2].int = -state.mem[state.curVal + 2].int;
+              state.mem[state.curVal + 3].int = -state.mem[state.curVal + 3].int;
             } else {
               state.curVal = -state.curVal;
             }
@@ -2162,17 +1943,17 @@ export function scanSomethingInternal(
               ops.scanCharNum();
               if (state.fontBc[q] <= state.curVal && state.fontEc[q] >= state.curVal) {
                 const iIndex = state.charBase[q] + state.curVal;
-                const iB0 = state.fontInfoB0[iIndex];
-                const iB1 = state.fontInfoB1[iIndex];
-                const iB2 = state.fontInfoB2[iIndex];
+                const iB0 = state.fontInfo[iIndex].qqqq.b0;
+                const iB1 = state.fontInfo[iIndex].qqqq.b1;
+                const iB2 = state.fontInfo[iIndex].qqqq.b2;
                 if (m === 14) {
-                  state.curVal = state.fontInfoInt[state.widthBase[q] + iB0];
+                  state.curVal = state.fontInfo[state.widthBase[q] + iB0].int;
                 } else if (m === 15) {
-                  state.curVal = state.fontInfoInt[state.heightBase[q] + Math.trunc(iB1 / 16)];
+                  state.curVal = state.fontInfo[state.heightBase[q] + Math.trunc(iB1 / 16)].int;
                 } else if (m === 16) {
-                  state.curVal = state.fontInfoInt[state.depthBase[q] + (iB1 % 16)];
+                  state.curVal = state.fontInfo[state.depthBase[q] + (iB1 % 16)].int;
                 } else {
-                  state.curVal = state.fontInfoInt[state.italicBase[q] + Math.trunc(iB2 / 4)];
+                  state.curVal = state.fontInfo[state.italicBase[q] + Math.trunc(iB2 / 4)].int;
                 }
               } else {
                 state.curVal = 0;
@@ -2183,17 +1964,17 @@ export function scanSomethingInternal(
             case 20:
               q = state.curChr - 18;
               ops.scanInt();
-              if (state.eqtbRh[3412] === 0 || state.curVal <= 0) {
+              if (state.eqtb[3412].hh.rh === 0 || state.curVal <= 0) {
                 state.curVal = 0;
               } else {
                 if (q === 2) {
                   q = state.curVal % 2;
                   state.curVal = Math.trunc((state.curVal + q) / 2);
                 }
-                if (state.curVal > state.memLh[state.eqtbRh[3412]]) {
-                  state.curVal = state.memLh[state.eqtbRh[3412]];
+                if (state.curVal > state.mem[state.eqtb[3412].hh.rh].hh.lh) {
+                  state.curVal = state.mem[state.eqtb[3412].hh.rh].hh.lh;
                 }
-                state.curVal = state.memInt[state.eqtbRh[3412] + 2 * state.curVal - q];
+                state.curVal = state.mem[state.eqtb[3412].hh.rh + 2 * state.curVal - q].int;
               }
               state.curValLevel = 1;
               break;
@@ -2202,9 +1983,9 @@ export function scanSomethingInternal(
               ops.scanNormalGlue();
               q = state.curVal;
               if (m === 21) {
-                state.curVal = state.memInt[q + 2];
+                state.curVal = state.mem[q + 2].int;
               } else {
-                state.curVal = state.memInt[q + 3];
+                state.curVal = state.mem[q + 3].int;
               }
               ops.deleteGlueRef(q);
               state.curValLevel = 1;
@@ -2239,7 +2020,7 @@ export function scanSomethingInternal(
               state.curVal = 0;
               while (q !== 0) {
                 state.curVal += 1;
-                q = state.memRh[q];
+                q = state.mem[q].hh.rh;
               }
               break;
             case 10:
@@ -2265,9 +2046,9 @@ export function scanSomethingInternal(
               ops.scanNormalGlue();
               q = state.curVal;
               if (m === 12) {
-                state.curVal = state.memB0[q];
+                state.curVal = state.mem[q].hh.b0;
               } else {
-                state.curVal = state.memB1[q];
+                state.curVal = state.mem[q].hh.b1;
               }
               ops.deleteGlueRef(q);
               break;
@@ -2279,49 +2060,49 @@ export function scanSomethingInternal(
         }
       } else {
         state.curVal = 0;
-        tx = state.curListTailField;
+        tx = state.curList.tailField;
         if (tx < state.hiMemMin) {
-          if (state.memB0[tx] === 9 && state.memB1[tx] === 3) {
-            r = state.curListHeadField;
+          if (state.mem[tx].hh.b0 === 9 && state.mem[tx].hh.b1 === 3) {
+            r = state.curList.headField;
             do {
               q = r;
-              r = state.memRh[q];
+              r = state.mem[q].hh.rh;
             } while (r !== tx);
             tx = q;
           }
         }
         if (state.curChr === 3) {
           state.curValLevel = 0;
-          if (tx === state.curListHeadField || state.curListModeField === 0) {
+          if (tx === state.curList.headField || state.curList.modeField === 0) {
             state.curVal = -1;
           }
         } else {
           state.curValLevel = state.curChr;
         }
-        if (tx < state.hiMemMin && state.curListModeField !== 0) {
+        if (tx < state.hiMemMin && state.curList.modeField !== 0) {
           if (state.curChr === 0) {
-            if (state.memB0[tx] === 12) {
-              state.curVal = state.memInt[tx + 1];
+            if (state.mem[tx].hh.b0 === 12) {
+              state.curVal = state.mem[tx + 1].int;
             }
           } else if (state.curChr === 1) {
-            if (state.memB0[tx] === 11) {
-              state.curVal = state.memInt[tx + 1];
+            if (state.mem[tx].hh.b0 === 11) {
+              state.curVal = state.mem[tx + 1].int;
             }
           } else if (state.curChr === 2) {
-            if (state.memB0[tx] === 10) {
-              state.curVal = state.memLh[tx + 1];
-              if (state.memB1[tx] === 99) {
+            if (state.mem[tx].hh.b0 === 10) {
+              state.curVal = state.mem[tx + 1].hh.lh;
+              if (state.mem[tx].hh.b1 === 99) {
                 state.curValLevel = 3;
               }
             }
           } else if (state.curChr === 3) {
-            if (state.memB0[tx] <= 13) {
-              state.curVal = state.memB0[tx] + 1;
+            if (state.mem[tx].hh.b0 <= 13) {
+              state.curVal = state.mem[tx].hh.b0 + 1;
             } else {
               state.curVal = 15;
             }
           }
-        } else if (state.curListModeField === 1 && tx === state.curListHeadField) {
+        } else if (state.curList.modeField === 1 && tx === state.curList.headField) {
           if (state.curChr === 0) {
             state.curVal = state.lastPenalty;
           } else if (state.curChr === 1) {
@@ -2358,7 +2139,7 @@ export function scanSomethingInternal(
 
   while (state.curValLevel > level) {
     if (state.curValLevel === 2) {
-      state.curVal = state.memInt[state.curVal + 1];
+      state.curVal = state.mem[state.curVal + 1].int;
     } else if (state.curValLevel === 3) {
       ops.muError();
     }
@@ -2368,26 +2149,18 @@ export function scanSomethingInternal(
   if (negative) {
     if (state.curValLevel >= 2) {
       state.curVal = ops.newSpec(state.curVal);
-      state.memInt[state.curVal + 1] = -state.memInt[state.curVal + 1];
-      state.memInt[state.curVal + 2] = -state.memInt[state.curVal + 2];
-      state.memInt[state.curVal + 3] = -state.memInt[state.curVal + 3];
+      state.mem[state.curVal + 1].int = -state.mem[state.curVal + 1].int;
+      state.mem[state.curVal + 2].int = -state.mem[state.curVal + 2].int;
+      state.mem[state.curVal + 3].int = -state.mem[state.curVal + 3].int;
     } else {
       state.curVal = -state.curVal;
     }
   } else if (state.curValLevel >= 2 && state.curValLevel <= 3) {
-    state.memRh[state.curVal] += 1;
+    state.mem[state.curVal].hh.rh += 1;
   }
 }
 
-export interface ScanIntState {
-  radix: number;
-  curTok: number;
-  curCmd: number;
-  curChr: number;
-  curVal: number;
-  alignState: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ScanIntState extends TeXStateSlice<"radix" | "curTok" | "curCmd" | "curChr" | "curVal" | "alignState" | "helpPtr" | "helpLine">{
 }
 
 export interface ScanIntOps {
@@ -2524,24 +2297,7 @@ export function scanInt(state: ScanIntState, ops: ScanIntOps): void {
   }
 }
 
-export interface ScanDimenState {
-  arithError: boolean;
-  curOrder: number;
-  curTok: number;
-  curCmd: number;
-  curVal: number;
-  curValLevel: number;
-  radix: number;
-  remainder: number;
-  eqtbInt: number[];
-  eqtbRh: number[];
-  memInt: number[];
-  memRh: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  helpPtr: number;
-  helpLine: number[];
-  dig: number[];
+export interface ScanDimenState extends TeXStateSlice<"arithError" | "curOrder" | "curTok" | "curCmd" | "curVal" | "curValLevel" | "radix" | "remainder" | "eqtb" | "eqtb" | "mem" | "mem" | "paramBase" | "fontInfo" | "helpPtr" | "helpLine" | "dig">{
 }
 
 export interface ScanDimenOps {
@@ -2589,7 +2345,7 @@ export function scanDimen(
       if (mu) {
         ops.scanSomethingInternal(3, false);
         if (state.curValLevel >= 2) {
-          const v = state.memInt[state.curVal + 1];
+          const v = state.mem[state.curVal + 1].int;
           ops.deleteGlueRef(state.curVal);
           state.curVal = v;
         }
@@ -2624,6 +2380,7 @@ export function scanDimen(
 
       if (state.radix === 10 && state.curTok === 3118) {
         let k = 0;
+        const fractionDigits: number[] = [];
         ops.getToken();
         while (true) {
           ops.getXToken();
@@ -2631,9 +2388,12 @@ export function scanDimen(
             break;
           }
           if (k < 17) {
-            state.dig[k] = state.curTok - 3120;
+            fractionDigits[k] = state.curTok - 3120;
             k += 1;
           }
+        }
+        for (let i = 0; i < k; i += 1) {
+          state.dig[i] = fractionDigits[i] ?? 0;
         }
         f = ops.roundDecimals(k);
         if (state.curCmd !== 10) {
@@ -2678,7 +2438,7 @@ export function scanDimen(
     if (mu) {
       ops.scanSomethingInternal(3, false);
       if (state.curValLevel >= 2) {
-        v = state.memInt[state.curVal + 1];
+        v = state.mem[state.curVal + 1].int;
         ops.deleteGlueRef(state.curVal);
         state.curVal = v;
       }
@@ -2698,9 +2458,9 @@ export function scanDimen(
   let v = 0;
   if (!mu) {
     if (ops.scanKeyword(717)) {
-      v = state.fontInfoInt[6 + state.paramBase[state.eqtbRh[3939]]];
+      v = state.fontInfo[6 + state.paramBase[state.eqtb[3939].hh.rh]].int;
     } else if (ops.scanKeyword(718)) {
-      v = state.fontInfoInt[5 + state.paramBase[state.eqtbRh[3939]]];
+      v = state.fontInfo[5 + state.paramBase[state.eqtb[3939].hh.rh]].int;
     } else {
       v = Number.NaN;
     }
@@ -2735,9 +2495,9 @@ export function scanDimen(
 
   if (ops.scanKeyword(713)) {
     ops.prepareMag();
-    if (state.eqtbInt[5285] !== 1000) {
-      state.curVal = ops.xnOverD(state.curVal, 1000, state.eqtbInt[5285]);
-      f = Math.trunc((1000 * f + 65536 * state.remainder) / state.eqtbInt[5285]);
+    if (state.eqtb[5285].int !== 1000) {
+      state.curVal = ops.xnOverD(state.curVal, 1000, state.eqtb[5285].int);
+      f = Math.trunc((1000 * f + 65536 * state.remainder) / state.eqtb[5285].int);
       state.curVal += Math.trunc(f / 65536);
       f = f % 65536;
     }
@@ -2752,7 +2512,6 @@ export function scanDimen(
 
   let num = 0;
   let denom = 1;
-  let explicitSp = false;
   if (ops.scanKeyword(724)) {
     num = 7227;
     denom = 100;
@@ -2775,7 +2534,9 @@ export function scanDimen(
     num = 14856;
     denom = 1157;
   } else if (ops.scanKeyword(731)) {
-    explicitSp = true;
+    goto30(state, ops);
+    goto89(state, negative, ops);
+    return;
   } else {
     ops.printNl(263);
     ops.print(714);
@@ -2790,7 +2551,7 @@ export function scanDimen(
     ops.error();
   }
 
-  if (!explicitSp && num !== 0) {
+  if (num !== 0) {
     state.curVal = ops.xnOverD(state.curVal, num, denom);
     f = Math.trunc((num * f + 65536 * state.remainder) / denom);
     state.curVal += Math.trunc(f / 65536);
@@ -2833,15 +2594,7 @@ function goto89(state: ScanDimenState, negative: boolean, ops: ScanDimenOps): vo
   }
 }
 
-export interface ScanGlueState {
-  curTok: number;
-  curCmd: number;
-  curVal: number;
-  curValLevel: number;
-  curOrder: number;
-  memInt: number[];
-  memB0: number[];
-  memB1: number[];
+export interface ScanGlueState extends TeXStateSlice<"curTok" | "curCmd" | "curVal" | "curValLevel" | "curOrder" | "mem" | "mem" | "mem">{
 }
 
 export interface ScanGlueOps {
@@ -2894,16 +2647,16 @@ export function scanGlue(
   }
 
   const q = ops.newSpec(0);
-  state.memInt[q + 1] = state.curVal;
+  state.mem[q + 1].int = state.curVal;
   if (ops.scanKeyword(739)) {
     ops.scanDimen(mu, true, false);
-    state.memInt[q + 2] = state.curVal;
-    state.memB0[q] = state.curOrder;
+    state.mem[q + 2].int = state.curVal;
+    state.mem[q].hh.b0 = state.curOrder;
   }
   if (ops.scanKeyword(740)) {
     ops.scanDimen(mu, true, false);
-    state.memInt[q + 3] = state.curVal;
-    state.memB1[q] = state.curOrder;
+    state.mem[q + 3].int = state.curVal;
+    state.mem[q].hh.b1 = state.curOrder;
   }
   state.curVal = q;
 }
@@ -2924,10 +2677,7 @@ export function scanMuGlue(ops: ScanMuGlueOps): void {
   ops.scanGlue(3);
 }
 
-export interface ScanRuleSpecState {
-  curCmd: number;
-  curVal: number;
-  memInt: number[];
+export interface ScanRuleSpecState extends TeXStateSlice<"curCmd" | "curVal" | "mem">{
 }
 
 export interface ScanRuleSpecOps {
@@ -2942,36 +2692,33 @@ export function scanRuleSpec(
 ): number {
   const q = ops.newRule();
   if (state.curCmd === 35) {
-    state.memInt[q + 1] = 26214;
+    state.mem[q + 1].int = 26214;
   } else {
-    state.memInt[q + 3] = 26214;
-    state.memInt[q + 2] = 0;
+    state.mem[q + 3].int = 26214;
+    state.mem[q + 2].int = 0;
   }
 
   while (true) {
     if (ops.scanKeyword(741)) {
       ops.scanDimen(false, false, false);
-      state.memInt[q + 1] = state.curVal;
+      state.mem[q + 1].int = state.curVal;
       continue;
     }
     if (ops.scanKeyword(742)) {
       ops.scanDimen(false, false, false);
-      state.memInt[q + 3] = state.curVal;
+      state.mem[q + 3].int = state.curVal;
       continue;
     }
     if (ops.scanKeyword(743)) {
       ops.scanDimen(false, false, false);
-      state.memInt[q + 2] = state.curVal;
+      state.mem[q + 2].int = state.curVal;
       continue;
     }
     return q;
   }
 }
 
-export interface ScanSpecState {
-  saveStack: number[];
-  savePtr: number;
-  curVal: number;
+export interface ScanSpecState extends SaveStackIntSlice, TeXStateSlice<"curVal">{
 }
 
 export interface ScanSpecOps {
@@ -2987,12 +2734,13 @@ export function scanSpec(
   state: ScanSpecState,
   ops: ScanSpecOps,
 ): void {
+  const { saveStack } = state;
   let s = 0;
   let specCode = 0;
   let skipScanDimen = false;
 
   if (threeCodes) {
-    s = state.saveStack[state.savePtr + 0];
+    s = saveStack[state.savePtr + 0].int ?? 0;
   }
   if (ops.scanKeyword(853)) {
     specCode = 0;
@@ -3009,27 +2757,17 @@ export function scanSpec(
   }
 
   if (threeCodes) {
-    state.saveStack[state.savePtr + 0] = s;
+    saveStack[state.savePtr + 0].int = s;
     state.savePtr += 1;
   }
-  state.saveStack[state.savePtr + 0] = specCode;
-  state.saveStack[state.savePtr + 1] = state.curVal;
+  saveStack[state.savePtr + 0].int = specCode;
+  saveStack[state.savePtr + 1].int = state.curVal;
   state.savePtr += 2;
   ops.newSaveLevel(c);
   ops.scanLeftBrace();
 }
 
-export interface ScanGeneralTextState {
-  scannerStatus: number;
-  warningIndex: number;
-  defRef: number;
-  curCs: number;
-  curVal: number;
-  curTok: number;
-  curCmd: number;
-  avail: number;
-  memLh: number[];
-  memRh: number[];
+export interface ScanGeneralTextState extends TeXStateSlice<"scannerStatus" | "warningIndex" | "defRef" | "curCs" | "curVal" | "curTok" | "curCmd" | "avail" | "mem" | "mem">{
 }
 
 export interface ScanGeneralTextOps {
@@ -3049,7 +2787,7 @@ export function scanGeneralText(
   state.scannerStatus = 5;
   state.warningIndex = state.curCs;
   state.defRef = ops.getAvail();
-  state.memLh[state.defRef] = 0;
+  state.mem[state.defRef].hh.lh = 0;
   let p = state.defRef;
 
   ops.scanLeftBrace();
@@ -3068,41 +2806,29 @@ export function scanGeneralText(
     }
 
     const q = ops.getAvail();
-    state.memRh[p] = q;
-    state.memLh[q] = state.curTok;
+    state.mem[p].hh.rh = q;
+    state.mem[q].hh.lh = state.curTok;
     p = q;
   }
 
-  const q = state.memRh[state.defRef];
-  state.memRh[state.defRef] = state.avail;
+  const q = state.mem[state.defRef].hh.rh;
+  state.mem[state.defRef].hh.rh = state.avail;
   state.avail = state.defRef;
   if (q === 0) {
     state.curVal = 29997;
   } else {
     state.curVal = p;
   }
-  state.memRh[29997] = q;
+  state.mem[29997].hh.rh = q;
 
   state.scannerStatus = s;
   state.warningIndex = w;
   state.defRef = d;
 }
 
-export interface ScanExprState {
-  curValLevel: number;
-  arithError: boolean;
-  curTok: number;
-  curCmd: number;
-  curVal: number;
+export interface ScanExprState extends TeXStateSlice<"curValLevel" | "arithError" | "curTok" | "curCmd" | "curVal" | "interaction" | "helpPtr" | "helpLine" | "mem" | "mem" | "mem" | "mem">{
   expandDepthCount: number;
   expandDepth: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  memInt: number[];
-  memRh: number[];
-  memB0: number[];
-  memB1: number[];
 }
 
 export interface ScanExprOps {
@@ -3166,12 +2892,12 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
 
       if (state.curTok === 3112) {
         q = ops.getNode(4);
-        state.memRh[q] = p;
-        state.memB0[q] = l;
-        state.memB1[q] = 4 * s + r;
-        state.memInt[q + 1] = e;
-        state.memInt[q + 2] = t;
-        state.memInt[q + 3] = n;
+        state.mem[q].hh.rh = p;
+        state.mem[q].hh.b0 = l;
+        state.mem[q].hh.b1 = 4 * s + r;
+        state.mem[q + 1].int = e;
+        state.mem[q + 2].int = t;
+        state.mem[q + 3].int = n;
         p = q;
         l = o;
         r = 0;
@@ -3233,9 +2959,9 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
           f = 0;
         }
       } else if (
-        Math.abs(state.memInt[f + 1]) > 1073741823 ||
-        Math.abs(state.memInt[f + 2]) > 1073741823 ||
-        Math.abs(state.memInt[f + 3]) > 1073741823
+        Math.abs(state.mem[f + 1].int) > 1073741823 ||
+        Math.abs(state.mem[f + 2].int) > 1073741823 ||
+        Math.abs(state.mem[f + 3].int) > 1073741823
       ) {
         state.arithError = true;
         ops.deleteGlueRef(f);
@@ -3247,11 +2973,11 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
           if (l >= 2 && o !== 0) {
             t = ops.newSpec(f);
             ops.deleteGlueRef(f);
-            if (state.memInt[t + 2] === 0) {
-              state.memB0[t] = 0;
+            if (state.mem[t + 2].int === 0) {
+              state.mem[t].hh.b0 = 0;
             }
-            if (state.memInt[t + 3] === 0) {
-              state.memB1[t] = 0;
+            if (state.mem[t + 3].int === 0) {
+              state.mem[t].hh.b1 = 0;
             }
           } else {
             t = f;
@@ -3266,18 +2992,18 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
           } else if (l === 1) {
             t = ops.multAndAdd(t, f, 0, 1073741823);
           } else {
-            state.memInt[t + 1] = ops.multAndAdd(state.memInt[t + 1], f, 0, 1073741823);
-            state.memInt[t + 2] = ops.multAndAdd(state.memInt[t + 2], f, 0, 1073741823);
-            state.memInt[t + 3] = ops.multAndAdd(state.memInt[t + 3], f, 0, 1073741823);
+            state.mem[t + 1].int = ops.multAndAdd(state.mem[t + 1].int, f, 0, 1073741823);
+            state.mem[t + 2].int = ops.multAndAdd(state.mem[t + 2].int, f, 0, 1073741823);
+            state.mem[t + 3].int = ops.multAndAdd(state.mem[t + 3].int, f, 0, 1073741823);
           }
           break;
         case 4:
           if (l < 2) {
             t = ops.quotient(t, f);
           } else {
-            state.memInt[t + 1] = ops.quotient(state.memInt[t + 1], f);
-            state.memInt[t + 2] = ops.quotient(state.memInt[t + 2], f);
-            state.memInt[t + 3] = ops.quotient(state.memInt[t + 3], f);
+            state.mem[t + 1].int = ops.quotient(state.mem[t + 1].int, f);
+            state.mem[t + 2].int = ops.quotient(state.mem[t + 2].int, f);
+            state.mem[t + 3].int = ops.quotient(state.mem[t + 3].int, f);
           }
           break;
         case 5:
@@ -3286,9 +3012,9 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
           } else if (l === 1) {
             t = ops.fract(t, n, f, 1073741823);
           } else {
-            state.memInt[t + 1] = ops.fract(state.memInt[t + 1], n, f, 1073741823);
-            state.memInt[t + 2] = ops.fract(state.memInt[t + 2], n, f, 1073741823);
-            state.memInt[t + 3] = ops.fract(state.memInt[t + 3], n, f, 1073741823);
+            state.mem[t + 1].int = ops.fract(state.mem[t + 1].int, n, f, 1073741823);
+            state.mem[t + 2].int = ops.fract(state.mem[t + 2].int, n, f, 1073741823);
+            state.mem[t + 3].int = ops.fract(state.mem[t + 3].int, n, f, 1073741823);
           }
           break;
         default:
@@ -3306,25 +3032,25 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
         } else if (l === 1) {
           e = ops.addOrSub(e, t, 1073741823, r === 2);
         } else {
-          state.memInt[e + 1] = ops.addOrSub(state.memInt[e + 1], state.memInt[t + 1], 1073741823, r === 2);
-          if (state.memB0[e] === state.memB0[t]) {
-            state.memInt[e + 2] = ops.addOrSub(state.memInt[e + 2], state.memInt[t + 2], 1073741823, r === 2);
-          } else if (state.memB0[e] < state.memB0[t] && state.memInt[t + 2] !== 0) {
-            state.memInt[e + 2] = state.memInt[t + 2];
-            state.memB0[e] = state.memB0[t];
+          state.mem[e + 1].int = ops.addOrSub(state.mem[e + 1].int, state.mem[t + 1].int, 1073741823, r === 2);
+          if (state.mem[e].hh.b0 === state.mem[t].hh.b0) {
+            state.mem[e + 2].int = ops.addOrSub(state.mem[e + 2].int, state.mem[t + 2].int, 1073741823, r === 2);
+          } else if (state.mem[e].hh.b0 < state.mem[t].hh.b0 && state.mem[t + 2].int !== 0) {
+            state.mem[e + 2].int = state.mem[t + 2].int;
+            state.mem[e].hh.b0 = state.mem[t].hh.b0;
           }
-          if (state.memB1[e] === state.memB1[t]) {
-            state.memInt[e + 3] = ops.addOrSub(state.memInt[e + 3], state.memInt[t + 3], 1073741823, r === 2);
-          } else if (state.memB1[e] < state.memB1[t] && state.memInt[t + 3] !== 0) {
-            state.memInt[e + 3] = state.memInt[t + 3];
-            state.memB1[e] = state.memB1[t];
+          if (state.mem[e].hh.b1 === state.mem[t].hh.b1) {
+            state.mem[e + 3].int = ops.addOrSub(state.mem[e + 3].int, state.mem[t + 3].int, 1073741823, r === 2);
+          } else if (state.mem[e].hh.b1 < state.mem[t].hh.b1 && state.mem[t + 3].int !== 0) {
+            state.mem[e + 3].int = state.mem[t + 3].int;
+            state.mem[e].hh.b1 = state.mem[t].hh.b1;
           }
           ops.deleteGlueRef(t);
-          if (state.memInt[e + 2] === 0) {
-            state.memB0[e] = 0;
+          if (state.mem[e + 2].int === 0) {
+            state.mem[e].hh.b0 = 0;
           }
-          if (state.memInt[e + 3] === 0) {
-            state.memB1[e] = 0;
+          if (state.mem[e + 3].int === 0) {
+            state.mem[e].hh.b1 = 0;
           }
         }
         r = o;
@@ -3338,13 +3064,13 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
       if (p !== 0) {
         f = e;
         q = p;
-        e = state.memInt[q + 1];
-        t = state.memInt[q + 2];
-        n = state.memInt[q + 3];
-        s = Math.trunc(state.memB1[q] / 4);
-        r = state.memB1[q] % 4;
-        l = state.memB0[q];
-        p = state.memRh[q];
+        e = state.mem[q + 1].int;
+        t = state.mem[q + 2].int;
+        n = state.mem[q + 3].int;
+        s = Math.trunc(state.mem[q].hh.b1 / 4);
+        r = state.mem[q].hh.b1 % 4;
+        l = state.mem[q].hh.b0;
+        p = state.mem[q].hh.rh;
         ops.freeNode(q, 4);
         continue;
       }
@@ -3360,7 +3086,7 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
         if (l >= 2) {
           ops.deleteGlueRef(e);
           e = 0;
-          state.memRh[e] += 1;
+          state.mem[e].hh.rh += 1;
         } else {
           e = 0;
         }
@@ -3373,28 +3099,7 @@ export function scanExpr(state: ScanExprState, ops: ScanExprOps): void {
   }
 }
 
-export interface PseudoStartState {
-  selector: number;
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
-  strPool: number[];
-  strStart: number[];
-  strPtr: number;
-  eqtbInt: number[];
-  memLh: number[];
-  memRh: number[];
-  memB0: number[];
-  memB1: number[];
-  memB2: number[];
-  memB3: number[];
-  pseudoFiles: number;
-  line: number;
-  curInput: InStateRecord;
-  termOffset: number;
-  maxPrintLine: number;
-  fileOffset: number;
-  openParens: number;
+export interface PseudoStartState extends TeXStateSlice<"selector" | "poolPtr" | "poolSize" | "initPoolPtr" | "strPool" | "strStart" | "strPtr" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "pseudoFiles" | "line" | "curInput" | "termOffset" | "maxPrintLine" | "fileOffset" | "openParens">{
 }
 
 export interface PseudoStartOps {
@@ -3418,7 +3123,7 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
   state.selector = 21;
   ops.tokenShow(29997);
   state.selector = oldSetting;
-  ops.flushList(state.memRh[29997]);
+  ops.flushList(state.mem[29997].hh.rh);
 
   if (state.poolPtr + 1 > state.poolSize) {
     ops.overflow(258, state.poolSize - state.initPoolPtr);
@@ -3427,7 +3132,7 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
   const s = ops.makeString();
   state.strPool[state.poolPtr] = 32;
   let l = state.strStart[s];
-  const nl = state.eqtbInt[5317];
+  const nl = state.eqtb[5317].int;
   const p = ops.getAvail();
   let q = p;
 
@@ -3442,17 +3147,17 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
     }
 
     let r = ops.getNode(sz);
-    state.memRh[q] = r;
+    state.mem[q].hh.rh = r;
     q = r;
-    state.memLh[q] = sz;
+    state.mem[q].hh.lh = sz;
 
     while (sz > 2) {
       sz -= 1;
       r += 1;
-      state.memB0[r] = state.strPool[m];
-      state.memB1[r] = state.strPool[m + 1];
-      state.memB2[r] = state.strPool[m + 2];
-      state.memB3[r] = state.strPool[m + 3];
+      state.mem[r].hh.b0 = state.strPool[m];
+      state.mem[r].hh.b1 = state.strPool[m + 1];
+      state.mem[r].qqqq.b2 = state.strPool[m + 2];
+      state.mem[r].qqqq.b3 = state.strPool[m + 3];
       m += 4;
     }
 
@@ -3473,18 +3178,18 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
       }
     }
 
-    state.memB0[r + 1] = b0;
-    state.memB1[r + 1] = b1;
-    state.memB2[r + 1] = b2;
-    state.memB3[r + 1] = b3;
+    state.mem[r + 1].hh.b0 = b0;
+    state.mem[r + 1].hh.b1 = b1;
+    state.mem[r + 1].qqqq.b2 = b2;
+    state.mem[r + 1].qqqq.b3 = b3;
 
     if (state.strPool[l] === nl) {
       l += 1;
     }
   }
 
-  state.memLh[p] = state.memRh[p];
-  state.memRh[p] = state.pseudoFiles;
+  state.mem[p].hh.lh = state.mem[p].hh.rh;
+  state.mem[p].hh.rh = state.pseudoFiles;
   state.pseudoFiles = p;
 
   state.strPtr -= 1;
@@ -3494,7 +3199,7 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
   state.line = 0;
   state.curInput.limitField = state.curInput.startField;
   state.curInput.locField = state.curInput.limitField + 1;
-  if (state.eqtbInt[5326] > 0) {
+  if (state.eqtb[5326].int > 0) {
     if (state.termOffset > state.maxPrintLine - 3) {
       ops.printLn();
     } else if (state.termOffset > 0 || state.fileOffset > 0) {
@@ -3509,14 +3214,7 @@ export function pseudoStart(state: PseudoStartState, ops: PseudoStartOps): void 
   }
 }
 
-export interface StrToksState {
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
-  strPool: number[];
-  avail: number;
-  memLh: number[];
-  memRh: number[];
+export interface StrToksState extends TeXStateSlice<"poolPtr" | "poolSize" | "initPoolPtr" | "strPool" | "avail" | "mem" | "mem">{
 }
 
 export interface StrToksOps {
@@ -3534,7 +3232,7 @@ export function strToks(
   }
 
   let p = 29997;
-  state.memRh[p] = 0;
+  state.mem[p].hh.rh = 0;
   let k = b;
   while (k < state.poolPtr) {
     let t = state.strPool[k];
@@ -3548,11 +3246,11 @@ export function strToks(
     if (q === 0) {
       q = ops.getAvail();
     } else {
-      state.avail = state.memRh[q];
-      state.memRh[q] = 0;
+      state.avail = state.mem[q].hh.rh;
+      state.mem[q].hh.rh = 0;
     }
-    state.memRh[p] = q;
-    state.memLh[q] = t;
+    state.mem[p].hh.rh = q;
+    state.mem[q].hh.lh = t;
     p = q;
     k += 1;
   }
@@ -3560,15 +3258,7 @@ export function strToks(
   return p;
 }
 
-export interface TheToksState {
-  curChr: number;
-  selector: number;
-  poolPtr: number;
-  avail: number;
-  curVal: number;
-  curValLevel: number;
-  memLh: number[];
-  memRh: number[];
+export interface TheToksState extends TeXStateSlice<"curChr" | "selector" | "poolPtr" | "avail" | "curVal" | "curValLevel" | "mem" | "mem">{
 }
 
 export interface TheToksOps {
@@ -3597,7 +3287,7 @@ export function theToks(state: TheToksState, ops: TheToksOps): number {
     state.selector = 21;
     const b = state.poolPtr;
     const p = ops.getAvail();
-    state.memRh[p] = state.memRh[29997];
+    state.mem[p].hh.rh = state.mem[29997].hh.rh;
     ops.tokenShow(p);
     ops.flushList(p);
     state.selector = oldSetting;
@@ -3608,26 +3298,26 @@ export function theToks(state: TheToksState, ops: TheToksOps): number {
   ops.scanSomethingInternal(5, false);
   if (state.curValLevel >= 4) {
     let p = 29997;
-    state.memRh[p] = 0;
+    state.mem[p].hh.rh = 0;
     if (state.curValLevel === 4) {
       const q = ops.getAvail();
-      state.memRh[p] = q;
-      state.memLh[q] = 4095 + state.curVal;
+      state.mem[p].hh.rh = q;
+      state.mem[q].hh.lh = 4095 + state.curVal;
       p = q;
     } else if (state.curVal !== 0) {
-      let r = state.memRh[state.curVal];
+      let r = state.mem[state.curVal].hh.rh;
       while (r !== 0) {
         let q = state.avail;
         if (q === 0) {
           q = ops.getAvail();
         } else {
-          state.avail = state.memRh[q];
-          state.memRh[q] = 0;
+          state.avail = state.mem[q].hh.rh;
+          state.mem[q].hh.rh = 0;
         }
-        state.memRh[p] = q;
-        state.memLh[q] = state.memLh[r];
+        state.mem[p].hh.rh = q;
+        state.mem[q].hh.lh = state.mem[r].hh.lh;
         p = q;
-        r = state.memRh[r];
+        r = state.mem[r].hh.rh;
       }
     }
     return p;
@@ -3659,8 +3349,7 @@ export function theToks(state: TheToksState, ops: TheToksOps): number {
   return ops.strToks(b);
 }
 
-export interface InsTheToksState {
-  memRh: number[];
+export interface InsTheToksState extends TeXStateSlice<"mem">{
 }
 
 export interface InsTheToksOps {
@@ -3669,23 +3358,11 @@ export interface InsTheToksOps {
 }
 
 export function insTheToks(state: InsTheToksState, ops: InsTheToksOps): void {
-  state.memRh[29988] = ops.theToks();
-  ops.beginTokenList(state.memRh[29997], 4);
+  state.mem[29988].hh.rh = ops.theToks();
+  ops.beginTokenList(state.mem[29997].hh.rh, 4);
 }
 
-export interface ConvToksState {
-  curChr: number;
-  scannerStatus: number;
-  curVal: number;
-  selector: number;
-  poolPtr: number;
-  curCs: number;
-  curCmd: number;
-  jobName: number;
-  fontName: number[];
-  fontSize: number[];
-  fontDsize: number[];
-  memRh: number[];
+export interface ConvToksState extends TeXStateSlice<"curChr" | "scannerStatus" | "curVal" | "selector" | "poolPtr" | "curCs" | "curCmd" | "jobName" | "fontName" | "fontSize" | "fontDsize" | "mem">{
 }
 
 export interface ConvToksOps {
@@ -3774,23 +3451,11 @@ export function convToks(state: ConvToksState, ops: ConvToksOps): void {
   }
 
   state.selector = oldSetting;
-  state.memRh[29988] = ops.strToks(b);
-  ops.beginTokenList(state.memRh[29997], 4);
+  state.mem[29988].hh.rh = ops.strToks(b);
+  ops.beginTokenList(state.mem[29997].hh.rh, 4);
 }
 
-export interface ScanToksState {
-  scannerStatus: number;
-  warningIndex: number;
-  curCs: number;
-  defRef: number;
-  curTok: number;
-  curCmd: number;
-  curChr: number;
-  alignState: number;
-  helpPtr: number;
-  helpLine: number[];
-  memLh: number[];
-  memRh: number[];
+export interface ScanToksState extends TeXStateSlice<"scannerStatus" | "warningIndex" | "curCs" | "defRef" | "curTok" | "curCmd" | "curChr" | "alignState" | "helpPtr" | "helpLine" | "mem" | "mem">{
 }
 
 export interface ScanToksOps {
@@ -3818,15 +3483,15 @@ export function scanToks(
   state.scannerStatus = macroDef ? 2 : 5;
   state.warningIndex = state.curCs;
   state.defRef = ops.getAvail();
-  state.memLh[state.defRef] = 0;
+  state.mem[state.defRef].hh.lh = 0;
   let p = state.defRef;
   let hashBrace = 0;
   let t = 3120;
 
   const appendTok = (tok: number): void => {
     const q = ops.getAvail();
-    state.memRh[p] = q;
-    state.memLh[q] = tok;
+    state.mem[p].hh.rh = q;
+    state.mem[q].hh.lh = tok;
     p = q;
   };
 
@@ -3896,7 +3561,7 @@ export function scanToks(
         ops.getNext();
         if (
           state.curCmd >= 111 &&
-          state.memLh[state.memRh[state.curChr]] === 3585
+          state.mem[state.mem[state.curChr].hh.rh].hh.lh === 3585
         ) {
           state.curCmd = 0;
           state.curChr = 257;
@@ -3908,8 +3573,8 @@ export function scanToks(
           ops.expand();
         } else {
           const q = ops.theToks();
-          if (state.memRh[29997] !== 0) {
-            state.memRh[p] = state.memRh[29997];
+          if (state.mem[29997].hh.rh !== 0) {
+            state.mem[p].hh.rh = state.mem[29997].hh.rh;
             p = q;
           }
         }
@@ -3946,9 +3611,9 @@ export function scanToks(
           state.helpLine[0] = 763;
           ops.backError();
           state.curTok = s;
+        } else {
+          state.curTok = 1232 + state.curChr;
         }
-      } else {
-        state.curTok = 1232 + state.curChr;
       }
     }
 
@@ -3970,26 +3635,7 @@ export interface ReadToksInputState {
   stateField: number;
 }
 
-export interface ReadToksState {
-  scannerStatus: number;
-  warningIndex: number;
-  defRef: number;
-  memLh: number[];
-  memRh: number[];
-  alignState: number;
-  curInput: ReadToksInputState;
-  readOpen: number[];
-  interaction: number;
-  readFile: number[];
-  last: number;
-  eqtbInt: number[];
-  buffer: number[];
-  first: number;
-  curChr: number;
-  curTok: number;
-  curVal: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface ReadToksState extends TeXStateSlice<"scannerStatus" | "warningIndex" | "defRef" | "mem" | "mem" | "alignState" | "curInput" | "readOpen" | "interaction" | "readFile" | "last" | "eqtb" | "buffer" | "first" | "curChr" | "curTok" | "curVal" | "helpPtr" | "helpLine">{
 }
 
 export interface ReadToksOps {
@@ -4020,12 +3666,12 @@ export function readToks(
   state.scannerStatus = 2;
   state.warningIndex = r;
   state.defRef = ops.getAvail();
-  state.memLh[state.defRef] = 0;
+  state.mem[state.defRef].hh.lh = 0;
   let p = state.defRef;
 
   let q = ops.getAvail();
-  state.memRh[p] = q;
-  state.memLh[q] = 3584;
+  state.mem[p].hh.rh = q;
+  state.mem[q].hh.lh = 3584;
   p = q;
 
   const m = n < 0 || n > 15 ? 16 : n;
@@ -4075,10 +3721,10 @@ export function readToks(
     }
 
     state.curInput.limitField = state.last;
-    if (state.eqtbInt[5316] < 0 || state.eqtbInt[5316] > 255) {
+    if (state.eqtb[5316].int < 0 || state.eqtb[5316].int > 255) {
       state.curInput.limitField -= 1;
     } else {
-      state.buffer[state.curInput.limitField] = state.eqtbInt[5316];
+      state.buffer[state.curInput.limitField] = state.eqtb[5316].int;
     }
     state.first = state.curInput.limitField + 1;
     state.curInput.locField = state.curInput.startField;
@@ -4094,8 +3740,8 @@ export function readToks(
           state.curTok = state.curChr + 3072;
         }
         q = ops.getAvail();
-        state.memRh[p] = q;
-        state.memLh[q] = state.curTok;
+        state.mem[p].hh.rh = q;
+        state.mem[q].hh.lh = state.curTok;
         p = q;
       }
     } else {
@@ -4112,8 +3758,8 @@ export function readToks(
           break;
         }
         q = ops.getAvail();
-        state.memRh[p] = q;
-        state.memLh[q] = state.curTok;
+        state.mem[p].hh.rh = q;
+        state.mem[q].hh.lh = state.curTok;
         p = q;
       }
     }

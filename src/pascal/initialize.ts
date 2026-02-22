@@ -1,190 +1,27 @@
-export interface InitializeState {
-  dviBufSize: number;
-  trieOpSize: number;
-  fontMax: number;
-  xchr: string[];
-  xord: number[];
-  interaction: number;
-  deletionsAllowed: boolean;
-  setBoxAllowed: boolean;
-  errorCount: number;
-  helpPtr: number;
-  useErrHelp: boolean;
-  interrupt: number;
-  okToInterrupt: boolean;
-  nestPtr: number;
-  maxNestStack: number;
-  curListModeField: number;
-  curListHeadField: number;
-  curListTailField: number;
-  curListETeXAuxField: number;
-  curListAuxInt: number;
-  curListMlField: number;
-  curListPgField: number;
-  shownMode: number;
-  pageContents: number;
-  pageTail: number;
-  lastGlue: number;
-  lastPenalty: number;
-  lastKern: number;
-  lastNodeType: number;
-  pageSoFar: number[];
-  pageMaxDepth: number;
-  xeqLevel: number[];
-  noNewControlSequence: boolean;
-  hashLh: number[];
-  hashRh: number[];
-  savePtr: number;
-  curLevel: number;
-  curGroup: number;
-  curBoundary: number;
-  maxSaveStack: number;
-  magSet: number;
-  curMark: number[];
-  curVal: number;
-  curValLevel: number;
-  radix: number;
-  curOrder: number;
-  readOpen: number[];
-  condPtr: number;
-  ifLimit: number;
-  curIf: number;
-  ifLine: number;
-  texFormatDefault: string;
-  fontUsed: boolean[];
-  nullCharacterB0: number;
-  nullCharacterB1: number;
-  nullCharacterB2: number;
-  nullCharacterB3: number;
-  totalPages: number;
-  maxV: number;
-  maxH: number;
-  maxPush: number;
-  lastBop: number;
-  doingLeaders: boolean;
-  deadCycles: number;
-  curS: number;
-  halfBuf: number;
-  dviLimit: number;
-  dviPtr: number;
-  dviOffset: number;
-  dviGone: number;
-  downPtr: number;
-  rightPtr: number;
-  adjustTail: number;
-  lastBadness: number;
-  packBeginLine: number;
-  emptyFieldRh: number;
-  emptyFieldLh: number;
-  nullDelimiterB0: number;
-  nullDelimiterB1: number;
-  nullDelimiterB2: number;
-  nullDelimiterB3: number;
-  alignPtr: number;
-  curAlign: number;
-  curSpan: number;
-  curLoop: number;
-  curHead: number;
-  curTail: number;
-  hyphWord: number[];
-  hyphList: number[];
-  hyphCount: number;
-  outputActive: boolean;
-  insertPenalties: number;
-  ligaturePresent: boolean;
-  cancelBoundary: boolean;
-  lftHit: boolean;
-  rtHit: boolean;
-  insDisc: boolean;
-  afterToken: number;
-  longHelpSeen: boolean;
-  formatIdent: number;
-  writeOpen: boolean[];
-  lrPtr: number;
-  lrProblems: number;
-  curDir: number;
-  pseudoFiles: number;
-  saRoot: number[];
-  saNullLh: number;
-  saNullRh: number;
-  saChain: number;
-  saLevel: number;
-  discPtr: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  rover: number;
-  loMemMax: number;
-  avail: number;
-  memEnd: number;
-  hiMemMin: number;
-  varUsed: number;
-  dynUsed: number;
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  hashUsed: number;
-  csCount: number;
-  fontPtr: number;
-  fmemPtr: number;
-  fontName: number[];
-  fontArea: number[];
-  hyphenChar: number[];
-  skewChar: number[];
-  bcharLabel: number[];
-  fontBchar: number[];
-  fontFalseBchar: number[];
-  fontBc: number[];
-  fontEc: number[];
-  fontSize: number[];
-  fontDsize: number[];
-  charBase: number[];
-  widthBase: number[];
-  heightBase: number[];
-  depthBase: number[];
-  italicBase: number[];
-  ligKernBase: number[];
-  kernBase: number[];
-  extenBase: number[];
-  fontGlue: number[];
-  fontParams: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  trieOpHash: Record<number, number>;
-  trieUsed: number[];
-  trieOpPtr: number;
-  trieNotReady: boolean;
-  trieL: number[];
-  trieC: number[];
-  triePtr: number;
-  eTeXMode: number;
-  maxRegNum: number;
-  maxRegHelpLine: number;
-  trieR: number[];
-  hyphStart: number;
+import type { FourQuarters, MemoryWord, TwoHalves } from "../main";
+import type { TeXStateSlice } from "./state_slices";
+
+export interface InitializeState extends TeXStateSlice<"dviBufSize" | "trieOpSize" | "fontMax" | "xchr" | "xord" | "interaction" | "deletionsAllowed" | "setBoxAllowed" | "errorCount" | "helpPtr" | "useErrHelp" | "interrupt" | "okToInterrupt" | "nestPtr" | "maxNestStack" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "shownMode" | "pageContents" | "pageTail" | "lastGlue" | "lastPenalty" | "lastKern" | "lastNodeType" | "pageSoFar" | "pageMaxDepth" | "xeqLevel" | "noNewControlSequence" | "hash" | "hash" | "savePtr" | "curLevel" | "curGroup" | "curBoundary" | "maxSaveStack" | "magSet" | "curMark" | "curVal" | "curValLevel" | "radix" | "curOrder" | "readOpen" | "condPtr" | "ifLimit" | "curIf" | "ifLine" | "texFormatDefault" | "fontUsed" | "nullCharacter" | "totalPages" | "maxV" | "maxH" | "maxPush" | "lastBop" | "doingLeaders" | "deadCycles" | "curS" | "halfBuf" | "dviLimit" | "dviPtr" | "dviOffset" | "dviGone" | "downPtr" | "rightPtr" | "adjustTail" | "lastBadness" | "packBeginLine" | "emptyField" | "nullDelimiter" | "alignPtr" | "curAlign" | "curSpan" | "curLoop" | "curHead" | "curTail" | "hyphWord" | "hyphList" | "hyphCount" | "outputActive" | "insertPenalties" | "ligaturePresent" | "cancelBoundary" | "lftHit" | "rtHit" | "insDisc" | "afterToken" | "longHelpSeen" | "formatIdent" | "writeOpen" | "lrPtr" | "lrProblems" | "curDir" | "pseudoFiles" | "saRoot" | "saNull" | "saChain" | "saLevel" | "discPtr" | "mem" | "mem" | "mem" | "mem" | "mem" | "rover" | "loMemMax" | "avail" | "memEnd" | "hiMemMin" | "varUsed" | "dynUsed" | "eqtb" | "eqtb" | "eqtb" | "eqtb" | "hashUsed" | "csCount" | "fontPtr" | "fmemPtr" | "fontName" | "fontArea" | "hyphenChar" | "skewChar" | "bcharLabel" | "fontBchar" | "fontFalseBchar" | "fontBc" | "fontEc" | "fontSize" | "fontDsize" | "charBase" | "widthBase" | "heightBase" | "depthBase" | "italicBase" | "ligKernBase" | "kernBase" | "extenBase" | "fontGlue" | "fontParams" | "paramBase" | "fontInfo" | "trieOpHash" | "trieUsed" | "trieOpPtr" | "trieNotReady" | "trieL" | "trieC" | "triePtr" | "eTeXMode" | "maxRegNum" | "maxRegHelpLine" | "trieR" | "hyphStart">{
 }
 
 function copyHashWord(to: number, from: number, state: InitializeState): void {
-  state.hashLh[to] = state.hashLh[from] ?? 0;
-  state.hashRh[to] = state.hashRh[from] ?? 0;
+  state.hash[to].lh = state.hash[from].lh ?? 0;
+  state.hash[to].rh = state.hash[from].rh ?? 0;
 }
 
 function copyMemWord(to: number, from: number, state: InitializeState): void {
-  state.memB0[to] = state.memB0[from] ?? 0;
-  state.memB1[to] = state.memB1[from] ?? 0;
-  state.memLh[to] = state.memLh[from] ?? 0;
-  state.memRh[to] = state.memRh[from] ?? 0;
-  state.memInt[to] = state.memInt[from] ?? 0;
+  state.mem[to].hh.b0 = state.mem[from].hh.b0 ?? 0;
+  state.mem[to].hh.b1 = state.mem[from].hh.b1 ?? 0;
+  state.mem[to].hh.lh = state.mem[from].hh.lh ?? 0;
+  state.mem[to].hh.rh = state.mem[from].hh.rh ?? 0;
+  state.mem[to].int = state.mem[from].int ?? 0;
 }
 
 function copyEqtbWord(to: number, from: number, state: InitializeState): void {
-  state.eqtbB0[to] = state.eqtbB0[from] ?? 0;
-  state.eqtbB1[to] = state.eqtbB1[from] ?? 0;
-  state.eqtbRh[to] = state.eqtbRh[from] ?? 0;
-  state.eqtbInt[to] = state.eqtbInt[from] ?? 0;
+  state.eqtb[to].hh.b0 = state.eqtb[from].hh.b0 ?? 0;
+  state.eqtb[to].hh.b1 = state.eqtb[from].hh.b1 ?? 0;
+  state.eqtb[to].hh.rh = state.eqtb[from].hh.rh ?? 0;
+  state.eqtb[to].int = state.eqtb[from].int ?? 0;
 }
 
 export function initialize(state: InitializeState): void {
@@ -216,18 +53,18 @@ export function initialize(state: InitializeState): void {
 
   state.nestPtr = 0;
   state.maxNestStack = 0;
-  state.curListModeField = 1;
-  state.curListHeadField = 29999;
-  state.curListTailField = 29999;
-  state.curListETeXAuxField = 0;
-  state.curListAuxInt = -65536000;
-  state.curListMlField = 0;
-  state.curListPgField = 0;
+  state.curList.modeField = 1;
+  state.curList.headField = 29999;
+  state.curList.tailField = 29999;
+  state.curList.eTeXAuxField = 0;
+  state.curList.auxField.int = -65536000;
+  state.curList.mlField = 0;
+  state.curList.pgField = 0;
   state.shownMode = 0;
 
   state.pageContents = 0;
   state.pageTail = 29998;
-  state.memRh[29998] = 0;
+  state.mem[29998].hh.rh = 0;
   state.lastGlue = 65535;
   state.lastPenalty = 0;
   state.lastKern = 0;
@@ -240,8 +77,8 @@ export function initialize(state: InitializeState): void {
   }
 
   state.noNewControlSequence = true;
-  state.hashLh[514] = 0;
-  state.hashRh[514] = 0;
+  state.hash[514].lh = 0;
+  state.hash[514].rh = 0;
   for (let k = 515; k <= 2880; k += 1) {
     copyHashWord(k, 514, state);
   }
@@ -276,10 +113,11 @@ export function initialize(state: InitializeState): void {
     state.fontUsed[k] = false;
   }
 
-  state.nullCharacterB0 = 0;
-  state.nullCharacterB1 = 0;
-  state.nullCharacterB2 = 0;
-  state.nullCharacterB3 = 0;
+  state.nullCharacter = state.nullCharacter ?? { b0: 0, b1: 0, b2: 0, b3: 0 };
+  state.nullCharacter.b0 = 0;
+  state.nullCharacter.b1 = 0;
+  state.nullCharacter.b2 = 0;
+  state.nullCharacter.b3 = 0;
 
   state.totalPages = 0;
   state.maxV = 0;
@@ -301,12 +139,16 @@ export function initialize(state: InitializeState): void {
   state.lastBadness = 0;
   state.packBeginLine = 0;
 
-  state.emptyFieldRh = 0;
-  state.emptyFieldLh = 0;
-  state.nullDelimiterB0 = 0;
-  state.nullDelimiterB1 = 0;
-  state.nullDelimiterB2 = 0;
-  state.nullDelimiterB3 = 0;
+  state.emptyField = state.emptyField ?? { lh: 0, rh: 0, b0: 0, b1: 0 };
+  state.emptyField.rh = 0;
+  state.emptyField.lh = 0;
+  state.emptyField.b0 = 0;
+  state.emptyField.b1 = 0;
+  state.nullDelimiter = state.nullDelimiter ?? { b0: 0, b1: 0, b2: 0, b3: 0 };
+  state.nullDelimiter.b0 = 0;
+  state.nullDelimiter.b1 = 0;
+  state.nullDelimiter.b2 = 0;
+  state.nullDelimiter.b3 = 0;
 
   state.alignPtr = 0;
   state.curAlign = 0;
@@ -344,54 +186,68 @@ export function initialize(state: InitializeState): void {
   state.pseudoFiles = 0;
 
   state.saRoot[6] = 0;
-  state.saNullLh = 0;
-  state.saNullRh = 0;
+  state.saNull = state.saNull ?? {
+    int: 0,
+    gr: 0,
+    hh: { rh: 0, lh: 0, b0: 0, b1: 0 },
+    qqqq: { b0: 0, b1: 0, b2: 0, b3: 0 },
+  };
+  state.saNull.int = 0;
+  state.saNull.gr = 0;
+  state.saNull.hh.lh = 0;
+  state.saNull.hh.rh = 0;
+  state.saNull.hh.b0 = 0;
+  state.saNull.hh.b1 = 0;
+  state.saNull.qqqq.b0 = 0;
+  state.saNull.qqqq.b1 = 0;
+  state.saNull.qqqq.b2 = 0;
+  state.saNull.qqqq.b3 = 0;
   state.saChain = 0;
   state.saLevel = 0;
   state.discPtr[2] = 0;
   state.discPtr[3] = 0;
 
   for (let k = 1; k <= 19; k += 1) {
-    state.memInt[k] = 0;
+    state.mem[k].int = 0;
   }
   for (let k = 0; k <= 19; k += 4) {
-    state.memRh[k] = 1;
-    state.memB0[k] = 0;
-    state.memB1[k] = 0;
+    state.mem[k].hh.rh = 1;
+    state.mem[k].hh.b0 = 0;
+    state.mem[k].hh.b1 = 0;
   }
-  state.memInt[6] = 65536;
-  state.memB0[4] = 1;
-  state.memInt[10] = 65536;
-  state.memB0[8] = 2;
-  state.memInt[14] = 65536;
-  state.memB0[12] = 1;
-  state.memInt[15] = 65536;
-  state.memB1[12] = 1;
-  state.memInt[18] = -65536;
-  state.memB0[16] = 1;
+  state.mem[6].int = 65536;
+  state.mem[4].hh.b0 = 1;
+  state.mem[10].int = 65536;
+  state.mem[8].hh.b0 = 2;
+  state.mem[14].int = 65536;
+  state.mem[12].hh.b0 = 1;
+  state.mem[15].int = 65536;
+  state.mem[12].hh.b1 = 1;
+  state.mem[18].int = -65536;
+  state.mem[16].hh.b0 = 1;
 
   state.rover = 20;
-  state.memRh[state.rover] = 65535;
-  state.memLh[state.rover] = 1000;
-  state.memLh[state.rover + 1] = state.rover;
-  state.memRh[state.rover + 1] = state.rover;
+  state.mem[state.rover].hh.rh = 65535;
+  state.mem[state.rover].hh.lh = 1000;
+  state.mem[state.rover + 1].hh.lh = state.rover;
+  state.mem[state.rover + 1].hh.rh = state.rover;
   state.loMemMax = state.rover + 1000;
-  state.memRh[state.loMemMax] = 0;
-  state.memLh[state.loMemMax] = 0;
+  state.mem[state.loMemMax].hh.rh = 0;
+  state.mem[state.loMemMax].hh.lh = 0;
   for (let k = 29987; k <= 30000; k += 1) {
     copyMemWord(k, state.loMemMax, state);
   }
-  state.memLh[29990] = 6714;
-  state.memRh[29991] = 256;
-  state.memLh[29991] = 0;
-  state.memB0[29993] = 1;
-  state.memLh[29994] = 65535;
-  state.memB1[29993] = 0;
-  state.memB1[30000] = 255;
-  state.memB0[30000] = 1;
-  state.memRh[30000] = 30000;
-  state.memB0[29998] = 10;
-  state.memB1[29998] = 0;
+  state.mem[29990].hh.lh = 6714;
+  state.mem[29991].hh.rh = 256;
+  state.mem[29991].hh.lh = 0;
+  state.mem[29993].hh.b0 = 1;
+  state.mem[29994].hh.lh = 65535;
+  state.mem[29993].hh.b1 = 0;
+  state.mem[30000].hh.b1 = 255;
+  state.mem[30000].hh.b0 = 1;
+  state.mem[30000].hh.rh = 30000;
+  state.mem[29998].hh.b0 = 10;
+  state.mem[29998].hh.b1 = 0;
 
   state.avail = 0;
   state.memEnd = 30000;
@@ -399,25 +255,25 @@ export function initialize(state: InitializeState): void {
   state.varUsed = 20;
   state.dynUsed = 14;
 
-  state.eqtbB0[2881] = 101;
-  state.eqtbRh[2881] = 0;
-  state.eqtbB1[2881] = 0;
+  state.eqtb[2881].hh.b0 = 101;
+  state.eqtb[2881].hh.rh = 0;
+  state.eqtb[2881].hh.b1 = 0;
   for (let k = 1; k <= 2880; k += 1) {
     copyEqtbWord(k, 2881, state);
   }
 
-  state.eqtbRh[2882] = 0;
-  state.eqtbB1[2882] = 1;
-  state.eqtbB0[2882] = 117;
+  state.eqtb[2882].hh.rh = 0;
+  state.eqtb[2882].hh.b1 = 1;
+  state.eqtb[2882].hh.b0 = 117;
   for (let k = 2883; k <= 3411; k += 1) {
     copyEqtbWord(k, 2882, state);
   }
 
-  state.memRh[0] = (state.memRh[0] ?? 0) + 530;
+  state.mem[0].hh.rh = (state.mem[0].hh.rh ?? 0) + 530;
 
-  state.eqtbRh[3412] = 0;
-  state.eqtbB0[3412] = 118;
-  state.eqtbB1[3412] = 1;
+  state.eqtb[3412].hh.rh = 0;
+  state.eqtb[3412].hh.b0 = 118;
+  state.eqtb[3412].hh.b1 = 1;
   for (let k = 3679; k <= 3682; k += 1) {
     copyEqtbWord(k, 3412, state);
   }
@@ -425,76 +281,76 @@ export function initialize(state: InitializeState): void {
     copyEqtbWord(k, 2881, state);
   }
 
-  state.eqtbRh[3683] = 0;
-  state.eqtbB0[3683] = 119;
-  state.eqtbB1[3683] = 1;
+  state.eqtb[3683].hh.rh = 0;
+  state.eqtb[3683].hh.b0 = 119;
+  state.eqtb[3683].hh.b1 = 1;
   for (let k = 3684; k <= 3938; k += 1) {
     copyEqtbWord(k, 3683, state);
   }
 
-  state.eqtbRh[3939] = 0;
-  state.eqtbB0[3939] = 120;
-  state.eqtbB1[3939] = 1;
+  state.eqtb[3939].hh.rh = 0;
+  state.eqtb[3939].hh.b0 = 120;
+  state.eqtb[3939].hh.b1 = 1;
   for (let k = 3940; k <= 3987; k += 1) {
     copyEqtbWord(k, 3939, state);
   }
 
-  state.eqtbRh[3988] = 0;
-  state.eqtbB0[3988] = 120;
-  state.eqtbB1[3988] = 1;
+  state.eqtb[3988].hh.rh = 0;
+  state.eqtb[3988].hh.b0 = 120;
+  state.eqtb[3988].hh.b1 = 1;
   for (let k = 3989; k <= 5267; k += 1) {
     copyEqtbWord(k, 3988, state);
   }
 
   for (let k = 0; k <= 255; k += 1) {
-    state.eqtbRh[3988 + k] = 12;
-    state.eqtbRh[5012 + k] = k;
-    state.eqtbRh[4756 + k] = 1000;
+    state.eqtb[3988 + k].hh.rh = 12;
+    state.eqtb[5012 + k].hh.rh = k;
+    state.eqtb[4756 + k].hh.rh = 1000;
   }
-  state.eqtbRh[4001] = 5;
-  state.eqtbRh[4020] = 10;
-  state.eqtbRh[4080] = 0;
-  state.eqtbRh[4025] = 14;
-  state.eqtbRh[4115] = 15;
-  state.eqtbRh[3988] = 9;
+  state.eqtb[4001].hh.rh = 5;
+  state.eqtb[4020].hh.rh = 10;
+  state.eqtb[4080].hh.rh = 0;
+  state.eqtb[4025].hh.rh = 14;
+  state.eqtb[4115].hh.rh = 15;
+  state.eqtb[3988].hh.rh = 9;
 
   for (let k = 48; k <= 57; k += 1) {
-    state.eqtbRh[5012 + k] = k + 28672;
+    state.eqtb[5012 + k].hh.rh = k + 28672;
   }
   for (let k = 65; k <= 90; k += 1) {
-    state.eqtbRh[3988 + k] = 11;
-    state.eqtbRh[3988 + k + 32] = 11;
-    state.eqtbRh[5012 + k] = k + 28928;
-    state.eqtbRh[5012 + k + 32] = k + 28960;
-    state.eqtbRh[4244 + k] = k + 32;
-    state.eqtbRh[4244 + k + 32] = k + 32;
-    state.eqtbRh[4500 + k] = k;
-    state.eqtbRh[4500 + k + 32] = k;
-    state.eqtbRh[4756 + k] = 999;
+    state.eqtb[3988 + k].hh.rh = 11;
+    state.eqtb[3988 + k + 32].hh.rh = 11;
+    state.eqtb[5012 + k].hh.rh = k + 28928;
+    state.eqtb[5012 + k + 32].hh.rh = k + 28960;
+    state.eqtb[4244 + k].hh.rh = k + 32;
+    state.eqtb[4244 + k + 32].hh.rh = k + 32;
+    state.eqtb[4500 + k].hh.rh = k;
+    state.eqtb[4500 + k + 32].hh.rh = k;
+    state.eqtb[4756 + k].hh.rh = 999;
   }
 
   for (let k = 5268; k <= 5588; k += 1) {
-    state.eqtbInt[k] = 0;
+    state.eqtb[k].int = 0;
   }
-  state.eqtbInt[5285] = 1000;
-  state.eqtbInt[5269] = 10000;
-  state.eqtbInt[5309] = 1;
-  state.eqtbInt[5308] = 25;
-  state.eqtbInt[5313] = 92;
-  state.eqtbInt[5316] = 13;
+  state.eqtb[5285].int = 1000;
+  state.eqtb[5269].int = 10000;
+  state.eqtb[5309].int = 1;
+  state.eqtb[5308].int = 25;
+  state.eqtb[5313].int = 92;
+  state.eqtb[5316].int = 13;
   for (let k = 0; k <= 255; k += 1) {
-    state.eqtbInt[5589 + k] = -1;
+    state.eqtb[5589 + k].int = -1;
   }
-  state.eqtbInt[5635] = 0;
+  state.eqtb[5635].int = 0;
 
   for (let k = 5845; k <= 6121; k += 1) {
-    state.eqtbInt[k] = 0;
+    state.eqtb[k].int = 0;
   }
 
   state.hashUsed = 2614;
   state.csCount = 0;
-  state.eqtbB0[2623] = 116;
-  state.hashRh[2623] = 505;
+  state.eqtb[2623].hh.b0 = 116;
+  state.hash[2623].rh = 505;
 
   state.fontPtr = 0;
   state.fmemPtr = 7;
@@ -521,7 +377,7 @@ export function initialize(state: InitializeState): void {
   state.fontParams[0] = 7;
   state.paramBase[0] = -1;
   for (let k = 0; k <= 6; k += 1) {
-    state.fontInfoInt[k] = 0;
+    state.fontInfo[k].int = 0;
   }
 
   for (let k = -state.trieOpSize; k <= state.trieOpSize; k += 1) {
@@ -535,12 +391,12 @@ export function initialize(state: InitializeState): void {
   state.trieL[0] = 0;
   state.trieC[0] = 0;
   state.triePtr = 0;
-  state.hashRh[2614] = 1206;
+  state.hash[2614].rh = 1206;
   state.formatIdent = 1271;
-  state.hashRh[2622] = 1310;
-  state.eqtbB1[2622] = 1;
-  state.eqtbB0[2622] = 113;
-  state.eqtbRh[2622] = 0;
+  state.hash[2622].rh = 1310;
+  state.eqtb[2622].hh.b1 = 1;
+  state.eqtb[2622].hh.b0 = 113;
+  state.eqtb[2622].hh.rh = 0;
 
   state.eTeXMode = 0;
   state.maxRegNum = 255;

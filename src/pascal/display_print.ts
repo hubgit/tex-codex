@@ -1,7 +1,5 @@
-export interface CsState {
-  eqtbRh: number[];
-  hashRh: number[];
-  strPtr: number;
+import type { TeXStateSlice } from "./state_slices";
+export interface CsState extends TeXStateSlice<"eqtb" | "hash" | "strPtr">{
 }
 
 export interface CsOps {
@@ -19,7 +17,7 @@ export function printCs(p: number, state: CsState, ops: CsOps): void {
         ops.printChar(32);
       } else {
         ops.printEsc(p - 257);
-        if (state.eqtbRh[3988 + p - 257] === 11) {
+        if (state.eqtb[3988 + p - 257].hh.rh === 11) {
           ops.printChar(32);
         }
       }
@@ -30,10 +28,10 @@ export function printCs(p: number, state: CsState, ops: CsOps): void {
     }
   } else if (p >= 2881) {
     ops.printEsc(509);
-  } else if (state.hashRh[p] < 0 || state.hashRh[p] >= state.strPtr) {
+  } else if (state.hash[p].rh < 0 || state.hash[p].rh >= state.strPtr) {
     ops.printEsc(510);
   } else {
-    ops.printEsc(state.hashRh[p]);
+    ops.printEsc(state.hash[p].rh);
     ops.printChar(32);
   }
 }
@@ -49,15 +47,11 @@ export function sprintCs(p: number, state: CsState, ops: CsOps): void {
       ops.printEsc(508);
     }
   } else {
-    ops.printEsc(state.hashRh[p]);
+    ops.printEsc(state.hash[p].rh);
   }
 }
 
-export interface MarkState {
-  hiMemMin: number;
-  memEnd: number;
-  memRh: number[];
-  maxPrintLine: number;
+export interface MarkState extends TeXStateSlice<"hiMemMin" | "memEnd" | "mem" | "maxPrintLine">{
 }
 
 export interface MarkOps {
@@ -71,13 +65,12 @@ export function printMark(p: number, state: MarkState, ops: MarkOps): void {
   if (p < state.hiMemMin || p > state.memEnd) {
     ops.printEsc(310);
   } else {
-    ops.showTokenList(state.memRh[p], 0, state.maxPrintLine - 10);
+    ops.showTokenList(state.mem[p].hh.rh, 0, state.maxPrintLine - 10);
   }
   ops.printChar(125);
 }
 
-export interface TokenShowState {
-  memRh: number[];
+export interface TokenShowState extends TeXStateSlice<"mem">{
 }
 
 export interface TokenShowOps {
@@ -90,7 +83,7 @@ export function tokenShow(
   ops: TokenShowOps,
 ): void {
   if (p !== 0) {
-    ops.showTokenList(state.memRh[p], 0, 10000000);
+    ops.showTokenList(state.mem[p].hh.rh, 0, 10000000);
   }
 }
 
@@ -132,12 +125,7 @@ export function printGlue(
   }
 }
 
-export interface SpecState {
-  memMin: number;
-  loMemMax: number;
-  memInt: number[];
-  memB0: number[];
-  memB1: number[];
+export interface SpecState extends TeXStateSlice<"memMin" | "loMemMax" | "mem" | "mem" | "mem">{
 }
 
 export function printSpec(
@@ -151,24 +139,22 @@ export function printSpec(
     return;
   }
 
-  ops.printScaled(state.memInt[p + 1]);
+  ops.printScaled(state.mem[p + 1].int);
   if (s !== 0) {
     ops.print(s);
   }
 
-  if (state.memInt[p + 2] !== 0) {
+  if (state.mem[p + 2].int !== 0) {
     ops.print(313);
-    printGlue(state.memInt[p + 2], state.memB0[p], s, ops);
+    printGlue(state.mem[p + 2].int, state.mem[p].hh.b0, s, ops);
   }
-  if (state.memInt[p + 3] !== 0) {
+  if (state.mem[p + 3].int !== 0) {
     ops.print(314);
-    printGlue(state.memInt[p + 3], state.memB1[p], s, ops);
+    printGlue(state.mem[p + 3].int, state.mem[p].hh.b1, s, ops);
   }
 }
 
-export interface FamAndCharState {
-  memB0: number[];
-  memB1: number[];
+export interface FamAndCharState extends TeXStateSlice<"mem" | "mem">{
 }
 
 export interface FamAndCharOps {
@@ -184,16 +170,12 @@ export function printFamAndChar(
   ops: FamAndCharOps,
 ): void {
   ops.printEsc(467);
-  ops.printInt(state.memB0[p]);
+  ops.printInt(state.mem[p].hh.b0);
   ops.printChar(32);
-  ops.print(state.memB1[p]);
+  ops.print(state.mem[p].hh.b1);
 }
 
-export interface DelimiterState {
-  memB0: number[];
-  memB1: number[];
-  memB2: number[];
-  memB3: number[];
+export interface DelimiterState extends TeXStateSlice<"mem" | "mem" | "mem" | "mem">{
 }
 
 export interface DelimiterOps {
@@ -206,8 +188,8 @@ export function printDelimiter(
   state: DelimiterState,
   ops: DelimiterOps,
 ): void {
-  const first = (state.memB0[p] * 256 + state.memB1[p]) | 0;
-  const second = (state.memB2[p] * 256 + state.memB3[p]) | 0;
+  const first = (state.mem[p].hh.b0 * 256 + state.mem[p].hh.b1) | 0;
+  const second = (state.mem[p].qqqq.b2 * 256 + state.mem[p].qqqq.b3) | 0;
   const a = (Math.imul(first, 4096) + second) | 0;
   if (a < 0) {
     ops.printInt(a);
@@ -254,12 +236,7 @@ export function printSkipParam(n: number, ops: SkipParamOps): void {
   }
 }
 
-export interface FontAndCharState {
-  memEnd: number;
-  memB0: number[];
-  memB1: number[];
-  fontMax: number;
-  hashRh: number[];
+export interface FontAndCharState extends TeXStateSlice<"memEnd" | "mem" | "mem" | "fontMax" | "hash">{
 }
 
 export interface FontAndCharOps {
@@ -278,24 +255,16 @@ export function printFontAndChar(
     return;
   }
 
-  if (state.memB0[p] < 0 || state.memB0[p] > state.fontMax) {
+  if (state.mem[p].hh.b0 < 0 || state.mem[p].hh.b0 > state.fontMax) {
     ops.printChar(42);
   } else {
-    ops.printEsc(state.hashRh[2624 + state.memB0[p]]);
+    ops.printEsc(state.hash[2624 + state.mem[p].hh.b0].rh);
   }
   ops.printChar(32);
-  ops.print(state.memB1[p]);
+  ops.print(state.mem[p].hh.b1);
 }
 
-export interface SubsidiaryDataState {
-  poolPtr: number;
-  strPtr: number;
-  strStart: number[];
-  depthThreshold: number;
-  strPool: number[];
-  tempPtr: number;
-  memRh: number[];
-  memLh: number[];
+export interface SubsidiaryDataState extends TeXStateSlice<"poolPtr" | "strPtr" | "strStart" | "depthThreshold" | "strPool" | "tempPtr" | "mem" | "mem">{
 }
 
 export interface SubsidiaryDataOps {
@@ -313,7 +282,7 @@ export function printSubsidiaryData(
   ops: SubsidiaryDataOps,
 ): void {
   if (state.poolPtr - state.strStart[state.strPtr] >= state.depthThreshold) {
-    if (state.memRh[p] !== 0) {
+    if (state.mem[p].hh.rh !== 0) {
       ops.print(315);
     }
     return;
@@ -323,7 +292,7 @@ export function printSubsidiaryData(
   state.poolPtr += 1;
   state.tempPtr = p;
 
-  switch (state.memRh[p]) {
+  switch (state.mem[p].hh.rh) {
     case 1:
       ops.printLn();
       ops.printCurrentString();
@@ -333,7 +302,7 @@ export function printSubsidiaryData(
       ops.showInfo();
       break;
     case 3:
-      if (state.memLh[p] === 0) {
+      if (state.mem[p].hh.lh === 0) {
         ops.printLn();
         ops.printCurrentString();
         ops.print(871);
@@ -348,17 +317,7 @@ export function printSubsidiaryData(
   state.poolPtr -= 1;
 }
 
-export interface ShortDisplayState {
-  memMin: number;
-  hiMemMin: number;
-  memEnd: number;
-  fontInShortDisplay: number;
-  fontMax: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  hashRh: number[];
+export interface ShortDisplayState extends TeXStateSlice<"memMin" | "hiMemMin" | "memEnd" | "fontInShortDisplay" | "fontMax" | "mem" | "mem" | "mem" | "mem" | "hash">{
 }
 
 export interface ShortDisplayOps {
@@ -375,19 +334,19 @@ export function shortDisplay(
   while (p > state.memMin) {
     if (p >= state.hiMemMin) {
       if (p <= state.memEnd) {
-        if (state.memB0[p] !== state.fontInShortDisplay) {
-          if (state.memB0[p] < 0 || state.memB0[p] > state.fontMax) {
+        if (state.mem[p].hh.b0 !== state.fontInShortDisplay) {
+          if (state.mem[p].hh.b0 < 0 || state.mem[p].hh.b0 > state.fontMax) {
             ops.printChar(42);
           } else {
-            ops.printEsc(state.hashRh[2624 + state.memB0[p]]);
+            ops.printEsc(state.hash[2624 + state.mem[p].hh.b0].rh);
           }
           ops.printChar(32);
-          state.fontInShortDisplay = state.memB0[p];
+          state.fontInShortDisplay = state.mem[p].hh.b0;
         }
-        ops.print(state.memB1[p]);
+        ops.print(state.mem[p].hh.b1);
       }
     } else {
-      switch (state.memB0[p]) {
+      switch (state.mem[p].hh.b0) {
         case 0:
         case 1:
         case 3:
@@ -401,27 +360,27 @@ export function shortDisplay(
           ops.printChar(124);
           break;
         case 10:
-          if (state.memLh[p + 1] !== 0) {
+          if (state.mem[p + 1].hh.lh !== 0) {
             ops.printChar(32);
           }
           break;
         case 9:
-          if (state.memB1[p] >= 4) {
+          if (state.mem[p].hh.b1 >= 4) {
             ops.print(309);
           } else {
             ops.printChar(36);
           }
           break;
         case 6:
-          shortDisplay(state.memRh[p + 1], state, ops);
+          shortDisplay(state.mem[p + 1].hh.rh, state, ops);
           break;
         case 7: {
-          shortDisplay(state.memLh[p + 1], state, ops);
-          shortDisplay(state.memRh[p + 1], state, ops);
-          let n = state.memB1[p];
+          shortDisplay(state.mem[p + 1].hh.lh, state, ops);
+          shortDisplay(state.mem[p + 1].hh.rh, state, ops);
+          let n = state.mem[p].hh.b1;
           while (n > 0) {
-            if (state.memRh[p] !== 0) {
-              p = state.memRh[p];
+            if (state.mem[p].hh.rh !== 0) {
+              p = state.mem[p].hh.rh;
             }
             n -= 1;
           }
@@ -431,6 +390,6 @@ export function shortDisplay(
           break;
       }
     }
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 }

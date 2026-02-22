@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { fourQuartersFromComponents, memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -70,7 +71,6 @@ function createState(overrides = {}) {
     interaction: 0,
     helpPtr: 0,
     helpLine: new Array(10).fill(0),
-    eqtbInt: new Array(6000).fill(0),
     fontPtr: 0,
     fontMax: 63,
     fmemPtr: 100,
@@ -84,15 +84,6 @@ function createState(overrides = {}) {
     kernBase: new Array(200).fill(0),
     extenBase: new Array(200).fill(0),
     paramBase: new Array(200).fill(0),
-    fontInfoInt: new Array(2000).fill(0),
-    fontInfoB0: new Array(2000).fill(0),
-    fontInfoB1: new Array(2000).fill(0),
-    fontInfoB2: new Array(2000).fill(0),
-    fontInfoB3: new Array(2000).fill(0),
-    fontCheckB0: new Array(200).fill(0),
-    fontCheckB1: new Array(200).fill(0),
-    fontCheckB2: new Array(200).fill(0),
-    fontCheckB3: new Array(200).fill(0),
     fontDsize: new Array(200).fill(0),
     fontSize: new Array(200).fill(0),
     fontParams: new Array(200).fill(0),
@@ -107,6 +98,22 @@ function createState(overrides = {}) {
     fontBchar: new Array(200).fill(0),
     fontFalseBchar: new Array(200).fill(0),
     ...overrides,
+    eqtb: memoryWordsFromComponents({
+      int: new Array(6000).fill(0),
+      }),
+    fontInfo: memoryWordsFromComponents({
+      b0: new Array(2000).fill(0),
+      b1: new Array(2000).fill(0),
+      b2: new Array(2000).fill(0),
+      b3: new Array(2000).fill(0),
+      int: new Array(2000).fill(0),
+      }),
+    fontCheck: fourQuartersFromComponents({
+      b0: new Array(200).fill(0),
+      b1: new Array(200).fill(0),
+      b2: new Array(200).fill(0),
+      b3: new Array(200).fill(0),
+      }),
   };
 }
 
@@ -133,8 +140,8 @@ test("readFontInfo matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = createState();
-    state.eqtbInt[5314] = 45;
-    state.eqtbInt[5315] = 123;
+    state.eqtb[5314].int = 45;
+    state.eqtb[5315].int = 123;
 
     let stream = createTfmStream(buildMinimalValidTfmBytes());
     let openOk = true;
@@ -203,8 +210,8 @@ test("readFontInfo matches Pascal probe trace", () => {
       `FPAR${state.fontParams[f]}`,
       `HYS${state.hyphenChar[f]},${state.skewChar[f]}`,
       `BCH${state.bcharLabel[f]},${state.fontBchar[f]},${state.fontFalseBchar[f]}`,
-      `CHK${state.fontCheckB0[f]},${state.fontCheckB1[f]},${state.fontCheckB2[f]},${state.fontCheckB3[f]}`,
-      `FI${state.fontInfoInt[100]},${state.fontInfoInt[101]},${state.fontInfoInt[102]},${state.fontInfoInt[103]},${state.fontInfoInt[104]},${state.fontInfoInt[105]},${state.fontInfoInt[106]},${state.fontInfoInt[107]},${state.fontInfoInt[108]},${state.fontInfoInt[109]},${state.fontInfoInt[110]},${state.fontInfoInt[111]}`,
+      `CHK${state.fontCheck[f].b0},${state.fontCheck[f].b1},${state.fontCheck[f].b2},${state.fontCheck[f].b3}`,
+      `FI${state.fontInfo[100].int},${state.fontInfo[101].int},${state.fontInfo[102].int},${state.fontInfo[103].int},${state.fontInfo[104].int},${state.fontInfo[105].int},${state.fontInfo[106].int},${state.fontInfo[107].int},${state.fontInfo[108].int},${state.fontInfo[109].int},${state.fontInfo[110].int},${state.fontInfo[111].int}`,
     ].join(" ");
 
     const expected = runProbeText("READ_FONT_INFO_TRACE", [scenario]);

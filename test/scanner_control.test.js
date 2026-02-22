@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -51,12 +52,14 @@ test("checkOuterValidity matches Pascal probe trace", () => {
       parToken: 555,
       longState: 111,
       alignState: 0,
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[900] = -1;
-    state.memLh[901] = -1;
-    state.memRh[901] = -1;
+    state.mem[900].hh.lh = -1;
+    state.mem[901].hh.lh = -1;
+    state.mem[901].hh.rh = -1;
 
     if (scenario === 2) {
       state.scannerStatus = 1;
@@ -113,8 +116,8 @@ test("checkOuterValidity matches Pascal probe trace", () => {
       `TOK${state.curTok}`,
       `HP${state.helpPtr}`,
       `HL${state.helpLine[0]},${state.helpLine[1]},${state.helpLine[2]},${state.helpLine[3]}`,
-      `M900${state.memLh[900]}`,
-      `M901${state.memLh[901]},${state.memRh[901]}`,
+      `M900${state.mem[900].hh.lh}`,
+      `M901${state.mem[901].hh.lh},${state.mem[901].hh.rh}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("CHECK_OUTER_VALIDITY_TRACE", [scenario]);
@@ -129,18 +132,20 @@ test("firmUpTheLine matches Pascal probe trace", () => {
     const state = {
       curInput: makeInputRecord(0, 0, 2, 0, 0, 0),
       last: 5,
-      eqtbInt: new Array(7000).fill(0),
       interaction: 2,
       first: 0,
       buffer: new Array(4096).fill(0),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(7000).fill(0),
+        }),
     };
-    state.eqtbInt[5296] = 1;
+    state.eqtb[5296].int = 1;
     state.buffer[2] = 65;
     state.buffer[3] = 66;
     state.buffer[4] = 67;
 
     if (scenario === 1) {
-      state.eqtbInt[5296] = 0;
+      state.eqtb[5296].int = 0;
     } else if (scenario === 3) {
       state.interaction = 3;
     }
@@ -185,13 +190,15 @@ test("runaway matches Pascal probe trace", () => {
       scannerStatus: 1,
       defRef: 100,
       errorLine: 80,
-      memRh: new Array(40000).fill(0),
+      mem: memoryWordsFromComponents({
+        rh: new Array(40000).fill(0),
+        }, { minSize: 30001 }),
     };
     const trace = [];
 
-    state.memRh[100] = 700;
-    state.memRh[29997] = 701;
-    state.memRh[29996] = 702;
+    state.mem[100].hh.rh = 700;
+    state.mem[29997].hh.rh = 701;
+    state.mem[29996].hh.rh = 702;
     state.scannerStatus = scenario;
 
     runaway(state, {
@@ -202,7 +209,7 @@ test("runaway matches Pascal probe trace", () => {
       showTokenList: (p, q, l) => trace.push(`ST${p},${q},${l}`),
     });
 
-    const actual = `${trace.join(" ")} M${state.scannerStatus},${state.defRef},${state.memRh[100]},${state.memRh[29997]},${state.memRh[29996]}`;
+    const actual = `${trace.join(" ")} M${state.scannerStatus},${state.defRef},${state.mem[100].hh.rh},${state.mem[29997].hh.rh},${state.mem[29996].hh.rh}`;
     const expected = runProbeText("RUNAWAY_TRACE", [scenario]);
     assert.equal(actual, expected, `RUNAWAY_TRACE mismatch for ${scenario}`);
   }
@@ -222,12 +229,16 @@ test("groupWarning matches Pascal probe trace", () => {
       curInput: makeInputRecord(1, 2, 30, 31, 32, 20),
       inputStack: new Array(8).fill(null).map(() => makeInputRecord(1, 0, 0, 0, 0, 0)),
       grpStack: new Array(8).fill(0),
-      saveStackRh: new Array(20).fill(0),
-      eqtbInt: new Array(7000).fill(0),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(7000).fill(0),
+        }),
+      saveStack: memoryWordsFromComponents({
+        rh: new Array(20).fill(0),
+        }),
     };
     const trace = [];
 
-    state.saveStackRh[10] = 444;
+    state.saveStack[10].hh.rh = 444;
     state.inputStack[2] = makeInputRecord(1, 3, 0, 0, 0, 10);
     state.inputStack[1] = makeInputRecord(1, 1, 0, 0, 0, 25);
 
@@ -235,17 +246,17 @@ test("groupWarning matches Pascal probe trace", () => {
       state.curBoundary = 999;
       state.grpStack[2] = 777;
       state.grpStack[1] = 777;
-      state.eqtbInt[5327] = 2;
+      state.eqtb[5327].int = 2;
     } else if (scenario === 2) {
       state.curBoundary = 777;
       state.grpStack[2] = 777;
       state.grpStack[1] = 123;
-      state.eqtbInt[5327] = 0;
+      state.eqtb[5327].int = 0;
     } else {
       state.curBoundary = 777;
       state.grpStack[2] = 777;
       state.grpStack[1] = 777;
-      state.eqtbInt[5327] = 2;
+      state.eqtb[5327].int = 2;
       state.curInput = makeInputRecord(0, 5, 30, 31, 32, 20);
     }
 
@@ -282,28 +293,32 @@ test("ifWarning matches Pascal probe trace", () => {
       curInput: makeInputRecord(1, 2, 30, 31, 32, 20),
       inputStack: new Array(8).fill(null).map(() => makeInputRecord(1, 0, 0, 0, 0, 0)),
       ifStack: new Array(8).fill(0),
-      memRh: new Array(2000).fill(0),
-      eqtbInt: new Array(7000).fill(0),
+      mem: memoryWordsFromComponents({
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(7000).fill(0),
+        }),
     };
     const trace = [];
 
-    state.memRh[500] = 222;
+    state.mem[500].hh.rh = 222;
     state.inputStack[2] = makeInputRecord(1, 3, 0, 0, 0, 10);
     state.inputStack[1] = makeInputRecord(1, 1, 0, 0, 0, 25);
 
     if (scenario === 1) {
       state.ifStack[2] = 7;
       state.ifStack[1] = 8;
-      state.eqtbInt[5327] = 2;
+      state.eqtb[5327].int = 2;
     } else if (scenario === 2) {
       state.ifStack[2] = 500;
       state.ifStack[1] = 7;
-      state.eqtbInt[5327] = 0;
+      state.eqtb[5327].int = 0;
       state.ifLine = 0;
     } else {
       state.ifStack[2] = 500;
       state.ifStack[1] = 500;
-      state.eqtbInt[5327] = 2;
+      state.eqtb[5327].int = 2;
       state.curInput = makeInputRecord(0, 5, 30, 31, 32, 20);
     }
 
@@ -337,19 +352,25 @@ test("fileWarning matches Pascal probe trace", () => {
       curBoundary: 40,
       inOpen: 2,
       grpStack: new Array(1200).fill(0),
-      saveStackB1: new Array(1200).fill(0),
-      saveStackRh: new Array(1200).fill(0),
       condPtr: 100,
       ifLimit: 2,
       curIf: 7,
       ifLine: 123,
       ifStack: new Array(8).fill(0),
-      memInt: new Array(3000).fill(0),
-      memB0: new Array(3000).fill(0),
-      memB1: new Array(3000).fill(0),
-      memRh: new Array(3000).fill(0),
-      eqtbInt: new Array(7000).fill(0),
       history: 0,
+      mem: memoryWordsFromComponents({
+        b0: new Array(3000).fill(0),
+        b1: new Array(3000).fill(0),
+        int: new Array(3000).fill(0),
+        rh: new Array(3000).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(7000).fill(0),
+        }),
+      saveStack: memoryWordsFromComponents({
+        b1: new Array(1200).fill(0),
+        rh: new Array(1200).fill(0),
+        }),
     };
     const trace = [];
 
@@ -363,26 +384,26 @@ test("fileWarning matches Pascal probe trace", () => {
       state.ifLimit = 3;
       state.curIf = 8;
       state.ifLine = 321;
-      state.eqtbInt[5327] = 1;
+      state.eqtb[5327].int = 1;
     } else {
       state.grpStack[2] = 999;
-      state.saveStackB1[40] = 21;
-      state.saveStackRh[40] = 50;
-      state.saveStackB1[50] = 22;
-      state.saveStackRh[50] = 999;
+      state.saveStack[40].hh.b1 = 21;
+      state.saveStack[40].hh.rh = 50;
+      state.saveStack[50].hh.b1 = 22;
+      state.saveStack[50].hh.rh = 999;
 
       state.ifStack[2] = 700;
-      state.memRh[100] = 200;
-      state.memInt[101] = 1111;
-      state.memB1[100] = 31;
-      state.memB0[100] = 2;
+      state.mem[100].hh.rh = 200;
+      state.mem[101].int = 1111;
+      state.mem[100].hh.b1 = 31;
+      state.mem[100].hh.b0 = 2;
 
-      state.memRh[200] = 700;
-      state.memInt[201] = 0;
-      state.memB1[200] = 32;
-      state.memB0[200] = 1;
+      state.mem[200].hh.rh = 700;
+      state.mem[201].int = 0;
+      state.mem[200].hh.b1 = 32;
+      state.mem[200].hh.b0 = 1;
 
-      state.eqtbInt[5327] = 2;
+      state.eqtb[5327].int = 2;
     }
 
     fileWarning(state, {

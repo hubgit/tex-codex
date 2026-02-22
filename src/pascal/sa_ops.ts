@@ -1,10 +1,7 @@
-export interface DeleteSaRefState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  saRoot: number[];
+import type { MemoryWord } from "../main";
+import type { TeXStateSlice } from "./state_slices";
+
+export interface DeleteSaRefState extends TeXStateSlice<"mem" | "mem" | "mem" | "mem" | "mem" | "saRoot">{
 }
 
 export interface DeleteSaRefOps {
@@ -17,56 +14,54 @@ export function deleteSaRef(
   state: DeleteSaRefState,
   ops: DeleteSaRefOps,
 ): void {
-  state.memLh[q + 1] -= 1;
-  if (state.memLh[q + 1] !== 0) {
+  state.mem[q + 1].hh.lh -= 1;
+  if (state.mem[q + 1].hh.lh !== 0) {
     return;
   }
 
   let s: number;
-  if (state.memB0[q] < 32) {
-    if (state.memInt[q + 2] === 0) {
+  if (state.mem[q].hh.b0 < 32) {
+    if (state.mem[q + 2].int === 0) {
       s = 3;
     } else {
       return;
     }
   } else {
-    if (state.memB0[q] < 64) {
-      if (state.memRh[q + 1] === 0) {
+    if (state.mem[q].hh.b0 < 64) {
+      if (state.mem[q + 1].hh.rh === 0) {
         ops.deleteGlueRef(0);
       } else {
         return;
       }
-    } else if (state.memRh[q + 1] !== 0) {
+    } else if (state.mem[q + 1].hh.rh !== 0) {
       return;
     }
     s = 2;
   }
 
   while (true) {
-    const i = state.memB0[q] % 16;
+    const i = state.mem[q].hh.b0 % 16;
     const p = q;
-    q = state.memRh[p];
+    q = state.mem[p].hh.rh;
     ops.freeNode(p, s);
     if (q === 0) {
       state.saRoot[i] = 0;
       return;
     }
     if (i % 2 !== 0) {
-      state.memRh[q + Math.trunc(i / 2) + 1] = 0;
+      state.mem[q + Math.trunc(i / 2) + 1].hh.rh = 0;
     } else {
-      state.memLh[q + Math.trunc(i / 2) + 1] = 0;
+      state.mem[q + Math.trunc(i / 2) + 1].hh.lh = 0;
     }
-    state.memB1[q] -= 1;
+    state.mem[q].hh.b1 -= 1;
     s = 9;
-    if (state.memB1[q] > 0) {
+    if (state.mem[q].hh.b1 > 0) {
       return;
     }
   }
 }
 
-export interface SaDestroyState {
-  memB0: number[];
-  memRh: number[];
+export interface SaDestroyState extends TeXStateSlice<"mem" | "mem">{
 }
 
 export interface SaDestroyOps {
@@ -80,22 +75,18 @@ export function saDestroy(
   state: SaDestroyState,
   ops: SaDestroyOps,
 ): void {
-  if (state.memB0[p] < 64) {
-    ops.deleteGlueRef(state.memRh[p + 1]);
-  } else if (state.memRh[p + 1] !== 0) {
-    if (state.memB0[p] < 80) {
-      ops.flushNodeList(state.memRh[p + 1]);
+  if (state.mem[p].hh.b0 < 64) {
+    ops.deleteGlueRef(state.mem[p + 1].hh.rh);
+  } else if (state.mem[p + 1].hh.rh !== 0) {
+    if (state.mem[p].hh.b0 < 80) {
+      ops.flushNodeList(state.mem[p + 1].hh.rh);
     } else {
-      ops.deleteTokenRef(state.memRh[p + 1]);
+      ops.deleteTokenRef(state.mem[p + 1].hh.rh);
     }
   }
 }
 
-export interface SaDefState {
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  curLevel: number;
+export interface SaDefState extends TeXStateSlice<"mem" | "mem" | "mem" | "curLevel">{
 }
 
 export interface SaDefOps {
@@ -110,36 +101,22 @@ export function saDef(
   state: SaDefState,
   ops: SaDefOps,
 ): void {
-  state.memLh[p + 1] += 1;
-  if (state.memRh[p + 1] === e) {
+  state.mem[p + 1].hh.lh += 1;
+  if (state.mem[p + 1].hh.rh === e) {
     ops.saDestroy(p);
   } else {
-    if (state.memB1[p] === state.curLevel) {
+    if (state.mem[p].hh.b1 === state.curLevel) {
       ops.saDestroy(p);
     } else {
       ops.saSave(p);
     }
-    state.memB1[p] = state.curLevel;
-    state.memRh[p + 1] = e;
+    state.mem[p].hh.b1 = state.curLevel;
+    state.mem[p + 1].hh.rh = e;
   }
   ops.deleteSaRef(p);
 }
 
-export interface SaSaveState {
-  curLevel: number;
-  saLevel: number;
-  savePtr: number;
-  maxSaveStack: number;
-  saveSize: number;
-  saChain: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  saveStackB0: number[];
-  saveStackB1: number[];
-  saveStackRh: number[];
+export interface SaSaveState extends TeXStateSlice<"curLevel" | "saLevel" | "savePtr" | "maxSaveStack" | "saveSize" | "saChain" | "mem" | "mem" | "mem" | "mem" | "mem" | "saveStack" | "saveStack" | "saveStack">{
 }
 
 export interface SaSaveOps {
@@ -159,41 +136,37 @@ export function saSave(
         ops.overflow(545, state.saveSize);
       }
     }
-    state.saveStackB0[state.savePtr] = 4;
-    state.saveStackB1[state.savePtr] = state.saLevel;
-    state.saveStackRh[state.savePtr] = state.saChain;
+    state.saveStack[state.savePtr].hh.b0 = 4;
+    state.saveStack[state.savePtr].hh.b1 = state.saLevel;
+    state.saveStack[state.savePtr].hh.rh = state.saChain;
     state.savePtr += 1;
     state.saChain = 0;
     state.saLevel = state.curLevel;
   }
-  let i = state.memB0[p];
+  let i = state.mem[p].hh.b0;
   let q: number;
   if (i < 32) {
-    if (state.memInt[p + 2] === 0) {
+    if (state.mem[p + 2].int === 0) {
       q = ops.getNode(2);
       i = 96;
     } else {
       q = ops.getNode(3);
-      state.memInt[q + 2] = state.memInt[p + 2];
+      state.mem[q + 2].int = state.mem[p + 2].int;
     }
-    state.memRh[q + 1] = 0;
+    state.mem[q + 1].hh.rh = 0;
   } else {
     q = ops.getNode(2);
-    state.memRh[q + 1] = state.memRh[p + 1];
+    state.mem[q + 1].hh.rh = state.mem[p + 1].hh.rh;
   }
-  state.memLh[q + 1] = p;
-  state.memB0[q] = i;
-  state.memB1[q] = state.memB1[p];
-  state.memRh[q] = state.saChain;
+  state.mem[q + 1].hh.lh = p;
+  state.mem[q].hh.b0 = i;
+  state.mem[q].hh.b1 = state.mem[p].hh.b1;
+  state.mem[q].hh.rh = state.saChain;
   state.saChain = q;
-  state.memLh[p + 1] += 1;
+  state.mem[p + 1].hh.lh += 1;
 }
 
-export interface SaWDefState {
-  memB1: number[];
-  memLh: number[];
-  memInt: number[];
-  curLevel: number;
+export interface SaWDefState extends TeXStateSlice<"mem" | "mem" | "mem" | "curLevel">{
 }
 
 export interface SaWDefOps {
@@ -207,21 +180,18 @@ export function saWDef(
   state: SaWDefState,
   ops: SaWDefOps,
 ): void {
-  state.memLh[p + 1] += 1;
-  if (state.memInt[p + 2] !== w) {
-    if (state.memB1[p] !== state.curLevel) {
+  state.mem[p + 1].hh.lh += 1;
+  if (state.mem[p + 2].int !== w) {
+    if (state.mem[p].hh.b1 !== state.curLevel) {
       ops.saSave(p);
     }
-    state.memB1[p] = state.curLevel;
-    state.memInt[p + 2] = w;
+    state.mem[p].hh.b1 = state.curLevel;
+    state.mem[p + 2].int = w;
   }
   ops.deleteSaRef(p);
 }
 
-export interface GsaDefState {
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
+export interface GsaDefState extends TeXStateSlice<"mem" | "mem" | "mem">{
 }
 
 export interface GsaDefOps {
@@ -235,17 +205,14 @@ export function gsaDef(
   state: GsaDefState,
   ops: GsaDefOps,
 ): void {
-  state.memLh[p + 1] += 1;
+  state.mem[p + 1].hh.lh += 1;
   ops.saDestroy(p);
-  state.memB1[p] = 1;
-  state.memRh[p + 1] = e;
+  state.mem[p].hh.b1 = 1;
+  state.mem[p + 1].hh.rh = e;
   ops.deleteSaRef(p);
 }
 
-export interface GsaWDefState {
-  memB1: number[];
-  memLh: number[];
-  memInt: number[];
+export interface GsaWDefState extends TeXStateSlice<"mem" | "mem" | "mem">{
 }
 
 export interface GsaWDefOps {
@@ -258,19 +225,13 @@ export function gsaWDef(
   state: GsaWDefState,
   ops: GsaWDefOps,
 ): void {
-  state.memLh[p + 1] += 1;
-  state.memB1[p] = 1;
-  state.memInt[p + 2] = w;
+  state.mem[p + 1].hh.lh += 1;
+  state.mem[p].hh.b1 = 1;
+  state.mem[p + 2].int = w;
   ops.deleteSaRef(p);
 }
 
-export interface SaRestoreState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  saChain: number;
+export interface SaRestoreState extends TeXStateSlice<"mem" | "mem" | "mem" | "mem" | "mem" | "saChain">{
 }
 
 export interface SaRestoreOps {
@@ -281,28 +242,28 @@ export interface SaRestoreOps {
 
 export function saRestore(state: SaRestoreState, ops: SaRestoreOps): void {
   while (true) {
-    const p = state.memLh[state.saChain + 1];
-    if (state.memB1[p] === 1) {
-      if (state.memB0[p] >= 32) {
+    const p = state.mem[state.saChain + 1].hh.lh;
+    if (state.mem[p].hh.b1 === 1) {
+      if (state.mem[p].hh.b0 >= 32) {
         ops.saDestroy(state.saChain);
       }
     } else {
-      if (state.memB0[p] < 32) {
-        if (state.memB0[state.saChain] < 32) {
-          state.memInt[p + 2] = state.memInt[state.saChain + 2];
+      if (state.mem[p].hh.b0 < 32) {
+        if (state.mem[state.saChain].hh.b0 < 32) {
+          state.mem[p + 2].int = state.mem[state.saChain + 2].int;
         } else {
-          state.memInt[p + 2] = 0;
+          state.mem[p + 2].int = 0;
         }
       } else {
         ops.saDestroy(p);
-        state.memRh[p + 1] = state.memRh[state.saChain + 1];
+        state.mem[p + 1].hh.rh = state.mem[state.saChain + 1].hh.rh;
       }
-      state.memB1[p] = state.memB1[state.saChain];
+      state.mem[p].hh.b1 = state.mem[state.saChain].hh.b1;
     }
     ops.deleteSaRef(p);
     const chainNode = state.saChain;
-    state.saChain = state.memRh[chainNode];
-    if (state.memB0[chainNode] < 32) {
+    state.saChain = state.mem[chainNode].hh.rh;
+    if (state.mem[chainNode].hh.b0 < 32) {
       ops.freeNode(chainNode, 3);
     } else {
       ops.freeNode(chainNode, 2);
@@ -313,18 +274,7 @@ export function saRestore(state: SaRestoreState, ops: SaRestoreOps): void {
   }
 }
 
-export interface NewIndexState {
-  curPtr: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  saNullB0: number;
-  saNullB1: number;
-  saNullLh: number;
-  saNullRh: number;
-  saNullInt: number;
+export interface NewIndexState extends TeXStateSlice<"curPtr" | "mem" | "mem" | "mem" | "mem" | "mem" | "saNull">{
 }
 
 export interface NewIndexOps {
@@ -338,47 +288,46 @@ export function newIndex(
   ops: NewIndexOps,
 ): void {
   state.curPtr = ops.getNode(9);
-  state.memB0[state.curPtr] = i;
-  state.memB1[state.curPtr] = 0;
-  state.memRh[state.curPtr] = q;
+  state.mem[state.curPtr].hh.b0 = i;
+  state.mem[state.curPtr].hh.b1 = 0;
+  state.mem[state.curPtr].hh.rh = q;
   for (let k = 1; k <= 8; k += 1) {
     const p = state.curPtr + k;
-    state.memB0[p] = state.saNullB0;
-    state.memB1[p] = state.saNullB1;
-    state.memLh[p] = state.saNullLh;
-    state.memRh[p] = state.saNullRh;
-    state.memInt[p] = state.saNullInt;
+    state.mem[p].hh.b0 = state.saNull.hh.b0;
+    state.mem[p].hh.b1 = state.saNull.hh.b1;
+    state.mem[p].hh.lh = state.saNull.hh.lh;
+    state.mem[p].hh.rh = state.saNull.hh.rh;
+    state.mem[p].int = state.saNull.int;
   }
 }
 
 function readSaChild(q: number, i: number, state: FindSaElementState): number {
   const slot = q + Math.trunc(i / 2) + 1;
   if (i % 2 !== 0) {
-    return state.memRh[slot];
+    return state.mem[slot].hh.rh;
   }
-  return state.memLh[slot];
+  return state.mem[slot].hh.lh;
 }
 
 function writeSaChild(q: number, i: number, child: number, state: FindSaElementState): void {
   const slot = q + Math.trunc(i / 2) + 1;
   if (i % 2 !== 0) {
-    state.memRh[slot] = child;
+    state.mem[slot].hh.rh = child;
   } else {
-    state.memLh[slot] = child;
+    state.mem[slot].hh.lh = child;
   }
-  state.memB1[q] += 1;
+  state.mem[q].hh.b1 += 1;
 }
 
 function assignSaNullWord(p: number, state: FindSaElementState): void {
-  state.memB0[p] = state.saNullB0;
-  state.memB1[p] = state.saNullB1;
-  state.memLh[p] = state.saNullLh;
-  state.memRh[p] = state.saNullRh;
-  state.memInt[p] = state.saNullInt;
+  state.mem[p].hh.b0 = state.saNull.hh.b0;
+  state.mem[p].hh.b1 = state.saNull.hh.b1;
+  state.mem[p].hh.lh = state.saNull.hh.lh;
+  state.mem[p].hh.rh = state.saNull.hh.rh;
+  state.mem[p].int = state.saNull.int;
 }
 
-export interface FindSaElementState extends NewIndexState {
-  saRoot: number[];
+export interface FindSaElementState extends NewIndexState, TeXStateSlice<"saRoot">{
 }
 
 export interface FindSaElementOps extends NewIndexOps {}
@@ -488,22 +437,22 @@ export function findSaElement(
       } else {
         if (t <= 1) {
           state.curPtr = ops.getNode(3);
-          state.memInt[state.curPtr + 2] = 0;
-          state.memRh[state.curPtr + 1] = n;
+          state.mem[state.curPtr + 2].int = 0;
+          state.mem[state.curPtr + 1].hh.rh = n;
         } else {
           state.curPtr = ops.getNode(2);
           if (t <= 3) {
-            state.memRh[state.curPtr + 1] = 0;
-            state.memRh[0] += 1;
+            state.mem[state.curPtr + 1].hh.rh = 0;
+            state.mem[0].hh.rh += 1;
           } else {
-            state.memRh[state.curPtr + 1] = 0;
+            state.mem[state.curPtr + 1].hh.rh = 0;
           }
         }
-        state.memLh[state.curPtr + 1] = 0;
+        state.mem[state.curPtr + 1].hh.lh = 0;
       }
-      state.memB0[state.curPtr] = 16 * t + i;
-      state.memB1[state.curPtr] = 1;
-      state.memRh[state.curPtr] = q;
+      state.mem[state.curPtr].hh.b0 = 16 * t + i;
+      state.mem[state.curPtr].hh.b1 = 1;
+      state.mem[state.curPtr].hh.rh = q;
       writeSaChild(q, i, state.curPtr, state);
       break;
     default:

@@ -1,11 +1,7 @@
-export interface FlushNodeListState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  hiMemMin: number;
-  avail: number;
+import { round } from "./arithmetic";
+import type { TeXStateSlice, MemGrSlice, MemWordCoreSlice } from "./state_slices";
+
+export interface FlushNodeListState extends TeXStateSlice<"mem" | "mem" | "mem" | "mem" | "mem" | "hiMemMin" | "avail">{
 }
 
 export interface FlushNodeListOps {
@@ -21,19 +17,19 @@ export function flushNodeList(
   ops: FlushNodeListOps,
 ): void {
   while (p !== 0) {
-    const q = state.memRh[p] ?? 0;
+    const q = state.mem[p].hh.rh ?? 0;
 
     if (p >= state.hiMemMin) {
-      state.memRh[p] = state.avail;
+      state.mem[p].hh.rh = state.avail;
       state.avail = p;
     } else {
       let skipFreeNode2 = false;
-      const nodeType = state.memB0[p] ?? 0;
+      const nodeType = state.mem[p].hh.b0 ?? 0;
       switch (nodeType) {
         case 0:
         case 1:
         case 13:
-          flushNodeList(state.memRh[p + 5] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 5].hh.rh ?? 0, state, ops);
           ops.freeNode(p, 7);
           skipFreeNode2 = true;
           break;
@@ -42,20 +38,20 @@ export function flushNodeList(
           skipFreeNode2 = true;
           break;
         case 3:
-          flushNodeList(state.memLh[p + 4] ?? 0, state, ops);
-          ops.deleteGlueRef(state.memRh[p + 4] ?? 0);
+          flushNodeList(state.mem[p + 4].hh.lh ?? 0, state, ops);
+          ops.deleteGlueRef(state.mem[p + 4].hh.rh ?? 0);
           ops.freeNode(p, 5);
           skipFreeNode2 = true;
           break;
         case 8: {
-          const whatsitType = state.memB1[p] ?? 0;
+          const whatsitType = state.mem[p].hh.b1 ?? 0;
           switch (whatsitType) {
             case 0:
               ops.freeNode(p, 3);
               break;
             case 1:
             case 3:
-              ops.deleteTokenRef(state.memRh[p + 1] ?? 0);
+              ops.deleteTokenRef(state.mem[p + 1].hh.rh ?? 0);
               ops.freeNode(p, 2);
               break;
             case 2:
@@ -70,14 +66,14 @@ export function flushNodeList(
           break;
         }
         case 10: {
-          const glueRef = state.memLh[p + 1] ?? 0;
-          if ((state.memRh[glueRef] ?? 0) === 0) {
+          const glueRef = state.mem[p + 1].hh.lh ?? 0;
+          if ((state.mem[glueRef].hh.rh ?? 0) === 0) {
             ops.freeNode(glueRef, 4);
           } else {
-            state.memRh[glueRef] = (state.memRh[glueRef] ?? 0) - 1;
+            state.mem[glueRef].hh.rh = (state.mem[glueRef].hh.rh ?? 0) - 1;
           }
-          if ((state.memRh[p + 1] ?? 0) !== 0) {
-            flushNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          if ((state.mem[p + 1].hh.rh ?? 0) !== 0) {
+            flushNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           }
           break;
         }
@@ -86,27 +82,27 @@ export function flushNodeList(
         case 12:
           break;
         case 6:
-          flushNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           break;
         case 4:
-          ops.deleteTokenRef(state.memRh[p + 1] ?? 0);
+          ops.deleteTokenRef(state.mem[p + 1].hh.rh ?? 0);
           break;
         case 7:
-          flushNodeList(state.memLh[p + 1] ?? 0, state, ops);
-          flushNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           break;
         case 5:
-          flushNodeList(state.memInt[p + 1] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].int ?? 0, state, ops);
           break;
         case 14:
           ops.freeNode(p, 3);
           skipFreeNode2 = true;
           break;
         case 15:
-          flushNodeList(state.memLh[p + 1] ?? 0, state, ops);
-          flushNodeList(state.memRh[p + 1] ?? 0, state, ops);
-          flushNodeList(state.memLh[p + 2] ?? 0, state, ops);
-          flushNodeList(state.memRh[p + 2] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
+          flushNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
+          flushNodeList(state.mem[p + 2].hh.lh ?? 0, state, ops);
+          flushNodeList(state.mem[p + 2].hh.rh ?? 0, state, ops);
           ops.freeNode(p, 3);
           skipFreeNode2 = true;
           break;
@@ -123,14 +119,14 @@ export function flushNodeList(
         case 26:
         case 29:
         case 28:
-          if ((state.memRh[p + 1] ?? 0) >= 2) {
-            flushNodeList(state.memLh[p + 1] ?? 0, state, ops);
+          if ((state.mem[p + 1].hh.rh ?? 0) >= 2) {
+            flushNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
           }
-          if ((state.memRh[p + 2] ?? 0) >= 2) {
-            flushNodeList(state.memLh[p + 2] ?? 0, state, ops);
+          if ((state.mem[p + 2].hh.rh ?? 0) >= 2) {
+            flushNodeList(state.mem[p + 2].hh.lh ?? 0, state, ops);
           }
-          if ((state.memRh[p + 3] ?? 0) >= 2) {
-            flushNodeList(state.memLh[p + 3] ?? 0, state, ops);
+          if ((state.mem[p + 3].hh.rh ?? 0) >= 2) {
+            flushNodeList(state.mem[p + 3].hh.lh ?? 0, state, ops);
           }
           if (nodeType === 24 || nodeType === 28) {
             ops.freeNode(p, 5);
@@ -145,8 +141,8 @@ export function flushNodeList(
           skipFreeNode2 = true;
           break;
         case 25:
-          flushNodeList(state.memLh[p + 2] ?? 0, state, ops);
-          flushNodeList(state.memLh[p + 3] ?? 0, state, ops);
+          flushNodeList(state.mem[p + 2].hh.lh ?? 0, state, ops);
+          flushNodeList(state.mem[p + 3].hh.lh ?? 0, state, ops);
           ops.freeNode(p, 6);
           skipFreeNode2 = true;
           break;
@@ -164,14 +160,7 @@ export function flushNodeList(
   }
 }
 
-export interface CopyNodeListState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  hiMemMin: number;
-  avail: number;
+export interface CopyNodeListState extends MemWordCoreSlice, MemGrSlice, TeXStateSlice<"hiMemMin" | "avail">{
 }
 
 export interface CopyNodeListOps {
@@ -185,11 +174,12 @@ function copyWord(
   src: number,
   state: CopyNodeListState,
 ): void {
-  state.memB0[dest] = state.memB0[src] ?? 0;
-  state.memB1[dest] = state.memB1[src] ?? 0;
-  state.memLh[dest] = state.memLh[src] ?? 0;
-  state.memRh[dest] = state.memRh[src] ?? 0;
-  state.memInt[dest] = state.memInt[src] ?? 0;
+  state.mem[dest].hh.b0 = state.mem[src].hh.b0 ?? 0;
+  state.mem[dest].hh.b1 = state.mem[src].hh.b1 ?? 0;
+  state.mem[dest].hh.lh = state.mem[src].hh.lh ?? 0;
+  state.mem[dest].hh.rh = state.mem[src].hh.rh ?? 0;
+  state.mem[dest].int = state.mem[src].int ?? 0;
+  state.mem[dest].gr = state.mem[src].gr ?? 0;
 }
 
 export function copyNodeList(
@@ -207,14 +197,14 @@ export function copyNodeList(
     if (p >= state.hiMemMin) {
       r = ops.getAvail();
     } else {
-      switch (state.memB0[p] ?? 0) {
+      switch (state.mem[p].hh.b0 ?? 0) {
         case 0:
         case 1:
         case 13:
           r = ops.getNode(7);
           copyWord(r + 6, p + 6, state);
           copyWord(r + 5, p + 5, state);
-          state.memRh[r + 5] = copyNodeList(state.memRh[p + 5] ?? 0, state, ops);
+          state.mem[r + 5].hh.rh = copyNodeList(state.mem[p + 5].hh.rh ?? 0, state, ops);
           words = 5;
           break;
         case 2:
@@ -224,12 +214,12 @@ export function copyNodeList(
         case 3:
           r = ops.getNode(5);
           copyWord(r + 4, p + 4, state);
-          state.memRh[state.memRh[p + 4] ?? 0] = (state.memRh[state.memRh[p + 4] ?? 0] ?? 0) + 1;
-          state.memLh[r + 4] = copyNodeList(state.memLh[p + 4] ?? 0, state, ops);
+          state.mem[state.mem[p + 4].hh.rh ?? 0].hh.rh = (state.mem[state.mem[p + 4].hh.rh ?? 0].hh.rh ?? 0) + 1;
+          state.mem[r + 4].hh.lh = copyNodeList(state.mem[p + 4].hh.lh ?? 0, state, ops);
           words = 4;
           break;
         case 8:
-          switch (state.memB1[p] ?? 0) {
+          switch (state.mem[p].hh.b1 ?? 0) {
             case 0:
               r = ops.getNode(3);
               words = 3;
@@ -237,7 +227,7 @@ export function copyNodeList(
             case 1:
             case 3:
               r = ops.getNode(2);
-              state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+              state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
               words = 2;
               break;
             case 2:
@@ -252,9 +242,9 @@ export function copyNodeList(
           break;
         case 10:
           r = ops.getNode(2);
-          state.memRh[state.memLh[p + 1] ?? 0] = (state.memRh[state.memLh[p + 1] ?? 0] ?? 0) + 1;
-          state.memLh[r + 1] = state.memLh[p + 1] ?? 0;
-          state.memRh[r + 1] = copyNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          state.mem[state.mem[p + 1].hh.lh ?? 0].hh.rh = (state.mem[state.mem[p + 1].hh.lh ?? 0].hh.rh ?? 0) + 1;
+          state.mem[r + 1].hh.lh = state.mem[p + 1].hh.lh ?? 0;
+          state.mem[r + 1].hh.rh = copyNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           break;
         case 11:
         case 9:
@@ -265,21 +255,21 @@ export function copyNodeList(
         case 6:
           r = ops.getNode(2);
           copyWord(r + 1, p + 1, state);
-          state.memRh[r + 1] = copyNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          state.mem[r + 1].hh.rh = copyNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           break;
         case 7:
           r = ops.getNode(2);
-          state.memLh[r + 1] = copyNodeList(state.memLh[p + 1] ?? 0, state, ops);
-          state.memRh[r + 1] = copyNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          state.mem[r + 1].hh.lh = copyNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
+          state.mem[r + 1].hh.rh = copyNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           break;
         case 4:
           r = ops.getNode(2);
-          state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+          state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
           words = 2;
           break;
         case 5:
           r = ops.getNode(2);
-          state.memInt[r + 1] = copyNodeList(state.memInt[p + 1] ?? 0, state, ops);
+          state.mem[r + 1].int = copyNodeList(state.mem[p + 1].int ?? 0, state, ops);
           break;
         default:
           ops.confusion(357);
@@ -292,38 +282,19 @@ export function copyNodeList(
       copyWord(r + words, p + words, state);
     }
 
-    state.memRh[q] = r;
+    state.mem[q].hh.rh = r;
     q = r;
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
 
-  state.memRh[q] = 0;
-  q = state.memRh[h] ?? 0;
-  state.memRh[h] = state.avail;
+  state.mem[q].hh.rh = 0;
+  q = state.mem[h].hh.rh ?? 0;
+  state.mem[h].hh.rh = state.avail;
   state.avail = h;
   return q;
 }
 
-export interface ShowNodeListState {
-  poolPtr: number;
-  strPtr: number;
-  strStart: number[];
-  strPool: number[];
-  depthThreshold: number;
-  breadthMax: number;
-  memMin: number;
-  memEnd: number;
-  hiMemMin: number;
-  eTeXMode: number;
-  fontInShortDisplay: number;
-  memB0: number[];
-  memB1: number[];
-  memB2: number[];
-  memB3: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
+export interface ShowNodeListState extends TeXStateSlice<"poolPtr" | "strPtr" | "strStart" | "strPool" | "depthThreshold" | "breadthMax" | "memMin" | "memEnd" | "hiMemMin" | "eTeXMode" | "fontInShortDisplay" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface ShowNodeListOps {
@@ -362,10 +333,10 @@ function withStringChar(
 
 function qqqqNonZero(p: number, state: ShowNodeListState): boolean {
   return (
-    (state.memB0[p] ?? 0) !== 0 ||
-    (state.memB1[p] ?? 0) !== 0 ||
-    (state.memB2[p] ?? 0) !== 0 ||
-    (state.memB3[p] ?? 0) !== 0
+    (state.mem[p].hh.b0 ?? 0) !== 0 ||
+    (state.mem[p].hh.b1 ?? 0) !== 0 ||
+    (state.mem[p].qqqq.b2 ?? 0) !== 0 ||
+    (state.mem[p].qqqq.b3 ?? 0) !== 0
   );
 }
 
@@ -397,11 +368,11 @@ export function showNodeList(
 
     if (p >= state.hiMemMin) {
       ops.printFontAndChar(p);
-      p = state.memRh[p] ?? 0;
+      p = state.mem[p].hh.rh ?? 0;
       continue;
     }
 
-    const b0 = state.memB0[p] ?? 0;
+    const b0 = state.mem[p].hh.b0 ?? 0;
     switch (b0) {
       case 0:
       case 1:
@@ -414,34 +385,34 @@ export function showNodeList(
           ops.printEsc(319);
         }
         ops.print(320);
-        ops.printScaled(state.memInt[p + 3] ?? 0);
+        ops.printScaled(state.mem[p + 3].int ?? 0);
         ops.printChar(43);
-        ops.printScaled(state.memInt[p + 2] ?? 0);
+        ops.printScaled(state.mem[p + 2].int ?? 0);
         ops.print(321);
-        ops.printScaled(state.memInt[p + 1] ?? 0);
+        ops.printScaled(state.mem[p + 1].int ?? 0);
 
         if (b0 === 13) {
-          if ((state.memB1[p] ?? 0) !== 0) {
+          if ((state.mem[p].hh.b1 ?? 0) !== 0) {
             ops.print(287);
-            ops.printInt((state.memB1[p] ?? 0) + 1);
+            ops.printInt((state.mem[p].hh.b1 ?? 0) + 1);
             ops.print(323);
           }
-          if ((state.memInt[p + 6] ?? 0) !== 0) {
+          if ((state.mem[p + 6].int ?? 0) !== 0) {
             ops.print(324);
-            ops.printGlue(state.memInt[p + 6] ?? 0, state.memB1[p + 5] ?? 0, 0);
+            ops.printGlue(state.mem[p + 6].int ?? 0, state.mem[p + 5].hh.b1 ?? 0, 0);
           }
-          if ((state.memInt[p + 4] ?? 0) !== 0) {
+          if ((state.mem[p + 4].int ?? 0) !== 0) {
             ops.print(325);
-            ops.printGlue(state.memInt[p + 4] ?? 0, state.memB0[p + 5] ?? 0, 0);
+            ops.printGlue(state.mem[p + 4].int ?? 0, state.mem[p + 5].hh.b0 ?? 0, 0);
           }
         } else {
-          const g = state.memGr[p + 6] ?? 0;
-          if (g !== 0.0 && (state.memB0[p + 5] ?? 0) !== 0) {
+          const g = state.mem[p + 6].gr ?? 0;
+          if (g !== 0.0 && (state.mem[p + 5].hh.b0 ?? 0) !== 0) {
             ops.print(326);
-            if ((state.memB0[p + 5] ?? 0) === 2) {
+            if ((state.mem[p + 5].hh.b0 ?? 0) === 2) {
               ops.print(327);
             }
-            if (Math.abs(state.memInt[p + 6] ?? 0) < 1048576) {
+            if ((state.mem[p + 6].int ?? 0) === 0 || !Number.isFinite(g)) {
               ops.print(328);
             } else if (Math.abs(g) > 20000.0) {
               if (g > 0.0) {
@@ -449,74 +420,74 @@ export function showNodeList(
               } else {
                 ops.print(329);
               }
-              ops.printGlue(20000 * 65536, state.memB1[p + 5] ?? 0, 0);
+              ops.printGlue(20000 * 65536, state.mem[p + 5].hh.b1 ?? 0, 0);
             } else {
-              ops.printGlue(Math.round(65536 * g), state.memB1[p + 5] ?? 0, 0);
+              ops.printGlue(round(65536 * g), state.mem[p + 5].hh.b1 ?? 0, 0);
             }
           }
-          if ((state.memInt[p + 4] ?? 0) !== 0) {
+          if ((state.mem[p + 4].int ?? 0) !== 0) {
             ops.print(322);
-            ops.printScaled(state.memInt[p + 4] ?? 0);
+            ops.printScaled(state.mem[p + 4].int ?? 0);
           }
-          if (state.eTeXMode === 1 && b0 === 0 && (state.memB1[p] ?? 0) - 0 === 2) {
+          if (state.eTeXMode === 1 && b0 === 0 && (state.mem[p].hh.b1 ?? 0) - 0 === 2) {
             ops.print(1371);
           }
         }
 
         withStringChar(46, state, () => {
-          showNodeList(state.memRh[p + 5] ?? 0, state, ops);
+          showNodeList(state.mem[p + 5].hh.rh ?? 0, state, ops);
         });
         break;
       }
       case 2:
         ops.printEsc(330);
-        ops.printRuleDimen(state.memInt[p + 3] ?? 0);
+        ops.printRuleDimen(state.mem[p + 3].int ?? 0);
         ops.printChar(43);
-        ops.printRuleDimen(state.memInt[p + 2] ?? 0);
+        ops.printRuleDimen(state.mem[p + 2].int ?? 0);
         ops.print(321);
-        ops.printRuleDimen(state.memInt[p + 1] ?? 0);
+        ops.printRuleDimen(state.mem[p + 1].int ?? 0);
         break;
       case 3:
         ops.printEsc(331);
-        ops.printInt((state.memB1[p] ?? 0) - 0);
+        ops.printInt((state.mem[p].hh.b1 ?? 0) - 0);
         ops.print(332);
-        ops.printScaled(state.memInt[p + 3] ?? 0);
+        ops.printScaled(state.mem[p + 3].int ?? 0);
         ops.print(333);
-        ops.printSpec(state.memRh[p + 4] ?? 0, 0);
+        ops.printSpec(state.mem[p + 4].hh.rh ?? 0, 0);
         ops.printChar(44);
-        ops.printScaled(state.memInt[p + 2] ?? 0);
+        ops.printScaled(state.mem[p + 2].int ?? 0);
         ops.print(334);
-        ops.printInt(state.memInt[p + 1] ?? 0);
+        ops.printInt(state.mem[p + 1].int ?? 0);
         withStringChar(46, state, () => {
-          showNodeList(state.memLh[p + 4] ?? 0, state, ops);
+          showNodeList(state.mem[p + 4].hh.lh ?? 0, state, ops);
         });
         break;
       case 8: {
-        const b1 = state.memB1[p] ?? 0;
+        const b1 = state.mem[p].hh.b1 ?? 0;
         switch (b1) {
           case 0:
             ops.printWriteWhatsit(1299, p);
             ops.printChar(61);
-            ops.printFileName(state.memRh[p + 1] ?? 0, state.memLh[p + 2] ?? 0, state.memRh[p + 2] ?? 0);
+            ops.printFileName(state.mem[p + 1].hh.rh ?? 0, state.mem[p + 2].hh.lh ?? 0, state.mem[p + 2].hh.rh ?? 0);
             break;
           case 1:
             ops.printWriteWhatsit(603, p);
-            ops.printMark(state.memRh[p + 1] ?? 0);
+            ops.printMark(state.mem[p + 1].hh.rh ?? 0);
             break;
           case 2:
             ops.printWriteWhatsit(1300, p);
             break;
           case 3:
             ops.printEsc(1301);
-            ops.printMark(state.memRh[p + 1] ?? 0);
+            ops.printMark(state.mem[p + 1].hh.rh ?? 0);
             break;
           case 4:
             ops.printEsc(1303);
-            ops.printInt(state.memRh[p + 1] ?? 0);
+            ops.printInt(state.mem[p + 1].hh.rh ?? 0);
             ops.print(1306);
-            ops.printInt(state.memB0[p + 1] ?? 0);
+            ops.printInt(state.mem[p + 1].hh.b0 ?? 0);
             ops.printChar(44);
-            ops.printInt(state.memB1[p + 1] ?? 0);
+            ops.printInt(state.mem[p + 1].hh.b1 ?? 0);
             ops.printChar(41);
             break;
           default:
@@ -526,7 +497,7 @@ export function showNodeList(
         break;
       }
       case 10: {
-        const b1 = state.memB1[p] ?? 0;
+        const b1 = state.mem[p].hh.b1 ?? 0;
         if (b1 >= 100) {
           ops.printEsc(339);
           if (b1 === 101) {
@@ -535,9 +506,9 @@ export function showNodeList(
             ops.printChar(120);
           }
           ops.print(340);
-          ops.printSpec(state.memLh[p + 1] ?? 0, 0);
+          ops.printSpec(state.mem[p + 1].hh.lh ?? 0, 0);
           withStringChar(46, state, () => {
-            showNodeList(state.memRh[p + 1] ?? 0, state, ops);
+            showNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
           });
         } else {
           ops.printEsc(335);
@@ -555,117 +526,117 @@ export function showNodeList(
           if (b1 !== 98) {
             ops.printChar(32);
             if (b1 < 98) {
-              ops.printSpec(state.memLh[p + 1] ?? 0, 0);
+              ops.printSpec(state.mem[p + 1].hh.lh ?? 0, 0);
             } else {
-              ops.printSpec(state.memLh[p + 1] ?? 0, 338);
+              ops.printSpec(state.mem[p + 1].hh.lh ?? 0, 338);
             }
           }
         }
         break;
       }
       case 11:
-        if ((state.memB1[p] ?? 0) !== 99) {
+        if ((state.mem[p].hh.b1 ?? 0) !== 99) {
           ops.printEsc(341);
-          if ((state.memB1[p] ?? 0) !== 0) {
+          if ((state.mem[p].hh.b1 ?? 0) !== 0) {
             ops.printChar(32);
           }
-          ops.printScaled(state.memInt[p + 1] ?? 0);
-          if ((state.memB1[p] ?? 0) === 2) {
+          ops.printScaled(state.mem[p + 1].int ?? 0);
+          if ((state.mem[p].hh.b1 ?? 0) === 2) {
             ops.print(342);
           }
         } else {
           ops.printEsc(343);
-          ops.printScaled(state.memInt[p + 1] ?? 0);
+          ops.printScaled(state.mem[p + 1].int ?? 0);
           ops.print(338);
         }
         break;
       case 9:
-        if ((state.memB1[p] ?? 0) > 1) {
-          if (((state.memB1[p] ?? 0) & 1) === 1) {
+        if ((state.mem[p].hh.b1 ?? 0) > 1) {
+          if (((state.mem[p].hh.b1 ?? 0) & 1) === 1) {
             ops.printEsc(344);
           } else {
             ops.printEsc(345);
           }
-          if ((state.memB1[p] ?? 0) > 8) {
+          if ((state.mem[p].hh.b1 ?? 0) > 8) {
             ops.printChar(82);
-          } else if ((state.memB1[p] ?? 0) > 4) {
+          } else if ((state.mem[p].hh.b1 ?? 0) > 4) {
             ops.printChar(76);
           } else {
             ops.printChar(77);
           }
         } else {
           ops.printEsc(346);
-          if ((state.memB1[p] ?? 0) === 0) {
+          if ((state.mem[p].hh.b1 ?? 0) === 0) {
             ops.print(347);
           } else {
             ops.print(348);
           }
-          if ((state.memInt[p + 1] ?? 0) !== 0) {
+          if ((state.mem[p + 1].int ?? 0) !== 0) {
             ops.print(349);
-            ops.printScaled(state.memInt[p + 1] ?? 0);
+            ops.printScaled(state.mem[p + 1].int ?? 0);
           }
         }
         break;
       case 6:
         ops.printFontAndChar(p + 1);
         ops.print(350);
-        if ((state.memB1[p] ?? 0) > 1) {
+        if ((state.mem[p].hh.b1 ?? 0) > 1) {
           ops.printChar(124);
         }
-        state.fontInShortDisplay = state.memB0[p + 1] ?? 0;
-        ops.shortDisplay(state.memRh[p + 1] ?? 0);
-        if (((state.memB1[p] ?? 0) & 1) === 1) {
+        state.fontInShortDisplay = state.mem[p + 1].hh.b0 ?? 0;
+        ops.shortDisplay(state.mem[p + 1].hh.rh ?? 0);
+        if (((state.mem[p].hh.b1 ?? 0) & 1) === 1) {
           ops.printChar(124);
         }
         ops.printChar(41);
         break;
       case 12:
         ops.printEsc(351);
-        ops.printInt(state.memInt[p + 1] ?? 0);
+        ops.printInt(state.mem[p + 1].int ?? 0);
         break;
       case 7:
         ops.printEsc(352);
-        if ((state.memB1[p] ?? 0) > 0) {
+        if ((state.mem[p].hh.b1 ?? 0) > 0) {
           ops.print(353);
-          ops.printInt(state.memB1[p] ?? 0);
+          ops.printInt(state.mem[p].hh.b1 ?? 0);
         }
         withStringChar(46, state, () => {
-          showNodeList(state.memLh[p + 1] ?? 0, state, ops);
+          showNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
         });
         withStringChar(124, state, () => {
-          showNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          showNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
         });
         break;
       case 4:
         ops.printEsc(354);
-        if ((state.memLh[p + 1] ?? 0) !== 0) {
+        if ((state.mem[p + 1].hh.lh ?? 0) !== 0) {
           ops.printChar(115);
-          ops.printInt(state.memLh[p + 1] ?? 0);
+          ops.printInt(state.mem[p + 1].hh.lh ?? 0);
         }
-        ops.printMark(state.memRh[p + 1] ?? 0);
+        ops.printMark(state.mem[p + 1].hh.rh ?? 0);
         break;
       case 5:
         ops.printEsc(355);
         withStringChar(46, state, () => {
-          showNodeList(state.memInt[p + 1] ?? 0, state, ops);
+          showNodeList(state.mem[p + 1].int ?? 0, state, ops);
         });
         break;
       case 14:
-        ops.printStyle(state.memB1[p] ?? 0);
+        ops.printStyle(state.mem[p].hh.b1 ?? 0);
         break;
       case 15:
         ops.printEsc(528);
         withStringChar(68, state, () => {
-          showNodeList(state.memLh[p + 1] ?? 0, state, ops);
+          showNodeList(state.mem[p + 1].hh.lh ?? 0, state, ops);
         });
         withStringChar(84, state, () => {
-          showNodeList(state.memRh[p + 1] ?? 0, state, ops);
+          showNodeList(state.mem[p + 1].hh.rh ?? 0, state, ops);
         });
         withStringChar(83, state, () => {
-          showNodeList(state.memLh[p + 2] ?? 0, state, ops);
+          showNodeList(state.mem[p + 2].hh.lh ?? 0, state, ops);
         });
         withStringChar(115, state, () => {
-          showNodeList(state.memRh[p + 2] ?? 0, state, ops);
+          showNodeList(state.mem[p + 2].hh.rh ?? 0, state, ops);
         });
         break;
       case 16:
@@ -730,7 +701,7 @@ export function showNodeList(
             ops.printDelimiter(p + 1);
             break;
           case 31:
-            if ((state.memB1[p] ?? 0) === 0) {
+            if ((state.mem[p].hh.b1 ?? 0) === 0) {
               ops.printEsc(888);
             } else {
               ops.printEsc(889);
@@ -741,8 +712,8 @@ export function showNodeList(
             break;
         }
         if (b0 < 30) {
-          if ((state.memB1[p] ?? 0) !== 0) {
-            if ((state.memB1[p] ?? 0) === 1) {
+          if ((state.mem[p].hh.b1 ?? 0) !== 0) {
+            if ((state.mem[p].hh.b1 ?? 0) === 1) {
               ops.printEsc(890);
             } else {
               ops.printEsc(891);
@@ -756,10 +727,10 @@ export function showNodeList(
       }
       case 25:
         ops.printEsc(892);
-        if ((state.memInt[p + 1] ?? 0) === 1073741824) {
+        if ((state.mem[p + 1].int ?? 0) === 1073741824) {
           ops.print(893);
         } else {
-          ops.printScaled(state.memInt[p + 1] ?? 0);
+          ops.printScaled(state.mem[p + 1].int ?? 0);
         }
         if (qqqqNonZero(p + 4, state)) {
           ops.print(894);
@@ -777,16 +748,11 @@ export function showNodeList(
         break;
     }
 
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
 }
 
-export interface ShowBoxState {
-  depthThreshold: number;
-  breadthMax: number;
-  eqtbInt: number[];
-  poolPtr: number;
-  poolSize: number;
+export interface ShowBoxState extends TeXStateSlice<"depthThreshold" | "breadthMax" | "eqtb" | "poolPtr" | "poolSize">{
 }
 
 export interface ShowBoxOps {
@@ -799,8 +765,8 @@ export function showBox(
   state: ShowBoxState,
   ops: ShowBoxOps,
 ): void {
-  state.depthThreshold = state.eqtbInt[5293] ?? 0;
-  state.breadthMax = state.eqtbInt[5292] ?? 0;
+  state.depthThreshold = state.eqtb[5293].int ?? 0;
+  state.breadthMax = state.eqtb[5292].int ?? 0;
   if (state.breadthMax <= 0) {
     state.breadthMax = 5;
   }
@@ -813,28 +779,30 @@ export function showBox(
 
 export interface ActivityListState {
   modeField: number;
-  auxInt: number;
-  auxLh: number;
-  auxRh: number;
   headField: number;
+  tailField: number;
+  eTeXAuxField: number;
   mlField: number;
   pgField: number;
+  auxField: {
+    int: number;
+    gr: number;
+    hh: {
+      lh: number;
+      rh: number;
+      b0: number;
+      b1: number;
+    };
+    qqqq: {
+      b0: number;
+      b1: number;
+      b2: number;
+      b3: number;
+    };
+  };
 }
 
-export interface ShowActivitiesState {
-  nestPtr: number;
-  curList: ActivityListState;
-  nest: ActivityListState[];
-  outputActive: boolean;
-  pageTail: number;
-  pageContents: number;
-  pageSoFar: number[];
-  eqtbInt: number[];
-  memRh: number[];
-  memLh: number[];
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
+export interface ShowActivitiesState extends TeXStateSlice<"nestPtr" | "nest" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "curList" | "outputActive" | "pageTail" | "pageContents" | "pageSoFar" | "eqtb" | "mem" | "mem" | "mem" | "mem" | "mem">{
 }
 
 export interface ShowActivitiesOps {
@@ -854,12 +822,54 @@ export interface ShowActivitiesOps {
 function copyActivityListState(source: ActivityListState): ActivityListState {
   return {
     modeField: source.modeField,
-    auxInt: source.auxInt,
-    auxLh: source.auxLh,
-    auxRh: source.auxRh,
     headField: source.headField,
+    tailField: source.tailField,
+    eTeXAuxField: source.eTeXAuxField,
     mlField: source.mlField,
     pgField: source.pgField,
+    auxField: {
+      int: source.auxField.int,
+      gr: source.auxField.gr,
+      hh: {
+        lh: source.auxField.hh.lh,
+        rh: source.auxField.hh.rh,
+        b0: source.auxField.hh.b0,
+        b1: source.auxField.hh.b1,
+      },
+      qqqq: {
+        b0: source.auxField.qqqq.b0,
+        b1: source.auxField.qqqq.b1,
+        b2: source.auxField.qqqq.b2,
+        b3: source.auxField.qqqq.b3,
+      },
+    },
+  };
+}
+
+function currentActivityList(state: ShowActivitiesState): ActivityListState {
+  return {
+    modeField: state.curList.modeField,
+    headField: state.curList.headField,
+    tailField: state.curList.tailField,
+    eTeXAuxField: state.curList.eTeXAuxField,
+    mlField: state.curList.mlField,
+    pgField: state.curList.pgField,
+    auxField: {
+      int: state.curList.auxField.int,
+      gr: 0,
+      hh: {
+        lh: state.curList.auxField.hh.lh,
+        rh: state.curList.auxField.hh.rh,
+        b0: 0,
+        b1: 0,
+      },
+      qqqq: {
+        b0: 0,
+        b1: 0,
+        b2: 0,
+        b3: 0,
+      },
+    },
   };
 }
 
@@ -867,16 +877,16 @@ export function showActivities(
   state: ShowActivitiesState,
   ops: ShowActivitiesOps,
 ): void {
-  state.nest[state.nestPtr] = copyActivityListState(state.curList);
+  state.nest[state.nestPtr] = copyActivityListState(currentActivityList(state));
   ops.printNl(339);
   ops.printLn();
 
   for (let p = state.nestPtr; p >= 0; p -= 1) {
     const list = state.nest[p];
     const m = list.modeField;
-    const auxInt = list.auxInt;
-    const auxLh = list.auxLh;
-    const auxRh = list.auxRh;
+    const auxInt = list.auxField.int;
+    const auxLh = list.auxField.hh.lh;
+    const auxRh = list.auxField.hh.rh;
 
     ops.printNl(366);
     ops.printMode(m);
@@ -903,7 +913,7 @@ export function showActivities(
         if (state.outputActive) {
           ops.print(993);
         }
-        ops.showBox(state.memRh[29998] ?? 0);
+        ops.showBox(state.mem[29998].hh.rh ?? 0);
 
         if (state.pageContents > 0) {
           ops.printNl(994);
@@ -911,43 +921,43 @@ export function showActivities(
           ops.printNl(995);
           ops.printScaled(state.pageSoFar[0] ?? 0);
 
-          let r = state.memRh[30000] ?? 0;
+          let r = state.mem[30000].hh.rh ?? 0;
           while (r !== 30000) {
             ops.printLn();
             ops.printEsc(331);
-            let t = state.memB1[r] ?? 0;
+            let t = state.mem[r].hh.b1 ?? 0;
             ops.printInt(t);
             ops.print(996);
-            if ((state.eqtbInt[5333 + t] ?? 0) === 1000) {
-              t = state.memInt[r + 3] ?? 0;
+            if ((state.eqtb[5333 + t].int ?? 0) === 1000) {
+              t = state.mem[r + 3].int ?? 0;
             } else {
-              t = ops.xOverN(state.memInt[r + 3] ?? 0, 1000) * (state.eqtbInt[5333 + t] ?? 0);
+              t = ops.xOverN(state.mem[r + 3].int ?? 0, 1000) * (state.eqtb[5333 + t].int ?? 0);
             }
             ops.printScaled(t);
-            if ((state.memB0[r] ?? 0) === 1) {
+            if ((state.mem[r].hh.b0 ?? 0) === 1) {
               let q = 29998;
               t = 0;
               do {
-                q = state.memRh[q] ?? 0;
-                if ((state.memB0[q] ?? 0) === 3 && (state.memB1[q] ?? 0) === (state.memB1[r] ?? 0)) {
+                q = state.mem[q].hh.rh ?? 0;
+                if ((state.mem[q].hh.b0 ?? 0) === 3 && (state.mem[q].hh.b1 ?? 0) === (state.mem[r].hh.b1 ?? 0)) {
                   t += 1;
                 }
-              } while (q !== (state.memLh[r + 1] ?? 0));
+              } while (q !== (state.mem[r + 1].hh.lh ?? 0));
               ops.print(997);
               ops.printInt(t);
               ops.print(998);
             }
-            r = state.memRh[r] ?? 0;
+            r = state.mem[r].hh.rh ?? 0;
           }
         }
       }
 
-      if ((state.memRh[29999] ?? 0) !== 0) {
+      if ((state.mem[29999].hh.rh ?? 0) !== 0) {
         ops.printNl(371);
       }
     }
 
-    ops.showBox(state.memRh[list.headField] ?? 0);
+    ops.showBox(state.mem[list.headField].hh.rh ?? 0);
 
     switch (Math.trunc(Math.abs(m) / 101)) {
       case 0:

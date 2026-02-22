@@ -1,28 +1,7 @@
 import { isOdd, pascalDiv, pascalMod } from "./runtime";
+import type { TeXStateSlice, MemB23Slice } from "./state_slices";
 
-export interface HpackState {
-  lastBadness: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
-  memB2?: number[];
-  memB3?: number[];
-  totalStretch: number[];
-  totalShrink: number[];
-  adjustTail: number;
-  eqtbInt: number[];
-  hiMemMin: number;
-  tempPtr: number;
-  LRPtr: number;
-  LRProblems: number;
-  avail: number;
-  outputActive: boolean;
-  packBeginLine: number;
-  line: number;
-  fontInShortDisplay: number;
+export interface HpackState extends MemB23Slice, TeXStateSlice<"lastBadness" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "totalStretch" | "totalShrink" | "adjustTail" | "eqtb" | "hiMemMin" | "tempPtr" | "lrPtr" | "lrProblems" | "avail" | "outputActive" | "packBeginLine" | "line" | "fontInShortDisplay">{
 }
 
 export interface HpackOps {
@@ -54,11 +33,11 @@ export function hpack(
 ): number {
   state.lastBadness = 0;
   const r = ops.getNode(7);
-  state.memB0[r] = 0;
-  state.memB1[r] = 0;
-  state.memInt[r + 4] = 0;
+  state.mem[r].hh.b0 = 0;
+  state.mem[r].hh.b1 = 0;
+  state.mem[r + 4].int = 0;
   let q = r + 5;
-  state.memRh[q] = p;
+  state.mem[q].hh.rh = p;
 
   let h = 0;
   let d = 0;
@@ -72,17 +51,17 @@ export function hpack(
   state.totalStretch[3] = 0;
   state.totalShrink[3] = 0;
 
-  if (state.eqtbInt[5332] > 0) {
+  if (state.eqtb[5332].int > 0) {
     state.tempPtr = ops.getAvail();
-    state.memLh[state.tempPtr] = 0;
-    state.memRh[state.tempPtr] = state.LRPtr;
-    state.LRPtr = state.tempPtr;
+    state.mem[state.tempPtr].hh.lh = 0;
+    state.mem[state.tempPtr].hh.rh = state.lrPtr;
+    state.lrPtr = state.tempPtr;
   }
 
   while (p !== 0) {
     while (p >= state.hiMemMin) {
-      const f = state.memB0[p];
-      const c = state.memB1[p];
+      const f = state.mem[p].hh.b0;
+      const c = state.mem[p].hh.b1;
       const metrics = ops.charMetrics(f, c);
       x += metrics.width;
       if (metrics.height > h) {
@@ -91,24 +70,24 @@ export function hpack(
       if (metrics.depth > d) {
         d = metrics.depth;
       }
-      p = state.memRh[p];
+      p = state.mem[p].hh.rh;
     }
     if (p === 0) {
       break;
     }
 
-    switch (state.memB0[p]) {
+    switch (state.mem[p].hh.b0) {
       case 0:
       case 1:
       case 2:
       case 13: {
-        x += state.memInt[p + 1];
-        const s = state.memB0[p] >= 2 ? 0 : state.memInt[p + 4];
-        if (state.memInt[p + 3] - s > h) {
-          h = state.memInt[p + 3] - s;
+        x += state.mem[p + 1].int;
+        const s = state.mem[p].hh.b0 >= 2 ? 0 : state.mem[p + 4].int;
+        if (state.mem[p + 3].int - s > h) {
+          h = state.mem[p + 3].int - s;
         }
-        if (state.memInt[p + 2] + s > d) {
-          d = state.memInt[p + 2] + s;
+        if (state.mem[p + 2].int + s > d) {
+          d = state.mem[p + 2].int + s;
         }
         break;
       }
@@ -116,107 +95,100 @@ export function hpack(
       case 4:
       case 5:
         if (state.adjustTail !== 0) {
-          while (state.memRh[q] !== p) {
-            q = state.memRh[q];
+          while (state.mem[q].hh.rh !== p) {
+            q = state.mem[q].hh.rh;
           }
-          if (state.memB0[p] === 5) {
-            state.memRh[state.adjustTail] = state.memInt[p + 1];
-            while (state.memRh[state.adjustTail] !== 0) {
-              state.adjustTail = state.memRh[state.adjustTail];
+          if (state.mem[p].hh.b0 === 5) {
+            state.mem[state.adjustTail].hh.rh = state.mem[p + 1].int;
+            while (state.mem[state.adjustTail].hh.rh !== 0) {
+              state.adjustTail = state.mem[state.adjustTail].hh.rh;
             }
-            p = state.memRh[p];
-            ops.freeNode(state.memRh[q], 2);
+            p = state.mem[p].hh.rh;
+            ops.freeNode(state.mem[q].hh.rh, 2);
           } else {
-            state.memRh[state.adjustTail] = p;
+            state.mem[state.adjustTail].hh.rh = p;
             state.adjustTail = p;
-            p = state.memRh[p];
+            p = state.mem[p].hh.rh;
           }
-          state.memRh[q] = p;
+          state.mem[q].hh.rh = p;
           p = q;
         }
         break;
       case 8:
         break;
       case 10: {
-        let g = state.memLh[p + 1];
-        x += state.memInt[g + 1];
-        let o = state.memB0[g];
-        state.totalStretch[o] += state.memInt[g + 2];
-        o = state.memB1[g];
-        state.totalShrink[o] += state.memInt[g + 3];
-        if (state.memB1[p] >= 100) {
-          g = state.memRh[p + 1];
-          if (state.memInt[g + 3] > h) {
-            h = state.memInt[g + 3];
+        let g = state.mem[p + 1].hh.lh;
+        x += state.mem[g + 1].int;
+        let o = state.mem[g].hh.b0;
+        state.totalStretch[o] += state.mem[g + 2].int;
+        o = state.mem[g].hh.b1;
+        state.totalShrink[o] += state.mem[g + 3].int;
+        if (state.mem[p].hh.b1 >= 100) {
+          g = state.mem[p + 1].hh.rh;
+          if (state.mem[g + 3].int > h) {
+            h = state.mem[g + 3].int;
           }
-          if (state.memInt[g + 2] > d) {
-            d = state.memInt[g + 2];
+          if (state.mem[g + 2].int > d) {
+            d = state.mem[g + 2].int;
           }
         }
         break;
       }
       case 11:
-        x += state.memInt[p + 1];
+        x += state.mem[p + 1].int;
         break;
       case 9:
-        x += state.memInt[p + 1];
-        if (state.eqtbInt[5332] > 0) {
-          if (isOdd(state.memB1[p])) {
-            if (state.memLh[state.LRPtr] === 4 * pascalDiv(state.memB1[p], 4) + 3) {
-              state.tempPtr = state.LRPtr;
-              state.LRPtr = state.memRh[state.tempPtr];
-              state.memRh[state.tempPtr] = state.avail;
+        x += state.mem[p + 1].int;
+        if (state.eqtb[5332].int > 0) {
+          if (isOdd(state.mem[p].hh.b1)) {
+            if (state.mem[state.lrPtr].hh.lh === 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3) {
+              state.tempPtr = state.lrPtr;
+              state.lrPtr = state.mem[state.tempPtr].hh.rh;
+              state.mem[state.tempPtr].hh.rh = state.avail;
               state.avail = state.tempPtr;
             } else {
-              state.LRProblems += 1;
-              state.memB0[p] = 11;
-              state.memB1[p] = 1;
+              state.lrProblems += 1;
+              state.mem[p].hh.b0 = 11;
+              state.mem[p].hh.b1 = 1;
             }
           } else {
             state.tempPtr = ops.getAvail();
-            state.memLh[state.tempPtr] = 4 * pascalDiv(state.memB1[p], 4) + 3;
-            state.memRh[state.tempPtr] = state.LRPtr;
-            state.LRPtr = state.tempPtr;
+            state.mem[state.tempPtr].hh.lh = 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3;
+            state.mem[state.tempPtr].hh.rh = state.lrPtr;
+            state.lrPtr = state.tempPtr;
           }
         }
         break;
       case 6:
-        state.memB0[29988] = state.memB0[p + 1];
-        state.memB1[29988] = state.memB1[p + 1];
-        state.memLh[29988] = state.memLh[p + 1];
-        state.memRh[29988] = state.memRh[p];
-        state.memInt[29988] = state.memInt[p + 1];
-        state.memGr[29988] = state.memGr[p + 1];
-        if (state.memB2 !== undefined) {
-          state.memB2[29988] = state.memB2[p + 1];
-        }
-        if (state.memB3 !== undefined) {
-          state.memB3[29988] = state.memB3[p + 1];
-        }
+        // Pascal: mem[29988] := mem[p+1]; mem[29988].hh.rh := mem[p].hh.rh;
+        // Keep this assignment order to mirror the Pascal copy/overwrite sequence.
+        state.mem[29988].int = state.mem[p + 1].int;
+        state.mem[29988].gr = state.mem[p + 1].gr;
+        state.mem[29988].hh.rh = state.mem[p].hh.rh;
         p = 29988;
         continue;
       default:
         break;
     }
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 
   if (state.adjustTail !== 0) {
-    state.memRh[state.adjustTail] = 0;
+    state.mem[state.adjustTail].hh.rh = 0;
   }
-  state.memInt[r + 3] = h;
-  state.memInt[r + 2] = d;
+  state.mem[r + 3].int = h;
+  state.mem[r + 2].int = d;
   if (m === 1) {
     w = x + w;
   }
-  state.memInt[r + 1] = w;
+  state.mem[r + 1].int = w;
   x = w - x;
 
   let showDiagnostic = false;
   if (x === 0) {
-    state.memB0[r + 5] = 0;
-    state.memB1[r + 5] = 0;
-    state.memGr[r + 6] = 0.0;
+    state.mem[r + 5].hh.b0 = 0;
+    state.mem[r + 5].hh.b1 = 0;
+    state.mem[r + 6].gr = 0.0;
   } else if (x > 0) {
     let o = 0;
     if (state.totalStretch[3] !== 0) {
@@ -226,17 +198,17 @@ export function hpack(
     } else if (state.totalStretch[1] !== 0) {
       o = 1;
     }
-    state.memB1[r + 5] = o;
-    state.memB0[r + 5] = 1;
+    state.mem[r + 5].hh.b1 = o;
+    state.mem[r + 5].hh.b0 = 1;
     if (state.totalStretch[o] !== 0) {
-      state.memGr[r + 6] = x / state.totalStretch[o];
+      state.mem[r + 6].gr = x / state.totalStretch[o];
     } else {
-      state.memB0[r + 5] = 0;
-      state.memGr[r + 6] = 0.0;
+      state.mem[r + 5].hh.b0 = 0;
+      state.mem[r + 6].gr = 0.0;
     }
-    if (o === 0 && state.memRh[r + 5] !== 0) {
+    if (o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = ops.badness(x, state.totalStretch[0]);
-      if (state.lastBadness > state.eqtbInt[5294]) {
+      if (state.lastBadness > state.eqtb[5294].int) {
         ops.printLn();
         if (state.lastBadness > 100) {
           ops.printNl(855);
@@ -257,24 +229,24 @@ export function hpack(
     } else if (state.totalShrink[1] !== 0) {
       o = 1;
     }
-    state.memB1[r + 5] = o;
-    state.memB0[r + 5] = 2;
+    state.mem[r + 5].hh.b1 = o;
+    state.mem[r + 5].hh.b0 = 2;
     if (state.totalShrink[o] !== 0) {
-      state.memGr[r + 6] = -x / state.totalShrink[o];
+      state.mem[r + 6].gr = -x / state.totalShrink[o];
     } else {
-      state.memB0[r + 5] = 0;
-      state.memGr[r + 6] = 0.0;
+      state.mem[r + 5].hh.b0 = 0;
+      state.mem[r + 6].gr = 0.0;
     }
-    if (state.totalShrink[o] < -x && o === 0 && state.memRh[r + 5] !== 0) {
+    if (state.totalShrink[o] < -x && o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = 1_000_000;
-      state.memGr[r + 6] = 1.0;
-      if (-x - state.totalShrink[0] > state.eqtbInt[5853] || state.eqtbInt[5294] < 100) {
-        if (state.eqtbInt[5861] > 0 && -x - state.totalShrink[0] > state.eqtbInt[5853]) {
-          while (state.memRh[q] !== 0) {
-            q = state.memRh[q];
+      state.mem[r + 6].gr = 1.0;
+      if (-x - state.totalShrink[0] > state.eqtb[5853].int || state.eqtb[5294].int < 100) {
+        if (state.eqtb[5861].int > 0 && -x - state.totalShrink[0] > state.eqtb[5853].int) {
+          while (state.mem[q].hh.rh !== 0) {
+            q = state.mem[q].hh.rh;
           }
-          state.memRh[q] = ops.newRule();
-          state.memInt[state.memRh[q] + 1] = state.eqtbInt[5861];
+          state.mem[q].hh.rh = ops.newRule();
+          state.mem[state.mem[q].hh.rh + 1].int = state.eqtb[5861].int;
         }
         ops.printLn();
         ops.printNl(863);
@@ -282,9 +254,9 @@ export function hpack(
         ops.print(864);
         showDiagnostic = true;
       }
-    } else if (o === 0 && state.memRh[r + 5] !== 0) {
+    } else if (o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = ops.badness(-x, state.totalShrink[0]);
-      if (state.lastBadness > state.eqtbInt[5294]) {
+      if (state.lastBadness > state.eqtb[5294].int) {
         ops.printLn();
         ops.printNl(865);
         ops.printInt(state.lastBadness);
@@ -313,45 +285,45 @@ export function hpack(
       }
       ops.printLn();
       state.fontInShortDisplay = 0;
-      ops.shortDisplay(state.memRh[r + 5]);
+      ops.shortDisplay(state.mem[r + 5].hh.rh);
       ops.printLn();
       ops.beginDiagnostic();
       ops.showBox(r);
       ops.endDiagnostic(true);
     }
 
-    if (state.eqtbInt[5332] > 0) {
-      if (state.memLh[state.LRPtr] !== 0) {
-        while (state.memRh[q] !== 0) {
-          q = state.memRh[q];
+    if (state.eqtb[5332].int > 0) {
+      if (state.mem[state.lrPtr].hh.lh !== 0) {
+        while (state.mem[q].hh.rh !== 0) {
+          q = state.mem[q].hh.rh;
         }
         do {
           state.tempPtr = q;
-          q = ops.newMath(0, state.memLh[state.LRPtr]);
-          state.memRh[state.tempPtr] = q;
-          state.LRProblems += 10_000;
-          state.tempPtr = state.LRPtr;
-          state.LRPtr = state.memRh[state.tempPtr];
-          state.memRh[state.tempPtr] = state.avail;
+          q = ops.newMath(0, state.mem[state.lrPtr].hh.lh);
+          state.mem[state.tempPtr].hh.rh = q;
+          state.lrProblems += 10_000;
+          state.tempPtr = state.lrPtr;
+          state.lrPtr = state.mem[state.tempPtr].hh.rh;
+          state.mem[state.tempPtr].hh.rh = state.avail;
           state.avail = state.tempPtr;
-        } while (state.memLh[state.LRPtr] !== 0);
+        } while (state.mem[state.lrPtr].hh.lh !== 0);
       }
-      if (state.LRProblems > 0) {
+      if (state.lrProblems > 0) {
         ops.printLn();
         ops.printNl(1373);
-        ops.printInt(pascalDiv(state.LRProblems, 10_000));
+        ops.printInt(pascalDiv(state.lrProblems, 10_000));
         ops.print(1374);
-        ops.printInt(pascalMod(state.LRProblems, 10_000));
+        ops.printInt(pascalMod(state.lrProblems, 10_000));
         ops.print(1375);
-        state.LRProblems = 0;
+        state.lrProblems = 0;
         showDiagnostic = true;
         continue;
       }
-      state.tempPtr = state.LRPtr;
-      state.LRPtr = state.memRh[state.tempPtr];
-      state.memRh[state.tempPtr] = state.avail;
+      state.tempPtr = state.lrPtr;
+      state.lrPtr = state.mem[state.tempPtr].hh.rh;
+      state.mem[state.tempPtr].hh.rh = state.avail;
       state.avail = state.tempPtr;
-      if (state.LRPtr !== 0) {
+      if (state.lrPtr !== 0) {
         ops.confusion(1372);
       }
     }
@@ -361,21 +333,7 @@ export function hpack(
   return r;
 }
 
-export interface VpackageState {
-  lastBadness: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
-  totalStretch: number[];
-  totalShrink: number[];
-  eqtbInt: number[];
-  hiMemMin: number;
-  outputActive: boolean;
-  packBeginLine: number;
-  line: number;
+export interface VpackageState extends TeXStateSlice<"lastBadness" | "mem" | "mem" | "mem" | "mem" | "mem" | "mem" | "totalStretch" | "totalShrink" | "eqtb" | "hiMemMin" | "outputActive" | "packBeginLine" | "line">{
 }
 
 export interface VpackageOps {
@@ -402,10 +360,10 @@ export function vpackage(
 ): number {
   state.lastBadness = 0;
   const r = ops.getNode(7);
-  state.memB0[r] = 1;
-  state.memB1[r] = 0;
-  state.memInt[r + 4] = 0;
-  state.memRh[r + 5] = p;
+  state.mem[r].hh.b0 = 1;
+  state.mem[r].hh.b1 = 0;
+  state.mem[r + 4].int = 0;
+  state.mem[r + 5].hh.rh = p;
 
   let w = 0;
   let d = 0;
@@ -425,16 +383,16 @@ export function vpackage(
       break;
     }
 
-    switch (state.memB0[p]) {
+    switch (state.mem[p].hh.b0) {
       case 0:
       case 1:
       case 2:
       case 13: {
-        x = x + d + state.memInt[p + 3];
-        d = state.memInt[p + 2];
-        const s = state.memB0[p] >= 2 ? 0 : state.memInt[p + 4];
-        if (state.memInt[p + 1] + s > w) {
-          w = state.memInt[p + 1] + s;
+        x = x + d + state.mem[p + 3].int;
+        d = state.mem[p + 2].int;
+        const s = state.mem[p].hh.b0 >= 2 ? 0 : state.mem[p + 4].int;
+        if (state.mem[p + 1].int + s > w) {
+          w = state.mem[p + 1].int + s;
         }
         break;
       }
@@ -443,48 +401,48 @@ export function vpackage(
       case 10: {
         x += d;
         d = 0;
-        let g = state.memLh[p + 1];
-        x += state.memInt[g + 1];
-        let o = state.memB0[g];
-        state.totalStretch[o] += state.memInt[g + 2];
-        o = state.memB1[g];
-        state.totalShrink[o] += state.memInt[g + 3];
-        if (state.memB1[p] >= 100) {
-          g = state.memRh[p + 1];
-          if (state.memInt[g + 1] > w) {
-            w = state.memInt[g + 1];
+        let g = state.mem[p + 1].hh.lh;
+        x += state.mem[g + 1].int;
+        let o = state.mem[g].hh.b0;
+        state.totalStretch[o] += state.mem[g + 2].int;
+        o = state.mem[g].hh.b1;
+        state.totalShrink[o] += state.mem[g + 3].int;
+        if (state.mem[p].hh.b1 >= 100) {
+          g = state.mem[p + 1].hh.rh;
+          if (state.mem[g + 1].int > w) {
+            w = state.mem[g + 1].int;
           }
         }
         break;
       }
       case 11:
-        x = x + d + state.memInt[p + 1];
+        x = x + d + state.mem[p + 1].int;
         d = 0;
         break;
       default:
         break;
     }
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 
-  state.memInt[r + 1] = w;
+  state.mem[r + 1].int = w;
   if (d > l) {
     x = x + d - l;
-    state.memInt[r + 2] = l;
+    state.mem[r + 2].int = l;
   } else {
-    state.memInt[r + 2] = d;
+    state.mem[r + 2].int = d;
   }
   if (m === 1) {
     h = x + h;
   }
-  state.memInt[r + 3] = h;
+  state.mem[r + 3].int = h;
   x = h - x;
 
   let showDiagnostic = false;
   if (x === 0) {
-    state.memB0[r + 5] = 0;
-    state.memB1[r + 5] = 0;
-    state.memGr[r + 6] = 0.0;
+    state.mem[r + 5].hh.b0 = 0;
+    state.mem[r + 5].hh.b1 = 0;
+    state.mem[r + 6].gr = 0.0;
   } else if (x > 0) {
     let o = 0;
     if (state.totalStretch[3] !== 0) {
@@ -494,17 +452,17 @@ export function vpackage(
     } else if (state.totalStretch[1] !== 0) {
       o = 1;
     }
-    state.memB1[r + 5] = o;
-    state.memB0[r + 5] = 1;
+    state.mem[r + 5].hh.b1 = o;
+    state.mem[r + 5].hh.b0 = 1;
     if (state.totalStretch[o] !== 0) {
-      state.memGr[r + 6] = x / state.totalStretch[o];
+      state.mem[r + 6].gr = x / state.totalStretch[o];
     } else {
-      state.memB0[r + 5] = 0;
-      state.memGr[r + 6] = 0.0;
+      state.mem[r + 5].hh.b0 = 0;
+      state.mem[r + 6].gr = 0.0;
     }
-    if (o === 0 && state.memRh[r + 5] !== 0) {
+    if (o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = ops.badness(x, state.totalStretch[0]);
-      if (state.lastBadness > state.eqtbInt[5295]) {
+      if (state.lastBadness > state.eqtb[5295].int) {
         ops.printLn();
         if (state.lastBadness > 100) {
           ops.printNl(855);
@@ -525,27 +483,27 @@ export function vpackage(
     } else if (state.totalShrink[1] !== 0) {
       o = 1;
     }
-    state.memB1[r + 5] = o;
-    state.memB0[r + 5] = 2;
+    state.mem[r + 5].hh.b1 = o;
+    state.mem[r + 5].hh.b0 = 2;
     if (state.totalShrink[o] !== 0) {
-      state.memGr[r + 6] = -x / state.totalShrink[o];
+      state.mem[r + 6].gr = -x / state.totalShrink[o];
     } else {
-      state.memB0[r + 5] = 0;
-      state.memGr[r + 6] = 0.0;
+      state.mem[r + 5].hh.b0 = 0;
+      state.mem[r + 6].gr = 0.0;
     }
-    if (state.totalShrink[o] < -x && o === 0 && state.memRh[r + 5] !== 0) {
+    if (state.totalShrink[o] < -x && o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = 1_000_000;
-      state.memGr[r + 6] = 1.0;
-      if (-x - state.totalShrink[0] > state.eqtbInt[5854] || state.eqtbInt[5295] < 100) {
+      state.mem[r + 6].gr = 1.0;
+      if (-x - state.totalShrink[0] > state.eqtb[5854].int || state.eqtb[5295].int < 100) {
         ops.printLn();
         ops.printNl(868);
         ops.printScaled(-x - state.totalShrink[0]);
         ops.print(869);
         showDiagnostic = true;
       }
-    } else if (o === 0 && state.memRh[r + 5] !== 0) {
+    } else if (o === 0 && state.mem[r + 5].hh.rh !== 0) {
       state.lastBadness = ops.badness(-x, state.totalShrink[0]);
-      if (state.lastBadness > state.eqtbInt[5295]) {
+      if (state.lastBadness > state.eqtb[5295].int) {
         ops.printLn();
         ops.printNl(870);
         ops.printInt(state.lastBadness);
@@ -576,14 +534,7 @@ export function vpackage(
   return r;
 }
 
-export interface AppendToVlistState {
-  curListAuxInt: number;
-  curListTailField: number;
-  memInt: number[];
-  memRh: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  tempPtr: number;
+export interface AppendToVlistState extends TeXStateSlice<"curList" | "curList" | "mem" | "mem" | "eqtb" | "eqtb" | "tempPtr">{
 }
 
 export interface AppendToVlistOps {
@@ -596,20 +547,20 @@ export function appendToVlist(
   state: AppendToVlistState,
   ops: AppendToVlistOps,
 ): void {
-  if (state.curListAuxInt > -65_536_000) {
+  if (state.curList.auxField.int > -65_536_000) {
     const d =
-      state.memInt[state.eqtbRh[2883] + 1] - state.curListAuxInt - state.memInt[b + 3];
+      state.mem[state.eqtb[2883].hh.rh + 1].int - state.curList.auxField.int - state.mem[b + 3].int;
     let p = 0;
-    if (d < state.eqtbInt[5847]) {
+    if (d < state.eqtb[5847].int) {
       p = ops.newParamGlue(0);
     } else {
       p = ops.newSkipParam(1);
-      state.memInt[state.tempPtr + 1] = d;
+      state.mem[state.tempPtr + 1].int = d;
     }
-    state.memRh[state.curListTailField] = p;
-    state.curListTailField = p;
+    state.mem[state.curList.tailField].hh.rh = p;
+    state.curList.tailField = p;
   }
-  state.memRh[state.curListTailField] = b;
-  state.curListTailField = b;
-  state.curListAuxInt = state.memInt[b + 2];
+  state.mem[state.curList.tailField].hh.rh = b;
+  state.curList.tailField = b;
+  state.curList.auxField.int = state.mem[b + 2].int;
 }

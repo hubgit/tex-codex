@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -340,12 +341,14 @@ test("prepareMag matches Pascal probe trace", () => {
     const [magSet, eqtb5285, initXeq, helpPtr, hl0, hl1] = c;
     const state = {
       magSet,
-      eqtbInt: new Array(6000).fill(0),
       xeqLevel: new Array(6000).fill(0),
       helpPtr,
       helpLine: [hl0, hl1],
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     };
-    state.eqtbInt[5285] = eqtb5285;
+    state.eqtb[5285].int = eqtb5285;
     state.xeqLevel[5285] = initXeq;
     const trace = [];
 
@@ -356,12 +359,12 @@ test("prepareMag matches Pascal probe trace", () => {
       intError: (n) => trace.push(`IE${n};`),
       geqWordDefine: (p, w) => {
         trace.push(`GQ${p},${w};`);
-        state.eqtbInt[p] = w;
+        state.eqtb[p].int = w;
         state.xeqLevel[p] = 1;
       },
     });
 
-    const actual = `${trace.join("")} STATE${state.magSet},${state.eqtbInt[5285]},${state.xeqLevel[5285]},${state.helpPtr},${state.helpLine[0]},${state.helpLine[1]}`;
+    const actual = `${trace.join("")} STATE${state.magSet},${state.eqtb[5285].int},${state.xeqLevel[5285]},${state.helpPtr},${state.helpLine[0]},${state.helpLine[1]}`;
     const expected = runProbeText("PREPARE_MAG_TRACE", c);
     assert.equal(actual, expected, `PREPARE_MAG_TRACE mismatch for ${c.join(",")}`);
   }

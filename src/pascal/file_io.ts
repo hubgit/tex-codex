@@ -1,4 +1,5 @@
 import { closeSync, openSync } from "node:fs";
+import type { TeXStateSlice } from "./state_slices";
 
 export interface PascalFile {
   fd: number | null;
@@ -62,16 +63,7 @@ export interface AlphaInputStream {
   pos: number;
 }
 
-export interface InputLnState {
-  first: number;
-  last: number;
-  maxBufStack: number;
-  bufSize: number;
-  formatIdent: number;
-  buffer: number[];
-  xord: number[];
-  curInputLocField: number;
-  curInputLimitField: number;
+export interface InputLnState extends TeXStateSlice<"first" | "last" | "maxBufStack" | "bufSize" | "formatIdent" | "buffer" | "xord" | "curInput">{
 }
 
 export interface InputLnOps {
@@ -118,8 +110,8 @@ export function inputLn(
           }
           throw new RangeError("Buffer size exceeded!");
         }
-        state.curInputLocField = state.first;
-        state.curInputLimitField = state.last - 1;
+        state.curInput.locField = state.first;
+        state.curInput.limitField = state.last - 1;
         ops.overflow(257, state.bufSize);
       }
     }
@@ -136,11 +128,7 @@ export function inputLn(
   return true;
 }
 
-export interface InitTerminalState {
-  first: number;
-  last: number;
-  buffer: number[];
-  curInputLocField: number;
+export interface InitTerminalState extends TeXStateSlice<"first" | "last" | "buffer" | "curInput">{
 }
 
 export interface InitTerminalOps {
@@ -164,26 +152,21 @@ export function initTerminal(
       ops.writeTermOut("! End of file on the terminal... why?");
       return false;
     }
-    state.curInputLocField = state.first;
+    state.curInput.locField = state.first;
     while (
-      state.curInputLocField < state.last &&
-      state.buffer[state.curInputLocField] === 32
+      state.curInput.locField < state.last &&
+      state.buffer[state.curInput.locField] === 32
     ) {
-      state.curInputLocField += 1;
+      state.curInput.locField += 1;
     }
-    if (state.curInputLocField < state.last) {
+    if (state.curInput.locField < state.last) {
       return true;
     }
     ops.writeLnTermOut("Please type the name of your input file.");
   }
 }
 
-export interface TermInputState {
-  first: number;
-  last: number;
-  termOffset: number;
-  selector: number;
-  buffer: number[];
+export interface TermInputState extends TeXStateSlice<"first" | "last" | "termOffset" | "selector" | "buffer">{
 }
 
 export interface TermInputOps {

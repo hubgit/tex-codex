@@ -1,1 +1,7 @@
+node_modules/
 dist/
+scripts/probe_math
+scripts/probe_math.o
+.trip-work/
+.playwright-cli/
+.wrangler/

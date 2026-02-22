@@ -1,15 +1,7 @@
 import { copyInStateRecord, InStateRecord } from "./input_state";
+import type { TeXStateSlice } from "./state_slices";
 
-export interface ShowTokenListState {
-  hiMemMin: number;
-  memEnd: number;
-  memLh: number[];
-  memRh: number[];
-  tally: number;
-  trickCount: number;
-  firstCount: number;
-  errorLine: number;
-  halfErrorLine: number;
+export interface ShowTokenListState extends TeXStateSlice<"hiMemMin" | "memEnd" | "mem" | "mem" | "tally" | "trickCount" | "firstCount" | "errorLine" | "halfErrorLine">{
 }
 
 export interface ShowTokenListOps {
@@ -28,37 +20,34 @@ export function showTokenList(
 ): number[] {
   let matchChr = 35;
   let n = 48;
-  let tally = 0;
   let jumpedToEnd = false;
+  const startTally = state.tally;
   const rendered: number[] = [];
+  const shown = (): number => state.tally - startTally;
 
   const emitEsc = (s: number): void => {
     ops.printEsc(s);
-    tally += 1;
     rendered.push(92);
   };
   const emitCs = (cs: number): void => {
     ops.printCs(cs);
-    tally += 1;
     rendered.push(92);
   };
   const emitPrint = (s: number): void => {
     ops.print(s);
-    tally += 1;
     if (s >= 0 && s <= 255) {
       rendered.push(s);
     }
   };
   const emitChar = (c: number): void => {
     ops.printChar(c);
-    tally += 1;
     rendered.push(c);
   };
 
-  while (p !== 0 && tally < l) {
+  while (p !== 0 && shown() < l) {
     if (p === q) {
-      state.firstCount = tally;
-      state.trickCount = tally + 1 + state.errorLine - state.halfErrorLine;
+      state.firstCount = shown();
+      state.trickCount = shown() + 1 + state.errorLine - state.halfErrorLine;
       if (state.trickCount < state.errorLine) {
         state.trickCount = state.errorLine;
       }
@@ -70,7 +59,7 @@ export function showTokenList(
       break;
     }
 
-    const token = state.memLh[p] ?? 0;
+    const token = state.mem[p].hh.lh ?? 0;
     if (token >= 4095) {
       emitCs(token - 4095);
     } else if (token < 0) {
@@ -126,27 +115,17 @@ export function showTokenList(
     if (jumpedToEnd) {
       break;
     }
-    p = state.memRh[p] ?? 0;
+    p = state.mem[p].hh.rh ?? 0;
   }
 
   if (!jumpedToEnd && p !== 0) {
     emitEsc(411);
   }
 
-  state.tally = tally;
   return rendered;
 }
 
-export interface BeginTokenListState {
-  inputPtr: number;
-  maxInStack: number;
-  stackSize: number;
-  inputStack: InStateRecord[];
-  curInput: InStateRecord;
-  memLh: number[];
-  memRh: number[];
-  paramPtr: number;
-  eqtbInt: number[];
+export interface BeginTokenListState extends TeXStateSlice<"inputPtr" | "maxInStack" | "stackSize" | "inputStack" | "curInput" | "mem" | "mem" | "paramPtr" | "eqtb">{
 }
 
 export interface BeginTokenListOps {
@@ -180,12 +159,12 @@ export function beginTokenList(
   state.curInput.indexField = t;
 
   if (t >= 5) {
-    state.memLh[p] += 1;
+    state.mem[p].hh.lh += 1;
     if (t === 5) {
       state.curInput.limitField = state.paramPtr;
     } else {
-      state.curInput.locField = state.memRh[p];
-      if (state.eqtbInt[5298] > 1) {
+      state.curInput.locField = state.mem[p].hh.rh;
+      if (state.eqtb[5298].int > 1) {
         ops.beginDiagnostic();
         ops.printNl(339);
         if (t === 14) {
@@ -205,14 +184,7 @@ export function beginTokenList(
   }
 }
 
-export interface EndTokenListState {
-  curInput: InStateRecord;
-  inputPtr: number;
-  inputStack: InStateRecord[];
-  paramPtr: number;
-  paramStack: number[];
-  alignState: number;
-  interrupt: number;
+export interface EndTokenListState extends TeXStateSlice<"curInput" | "inputPtr" | "inputStack" | "paramPtr" | "paramStack" | "alignState" | "interrupt">{
 }
 
 export interface EndTokenListOps {
@@ -254,15 +226,7 @@ export function endTokenList(
   }
 }
 
-export interface BackInputState {
-  curInput: InStateRecord;
-  inputPtr: number;
-  maxInStack: number;
-  stackSize: number;
-  inputStack: InStateRecord[];
-  curTok: number;
-  alignState: number;
-  memLh: number[];
+export interface BackInputState extends TeXStateSlice<"curInput" | "inputPtr" | "maxInStack" | "stackSize" | "inputStack" | "curTok" | "alignState" | "mem">{
 }
 
 export interface BackInputOps {
@@ -284,7 +248,7 @@ export function backInput(
   }
 
   const p = ops.getAvail();
-  state.memLh[p] = state.curTok;
+  state.mem[p].hh.lh = state.curTok;
   if (state.curTok < 768) {
     if (state.curTok < 512) {
       state.alignState -= 1;
@@ -308,8 +272,7 @@ export function backInput(
   state.curInput.locField = p;
 }
 
-export interface BackErrorState {
-  okToInterrupt: boolean;
+export interface BackErrorState extends TeXStateSlice<"okToInterrupt">{
 }
 
 export interface BackErrorOps {
@@ -327,9 +290,7 @@ export function backError(
   ops.error();
 }
 
-export interface InsErrorState {
-  okToInterrupt: boolean;
-  curInput: InStateRecord;
+export interface InsErrorState extends TeXStateSlice<"okToInterrupt" | "curInput">{
 }
 
 export interface InsErrorOps {
@@ -348,23 +309,7 @@ export function insError(
   ops.error();
 }
 
-export interface BeginFileReadingState {
-  inOpen: number;
-  maxInOpen: number;
-  first: number;
-  bufSize: number;
-  inputPtr: number;
-  maxInStack: number;
-  stackSize: number;
-  inputStack: InStateRecord[];
-  curInput: InStateRecord;
-  eofSeen: boolean[];
-  grpStack: number[];
-  ifStack: number[];
-  lineStack: number[];
-  curBoundary: number;
-  condPtr: number;
-  line: number;
+export interface BeginFileReadingState extends TeXStateSlice<"inOpen" | "maxInOpen" | "first" | "bufSize" | "inputPtr" | "maxInStack" | "stackSize" | "inputStack" | "curInput" | "eofSeen" | "grpStack" | "ifStack" | "lineStack" | "curBoundary" | "condPtr" | "line">{
 }
 
 export interface BeginFileReadingOps {
@@ -403,15 +348,7 @@ export function beginFileReading(
   state.curInput.nameField = 0;
 }
 
-export interface EndFileReadingState {
-  first: number;
-  line: number;
-  curInput: InStateRecord;
-  lineStack: number[];
-  inputFile: number[];
-  inputPtr: number;
-  inputStack: InStateRecord[];
-  inOpen: number;
+export interface EndFileReadingState extends TeXStateSlice<"first" | "line" | "curInput" | "lineStack" | "inputFile" | "inputPtr" | "inputStack" | "inOpen">{
 }
 
 export interface EndFileReadingOps {
@@ -436,10 +373,7 @@ export function endFileReading(
   state.inOpen -= 1;
 }
 
-export interface ClearForErrorPromptState {
-  curInput: InStateRecord;
-  inputPtr: number;
-  termIn: number;
+export interface ClearForErrorPromptState extends TeXStateSlice<"curInput" | "inputPtr" | "termIn">{
 }
 
 export interface ClearForErrorPromptOps {

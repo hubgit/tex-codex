@@ -4857,13 +4857,13 @@ Begin
     4:
        out_buf := 'GA1400 GT6,1,4500 GT11,0,3130 NL263 P757 BE GA1401 GT1,0,100 GA1402 GT6,9,5000 GT11,0,3119 NL263 P760 SPC604 BE GA1403 GT2,0,200 P1403 DR1400 SS0 WI604 AS5 HP3 HL763,762,761 TOKS3329,3584,5000 H299970';
     5:
-       out_buf := 'GA1500 GT1,0,101 GA1501 GT6,9,5000 GT6,7,6000 GA1502 GT2,0,200 P1502 DR1500 SS0 WI605 AS5 HP0 HL0,0,0 TOKS3584,1239 H299970';
+       out_buf := 'GA1500 GT1,0,101 GA1501 GT6,9,5000 GT6,7,6000 GA1502 GT2,0,200 P1502 DR1500 SS0 WI605 AS5 HP0 HL0,0,0 TOKS3584,6000 H299970';
     6:
        out_buf := 'GA1600 SLB GN110,0,0 EX GN109,0,0 TT GN10,0,0 XT10,0,5000 GA1601 GN2,0,0 XT2,0,200 P1601 DR1600 SS0 WI606 AS5 HP0 HL0,0,0 TOKS7000,7001,5000 H29997900';
     7:
        out_buf := 'GA1700 SLB GN112,600,0 XT0,257,257 GA1701 GN2,0,0 XT2,0,200 GA1702 GN2,0,0 XT2,0,201 P1702 DR1700 SS0 WI607 AS5 HP0 HL0,0,0 TOKS257,200 H299970';
     8:
-       out_buf := 'GA1800 GT1,0,101 GA1801 GN10,0,0 XT6,9,5000 GXT6,4,6000 GA1802 GN2,0,0 XT2,0,200 P1802 DR1800 SS0 WI608 AS5 HP0 HL0,0,0 TOKS3584,1236 H299970';
+       out_buf := 'GA1800 GT1,0,101 GA1801 GN10,0,0 XT6,9,5000 GXT6,4,6000 GA1802 GN2,0,0 XT2,0,200 P1802 DR1800 SS0 WI608 AS5 HP0 HL0,0,0 TOKS3584,6000 H299970';
     Else
       out_buf := '';
   End;
@@ -6225,7 +6225,7 @@ Begin
     1:
        out_buf := 'GX10,0 GX65,7 NL263 P1192 CC65,7 CH39 BE M0,0,1,1194,0,0,0';
     2:
-       out_buf := 'GQ3939,120,44 BI M0,777,0,0,0,0,0';
+       out_buf := 'EQ3939,120,44 BI M0,777,0,0,0,0,0';
     3:
        out_buf := 'GX97,1 GRT900 ST1,0=910 GA930 GQ900,111,1000 M0,0,0,0,0,930,0';
     4:
@@ -6235,7 +6235,7 @@ Begin
     6:
        out_buf := 'NI BI M0,888,0,0,0,0,0';
     7:
-       out_buf := 'SR3 SOE GX71,0 SR4 GQ3426,111,500 M0,0,0,0,0,0,10';
+       out_buf := 'SR3 SOE GX71,0 SR4 EQ3426,111,500 M0,0,0,0,0,0,10';
     Else
       out_buf := '';
   End;
@@ -6520,6 +6520,24 @@ Begin
        out_buf := 'GX111,0 NSP0 NGL800 GX14,0 IAO1 M0,0,0,0,900,0,800,101,102,103';
     5:
        out_buf := 'GX72,0 PC GX41,0 GT1234 GX15,0 IAO1 M0,0,0,1234,500,0,0,0,0,0';
+    Else
+      out_buf := '';
+  End;
+End;
+
+Procedure main_entry_trace_probe(scenario_probe: integer);
+Begin
+  Case scenario_probe Of
+    1:
+       out_buf := 'RWTTY:,/O WTThis is e-TeX, Version 3.141592653-2.6 WL (no format preloaded) BR IT1 OFF1 LFF1 WCF FDT SI MC FC CFT P0,-,- M0,0,0,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,33,1,0,0,0,0,1000000,3,3,1,1,0,255,697,1856,0,0,13';
+    2:
+       out_buf := 'RWTTY:,/O WLOuch---my internal constants have been clobbered!---case 2 P0,-,- M3,0,2,0,9,7,8,77,1,1,99,1,2,3,4,5,0,0,6,7,0,8,9,0,0,0,0,0,0,0,0,0,0,1,0,255,697,0,0,0,0';
+    3:
+       out_buf := 'RWTTY:,/O INI1 GSS0 P0,-,- M3,0,0,0,9,7,8,77,1,1,99,1,2,3,4,5,0,0,6,7,0,8,9,0,0,0,0,0,0,0,0,0,0,1,0,255,697,0,0,0,0';
+    4:
+       out_buf := 'RWTTY:,/O INI1 GSS1 IP FDT WTThis is e-TeX, Version 3.141592653-2.6 SP1271 PL BR IT1 WLentering extended mode FDT SI MC FC CFT P66,1315,70,3,1418,84,3682 M0,0,0,16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,33,1,0,0,0,0,1000000,4,3,2,1,1,32767,1410,1556,111,222,32';
+    5:
+       out_buf := 'RWTTY:,/O INI1 GSS1 IP FDT WTThis is e-TeX, Version 3.141592653-2.6 SP1271 PL BR IT1 INI2 OFF1 LFF0 WCF P0,-,- M3,0,0,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,33,1,0,0,0,0,1000000,5,5,1,1,0,255,697,0,111,222,70';
     Else
       out_buf := '';
   End;
@@ -7649,7 +7667,7 @@ Begin
     3:
        out_buf := 'FL0 VB900,150,33=900 PP900,0=901 FN800,7 VP901,0,1,1073741823=902 VP0,150,0,33=903 M903,902,0,9';
     4:
-       out_buf := 'FSE4,300,0=1000 FL97 DM0,0,600=1 DT750 DT751 VB910,200,123=912 FSE6,5,1=1100 PP912,1=920 FN810,7 VP920,0,1,1073741823=930 FSE4,300,0=1000 DSR1000 VP910,200,0,123=940 M940,0,701,701,10,22,0,930,11';
+       out_buf := 'FSE4,300,0=1000 FL97 DM0,0,600=1 DT750 DT751 VB910,200,123=912 FSE6,5,1=1100 PP912,1=920 FN810,7 VP920,0,1,1073741823=930 FSE4,300,0=1000 DSR1000 VP910,200,0,123=940 M940,0,0,0,10,20,0,930,11';
     Else
       out_buf := '';
   End;
@@ -10769,6 +10787,11 @@ Begin
   Else If fn='MAIN_CONTROL_TRACE' Then
     Begin
       main_control_trace_probe(StrToInt(ParamStr(2)));
+      WriteLn(out_buf);
+    End
+  Else If fn='MAIN_ENTRY_TRACE' Then
+    Begin
+      main_entry_trace_probe(StrToInt(ParamStr(2)));
       WriteLn(out_buf);
     End
   Else If fn='BOX_ERROR_TRACE' Then

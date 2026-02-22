@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { listStateRecordFromComponents, memoryWordsFromComponents, twoHalvesFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -30,13 +31,6 @@ test("initialize matches Pascal probe trace", () => {
     okToInterrupt: false,
     nestPtr: 9,
     maxNestStack: 9,
-    curListModeField: 0,
-    curListHeadField: 0,
-    curListTailField: 0,
-    curListETeXAuxField: 0,
-    curListAuxInt: 0,
-    curListMlField: 0,
-    curListPgField: 0,
     shownMode: 0,
     pageContents: 0,
     pageTail: 0,
@@ -48,8 +42,6 @@ test("initialize matches Pascal probe trace", () => {
     pageMaxDepth: 0,
     xeqLevel: new Array(7000).fill(0),
     noNewControlSequence: false,
-    hashLh: new Array(7000).fill(1),
-    hashRh: new Array(7000).fill(1),
     savePtr: 0,
     curLevel: 0,
     curGroup: 0,
@@ -68,10 +60,7 @@ test("initialize matches Pascal probe trace", () => {
     ifLine: 0,
     texFormatDefault: "",
     fontUsed: new Array(16).fill(true),
-    nullCharacterB0: 0,
-    nullCharacterB1: 0,
-    nullCharacterB2: 0,
-    nullCharacterB3: 0,
+    nullCharacter: { b0: 0, b1: 0, b2: 0, b3: 0 },
     totalPages: 0,
     maxV: 0,
     maxH: 0,
@@ -90,12 +79,8 @@ test("initialize matches Pascal probe trace", () => {
     adjustTail: 0,
     lastBadness: 0,
     packBeginLine: 0,
-    emptyFieldRh: 0,
-    emptyFieldLh: 0,
-    nullDelimiterB0: 0,
-    nullDelimiterB1: 0,
-    nullDelimiterB2: 0,
-    nullDelimiterB3: 0,
+    emptyField: { lh: 0, rh: 0, b0: 0, b1: 0 },
+    nullDelimiter: { b0: 0, b1: 0, b2: 0, b3: 0 },
     alignPtr: 0,
     curAlign: 0,
     curSpan: 0,
@@ -121,16 +106,15 @@ test("initialize matches Pascal probe trace", () => {
     curDir: 0,
     pseudoFiles: 0,
     saRoot: new Array(8).fill(0),
-    saNullLh: 0,
-    saNullRh: 0,
+    saNull: {
+      int: 0,
+      gr: 0,
+      hh: { b0: 0, b1: 0, lh: 0, rh: 0 },
+      qqqq: { b0: 0, b1: 0, b2: 0, b3: 0 },
+    },
     saChain: 0,
     saLevel: 0,
     discPtr: new Array(10).fill(0),
-    memB0: new Array(70000).fill(0),
-    memB1: new Array(70000).fill(0),
-    memLh: new Array(70000).fill(0),
-    memRh: new Array(70000).fill(0),
-    memInt: new Array(70000).fill(0),
     rover: 0,
     loMemMax: 0,
     avail: 0,
@@ -138,10 +122,6 @@ test("initialize matches Pascal probe trace", () => {
     hiMemMin: 0,
     varUsed: 0,
     dynUsed: 0,
-    eqtbB0: new Array(7000).fill(0),
-    eqtbB1: new Array(7000).fill(0),
-    eqtbRh: new Array(7000).fill(0),
-    eqtbInt: new Array(7000).fill(0),
     hashUsed: 0,
     csCount: 0,
     fontPtr: 0,
@@ -168,7 +148,6 @@ test("initialize matches Pascal probe trace", () => {
     fontGlue: new Array(16).fill(0),
     fontParams: new Array(16).fill(0),
     paramBase: new Array(16).fill(0),
-    fontInfoInt: new Array(64).fill(0),
     trieOpHash: {},
     trieUsed: new Array(300).fill(0),
     trieOpPtr: 0,
@@ -181,11 +160,40 @@ test("initialize matches Pascal probe trace", () => {
     maxRegHelpLine: 0,
     trieR: new Array(128).fill(0),
     hyphStart: 0,
+    mem: memoryWordsFromComponents({
+      b0: new Array(70000).fill(0),
+      b1: new Array(70000).fill(0),
+      int: new Array(70000).fill(0),
+      lh: new Array(70000).fill(0),
+      rh: new Array(70000).fill(0),
+      }, { minSize: 30001 }),
+    eqtb: memoryWordsFromComponents({
+      b0: new Array(7000).fill(0),
+      b1: new Array(7000).fill(0),
+      int: new Array(7000).fill(0),
+      rh: new Array(7000).fill(0),
+      }),
+    fontInfo: memoryWordsFromComponents({
+      int: new Array(64).fill(0),
+      }),
+    hash: twoHalvesFromComponents({
+      lh: new Array(7000).fill(1),
+      rh: new Array(7000).fill(1),
+      }),
+    curList: listStateRecordFromComponents({
+      modeField: 0,
+      headField: 0,
+      tailField: 0,
+      eTeXAuxField: 0,
+      pgField: 0,
+      mlField: 0,
+      auxInt: 0,
+      }),
   };
 
   initialize(state);
 
-  const actual = `M${state.xchr[32].charCodeAt(0)},${state.xchr[65].charCodeAt(0)},${state.xchr[127].charCodeAt(0)},${state.xord[32]},${state.xord[65]},${state.xord[0]},${state.interaction},${state.deletionsAllowed ? 1 : 0},${state.setBoxAllowed ? 1 : 0},${state.errorCount},${state.helpPtr},${state.useErrHelp ? 1 : 0},${state.interrupt},${state.okToInterrupt ? 1 : 0},${state.nestPtr},${state.curListModeField},${state.curListHeadField},${state.curListTailField},${state.curListAuxInt},${state.pageContents},${state.pageTail},${state.memRh[29998]},${state.lastGlue},${state.lastPenalty},${state.lastKern},${state.lastNodeType},${state.pageSoFar[7]},${state.pageMaxDepth},${state.xeqLevel[5268]},${state.xeqLevel[6121]},${state.hashLh[514]},${state.hashRh[514]},${state.hashLh[515]},${state.hashRh[515]},${state.savePtr},${state.curLevel},${state.curGroup},${state.curBoundary},${state.magSet},${state.curMark[0]},${state.curMark[4]},${state.readOpen[0]},${state.readOpen[16]},${state.condPtr},${state.ifLimit},${state.curIf},${state.ifLine},${state.nullCharacterB0},${state.nullCharacterB1},${state.nullCharacterB2},${state.nullCharacterB3},${state.deadCycles},${state.curS},${state.halfBuf},${state.dviLimit},${state.dviPtr},${state.dviOffset},${state.dviGone},${state.emptyFieldLh},${state.emptyFieldRh},${state.alignPtr},${state.hyphWord[0]},${state.hyphWord[307]},${state.hyphCount},${state.outputActive ? 1 : 0},${state.insertPenalties},${state.afterToken},${state.longHelpSeen ? 1 : 0},${state.formatIdent},${state.writeOpen[0] ? 1 : 0},${state.writeOpen[17] ? 1 : 0},${state.saRoot[0]},${state.saRoot[6]},${state.discPtr[2]},${state.discPtr[3]},${state.memB0[4]},${state.memInt[6]},${state.memB0[8]},${state.memInt[10]},${state.memB0[12]},${state.memB1[12]},${state.memInt[14]},${state.memInt[15]},${state.memB0[16]},${state.memInt[18]},${state.rover},${state.memRh[20]},${state.memLh[20]},${state.memLh[21]},${state.memRh[21]},${state.loMemMax},${state.memLh[29990]},${state.memRh[29991]},${state.memLh[29991]},${state.memB0[29993]},${state.memLh[29994]},${state.memB1[30000]},${state.memRh[30000]},${state.memB0[29998]},${state.memB1[29998]},${state.avail},${state.memEnd},${state.hiMemMin},${state.varUsed},${state.dynUsed},${state.eqtbB0[2881]},${state.eqtbB0[2882]},${state.eqtbB1[2882]},${state.eqtbB0[3412]},${state.eqtbB0[3683]},${state.eqtbB0[3939]},${state.eqtbB0[3988]},${state.eqtbRh[3988]},${state.eqtbRh[4001]},${state.eqtbRh[4020]},${state.eqtbRh[4025]},${state.eqtbRh[4080]},${state.eqtbRh[4115]},${state.eqtbRh[5012 + 48]},${state.eqtbRh[5012 + 65]},${state.eqtbRh[5012 + 97]},${state.eqtbRh[4244 + 65]},${state.eqtbRh[4500 + 97]},${state.eqtbRh[4756 + 65]},${state.eqtbInt[5269]},${state.eqtbInt[5285]},${state.eqtbInt[5308]},${state.eqtbInt[5309]},${state.eqtbInt[5313]},${state.eqtbInt[5316]},${state.eqtbInt[5589]},${state.eqtbInt[5635]},${state.eqtbInt[5845]},${state.eqtbInt[6121]},${state.hashUsed},${state.csCount},${state.hashRh[2614]},${state.hashRh[2622]},${state.hashRh[2623]},${state.eqtbB0[2622]},${state.eqtbB1[2622]},${state.eqtbRh[2622]},${state.fontPtr},${state.fmemPtr},${state.fontName[0]},${state.fontArea[0]},${state.hyphenChar[0]},${state.skewChar[0]},${state.fontBchar[0]},${state.fontFalseBchar[0]},${state.fontBc[0]},${state.fontEc[0]},${state.fontParams[0]},${state.paramBase[0]},${state.trieOpHash[-8]},${state.trieOpHash[0]},${state.trieOpHash[8]},${state.trieUsed[0]},${state.trieUsed[255]},${state.trieOpPtr},${state.trieNotReady ? 1 : 0},${state.trieL[0]},${state.trieC[0]},${state.triePtr},${state.eTeXMode},${state.maxRegNum},${state.maxRegHelpLine},${state.trieR[0]},${state.hyphStart},${state.texFormatDefault}`;
+  const actual = `M${state.xchr[32].charCodeAt(0)},${state.xchr[65].charCodeAt(0)},${state.xchr[127].charCodeAt(0)},${state.xord[32]},${state.xord[65]},${state.xord[0]},${state.interaction},${state.deletionsAllowed ? 1 : 0},${state.setBoxAllowed ? 1 : 0},${state.errorCount},${state.helpPtr},${state.useErrHelp ? 1 : 0},${state.interrupt},${state.okToInterrupt ? 1 : 0},${state.nestPtr},${state.curList.modeField},${state.curList.headField},${state.curList.tailField},${state.curList.auxField.int},${state.pageContents},${state.pageTail},${state.mem[29998].hh.rh},${state.lastGlue},${state.lastPenalty},${state.lastKern},${state.lastNodeType},${state.pageSoFar[7]},${state.pageMaxDepth},${state.xeqLevel[5268]},${state.xeqLevel[6121]},${state.hash[514].lh},${state.hash[514].rh},${state.hash[515].lh},${state.hash[515].rh},${state.savePtr},${state.curLevel},${state.curGroup},${state.curBoundary},${state.magSet},${state.curMark[0]},${state.curMark[4]},${state.readOpen[0]},${state.readOpen[16]},${state.condPtr},${state.ifLimit},${state.curIf},${state.ifLine},${state.nullCharacter.b0},${state.nullCharacter.b1},${state.nullCharacter.b2},${state.nullCharacter.b3},${state.deadCycles},${state.curS},${state.halfBuf},${state.dviLimit},${state.dviPtr},${state.dviOffset},${state.dviGone},${state.emptyField.lh},${state.emptyField.rh},${state.alignPtr},${state.hyphWord[0]},${state.hyphWord[307]},${state.hyphCount},${state.outputActive ? 1 : 0},${state.insertPenalties},${state.afterToken},${state.longHelpSeen ? 1 : 0},${state.formatIdent},${state.writeOpen[0] ? 1 : 0},${state.writeOpen[17] ? 1 : 0},${state.saRoot[0]},${state.saRoot[6]},${state.discPtr[2]},${state.discPtr[3]},${state.mem[4].hh.b0},${state.mem[6].int},${state.mem[8].hh.b0},${state.mem[10].int},${state.mem[12].hh.b0},${state.mem[12].hh.b1},${state.mem[14].int},${state.mem[15].int},${state.mem[16].hh.b0},${state.mem[18].int},${state.rover},${state.mem[20].hh.rh},${state.mem[20].hh.lh},${state.mem[21].hh.lh},${state.mem[21].hh.rh},${state.loMemMax},${state.mem[29990].hh.lh},${state.mem[29991].hh.rh},${state.mem[29991].hh.lh},${state.mem[29993].hh.b0},${state.mem[29994].hh.lh},${state.mem[30000].hh.b1},${state.mem[30000].hh.rh},${state.mem[29998].hh.b0},${state.mem[29998].hh.b1},${state.avail},${state.memEnd},${state.hiMemMin},${state.varUsed},${state.dynUsed},${state.eqtb[2881].hh.b0},${state.eqtb[2882].hh.b0},${state.eqtb[2882].hh.b1},${state.eqtb[3412].hh.b0},${state.eqtb[3683].hh.b0},${state.eqtb[3939].hh.b0},${state.eqtb[3988].hh.b0},${state.eqtb[3988].hh.rh},${state.eqtb[4001].hh.rh},${state.eqtb[4020].hh.rh},${state.eqtb[4025].hh.rh},${state.eqtb[4080].hh.rh},${state.eqtb[4115].hh.rh},${state.eqtb[5012 + 48].hh.rh},${state.eqtb[5012 + 65].hh.rh},${state.eqtb[5012 + 97].hh.rh},${state.eqtb[4244 + 65].hh.rh},${state.eqtb[4500 + 97].hh.rh},${state.eqtb[4756 + 65].hh.rh},${state.eqtb[5269].int},${state.eqtb[5285].int},${state.eqtb[5308].int},${state.eqtb[5309].int},${state.eqtb[5313].int},${state.eqtb[5316].int},${state.eqtb[5589].int},${state.eqtb[5635].int},${state.eqtb[5845].int},${state.eqtb[6121].int},${state.hashUsed},${state.csCount},${state.hash[2614].rh},${state.hash[2622].rh},${state.hash[2623].rh},${state.eqtb[2622].hh.b0},${state.eqtb[2622].hh.b1},${state.eqtb[2622].hh.rh},${state.fontPtr},${state.fmemPtr},${state.fontName[0]},${state.fontArea[0]},${state.hyphenChar[0]},${state.skewChar[0]},${state.fontBchar[0]},${state.fontFalseBchar[0]},${state.fontBc[0]},${state.fontEc[0]},${state.fontParams[0]},${state.paramBase[0]},${state.trieOpHash[-8]},${state.trieOpHash[0]},${state.trieOpHash[8]},${state.trieUsed[0]},${state.trieUsed[255]},${state.trieOpPtr},${state.trieNotReady ? 1 : 0},${state.trieL[0]},${state.trieC[0]},${state.triePtr},${state.eTeXMode},${state.maxRegNum},${state.maxRegHelpLine},${state.trieR[0]},${state.hyphStart},${state.texFormatDefault}`;
 
   const expected = runProbeText("INITIALIZE_TRACE", [1]);
   assert.equal(actual, expected);

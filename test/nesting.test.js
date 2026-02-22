@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { listStateArrayFromComponents, listStateRecordFromComponents, memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -37,14 +38,24 @@ test("pushNest matches Pascal probe trace", () => {
       maxNestStack,
       nestSize,
       line,
-      nest: new Array(64).fill(null),
-      curList: {
+      nest: listStateArrayFromComponents({
+        base: new Array(64).fill(null),
+        modeField: new Array(64).fill(0),
+        tailField: new Array(64).fill(0),
+        pgField: new Array(64).fill(0),
+        auxInt: new Array(64).fill(0),
+        }),
+      curList: listStateRecordFromComponents({
+        modeField: 1,
         headField: head,
         tailField: tail,
+        eTeXAuxField: aux,
         pgField: pg,
         mlField: ml,
-        eTeXAuxField: aux,
-      },
+        auxInt: 0,
+        auxLh: 0,
+        auxRh: 0,
+        }),
     };
     const saveIndex = state.nestPtr;
     let overflowCalls = 0;
@@ -99,27 +110,46 @@ test("popNest matches Pascal probe trace", () => {
     const state = {
       nestPtr,
       avail,
-      memRh: new Array(2000).fill(0),
-      nest: new Array(64).fill(null),
-      curList: {
+      nest: listStateArrayFromComponents({
+        base: new Array(64).fill(null),
+        modeField: new Array(64).fill(0),
+        tailField: new Array(64).fill(0),
+        pgField: new Array(64).fill(0),
+        auxInt: new Array(64).fill(0),
+        }),
+      mem: memoryWordsFromComponents({
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
+      curList: listStateRecordFromComponents({
+        modeField: 0,
         headField: curHead,
         tailField: 999,
+        eTeXAuxField: 999,
         pgField: 999,
         mlField: 999,
-        eTeXAuxField: 999,
-      },
+        auxInt: 999,
+        auxLh: 0,
+        auxRh: 0,
+        }),
     };
     state.nest[nestPtr - 1] = {
+      modeField: 0,
       headField: savedHead,
       tailField: savedTail,
       pgField: savedPg,
       mlField: savedMl,
       eTeXAuxField: savedAux,
+      auxField: {
+        int: 0,
+        gr: 0,
+        hh: { rh: 0, lh: 0, b0: 0, b1: 0 },
+        qqqq: { b0: 0, b1: 0, b2: 0, b3: 0 },
+      },
     };
 
     popNest(state);
     const actual = [
-      state.memRh[curHead],
+      state.mem[curHead].hh.rh,
       state.avail,
       state.nestPtr,
       state.curList.headField,

@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { listStateRecordFromComponents, memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -24,61 +25,63 @@ test("flushNodeList matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      memB0: new Array(2000).fill(0),
-      memB1: new Array(2000).fill(0),
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
-      memInt: new Array(2000).fill(0),
       hiMemMin: 1000,
       avail: 0,
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        b1: new Array(2000).fill(0),
+        int: new Array(2000).fill(0),
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
 
     let p = 0;
     if (scenario === 1) {
       p = 1200;
-      state.memRh[1200] = 1300;
-      state.memRh[1300] = 0;
+      state.mem[1200].hh.rh = 1300;
+      state.mem[1300].hh.rh = 0;
     } else if (scenario === 2) {
       p = 100;
-      state.memB0[100] = 0;
-      state.memRh[100] = 0;
-      state.memRh[105] = 150;
-      state.memB0[150] = 2;
-      state.memRh[150] = 0;
+      state.mem[100].hh.b0 = 0;
+      state.mem[100].hh.rh = 0;
+      state.mem[105].hh.rh = 150;
+      state.mem[150].hh.b0 = 2;
+      state.mem[150].hh.rh = 0;
     } else if (scenario === 3) {
       p = 200;
-      state.memB0[200] = 8;
-      state.memB1[200] = 1;
-      state.memRh[200] = 0;
-      state.memRh[201] = 777;
+      state.mem[200].hh.b0 = 8;
+      state.mem[200].hh.b1 = 1;
+      state.mem[200].hh.rh = 0;
+      state.mem[201].hh.rh = 777;
     } else if (scenario === 4) {
       p = 300;
-      state.memB0[300] = 10;
-      state.memRh[300] = 0;
-      state.memLh[301] = 500;
-      state.memRh[301] = 350;
-      state.memRh[500] = 2;
-      state.memB0[350] = 2;
-      state.memRh[350] = 0;
+      state.mem[300].hh.b0 = 10;
+      state.mem[300].hh.rh = 0;
+      state.mem[301].hh.lh = 500;
+      state.mem[301].hh.rh = 350;
+      state.mem[500].hh.rh = 2;
+      state.mem[350].hh.b0 = 2;
+      state.mem[350].hh.rh = 0;
     } else if (scenario === 5) {
       p = 400;
-      state.memB0[400] = 24;
-      state.memRh[400] = 0;
-      state.memRh[401] = 2;
-      state.memLh[401] = 410;
-      state.memRh[402] = 1;
-      state.memLh[402] = 420;
-      state.memRh[403] = 2;
-      state.memLh[403] = 430;
-      state.memB0[410] = 2;
-      state.memRh[410] = 0;
-      state.memB0[430] = 2;
-      state.memRh[430] = 0;
+      state.mem[400].hh.b0 = 24;
+      state.mem[400].hh.rh = 0;
+      state.mem[401].hh.rh = 2;
+      state.mem[401].hh.lh = 410;
+      state.mem[402].hh.rh = 1;
+      state.mem[402].hh.lh = 420;
+      state.mem[403].hh.rh = 2;
+      state.mem[403].hh.lh = 430;
+      state.mem[410].hh.b0 = 2;
+      state.mem[410].hh.rh = 0;
+      state.mem[430].hh.b0 = 2;
+      state.mem[430].hh.rh = 0;
     } else if (scenario === 6) {
       p = 600;
-      state.memB0[600] = 8;
-      state.memB1[600] = 9;
-      state.memRh[600] = 0;
+      state.mem[600].hh.b0 = 8;
+      state.mem[600].hh.b1 = 9;
+      state.mem[600].hh.rh = 0;
     }
 
     const trace = [];
@@ -100,7 +103,7 @@ test("flushNodeList matches Pascal probe trace", () => {
     const actual = [
       `T${trace.length === 0 ? "-" : trace.join(";")}`,
       `E${errToken}`,
-      `S${state.avail},${state.memRh[1200]},${state.memRh[1300]},${state.memRh[500]},${state.memRh[100]},${state.memRh[105]},${state.memRh[150]},${state.memRh[200]},${state.memRh[201]},${state.memRh[300]},${state.memRh[301]},${state.memRh[400]},${state.memRh[401]},${state.memRh[402]},${state.memRh[403]},${state.memRh[600]}`,
+      `S${state.avail},${state.mem[1200].hh.rh},${state.mem[1300].hh.rh},${state.mem[500].hh.rh},${state.mem[100].hh.rh},${state.mem[105].hh.rh},${state.mem[150].hh.rh},${state.mem[200].hh.rh},${state.mem[201].hh.rh},${state.mem[300].hh.rh},${state.mem[301].hh.rh},${state.mem[400].hh.rh},${state.mem[401].hh.rh},${state.mem[402].hh.rh},${state.mem[403].hh.rh},${state.mem[600].hh.rh}`,
     ].join(" ");
 
     const expected = runProbeText("FLUSH_NODE_LIST_TRACE", [scenario]);
@@ -117,13 +120,16 @@ test("copyNodeList matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      memB0: new Array(2500).fill(0),
-      memB1: new Array(2500).fill(0),
-      memLh: new Array(2500).fill(0),
-      memRh: new Array(2500).fill(0),
-      memInt: new Array(2500).fill(0),
       hiMemMin: 1000,
       avail: 0,
+      mem: memoryWordsFromComponents({
+        b0: new Array(2500).fill(0),
+        b1: new Array(2500).fill(0),
+        int: new Array(2500).fill(0),
+        lh: new Array(2500).fill(0),
+        rh: new Array(2500).fill(0),
+        gr: new Array(2500).fill(0),
+        }, { minSize: 30001 }),
     };
 
     let p = 0;
@@ -138,96 +144,96 @@ test("copyNodeList matches Pascal probe trace", () => {
       p = 1200;
       availQueue = [900, 901];
       nodeQueue = [];
-      state.memB0[1200] = 77;
-      state.memB1[1200] = 3;
-      state.memLh[1200] = 222;
-      state.memRh[1200] = 0;
-      state.memInt[1200] = 123456;
+      state.mem[1200].hh.b0 = 77;
+      state.mem[1200].hh.b1 = 3;
+      state.mem[1200].hh.lh = 222;
+      state.mem[1200].hh.rh = 0;
+      state.mem[1200].int = 123456;
     } else if (scenario === 3) {
       p = 100;
       availQueue = [900];
       nodeQueue = [910];
-      state.memB0[100] = 2;
-      state.memB1[100] = 9;
-      state.memLh[100] = 11;
-      state.memRh[100] = 0;
-      state.memInt[100] = 1000;
-      state.memB0[101] = 3;
-      state.memLh[101] = 12;
-      state.memRh[101] = 44;
-      state.memInt[101] = 1001;
-      state.memB0[102] = 4;
-      state.memLh[102] = 13;
-      state.memRh[102] = 55;
-      state.memInt[102] = 1002;
-      state.memB0[103] = 5;
-      state.memLh[103] = 14;
-      state.memRh[103] = 66;
-      state.memInt[103] = 1003;
+      state.mem[100].hh.b0 = 2;
+      state.mem[100].hh.b1 = 9;
+      state.mem[100].hh.lh = 11;
+      state.mem[100].hh.rh = 0;
+      state.mem[100].int = 1000;
+      state.mem[101].hh.b0 = 3;
+      state.mem[101].hh.lh = 12;
+      state.mem[101].hh.rh = 44;
+      state.mem[101].int = 1001;
+      state.mem[102].hh.b0 = 4;
+      state.mem[102].hh.lh = 13;
+      state.mem[102].hh.rh = 55;
+      state.mem[102].int = 1002;
+      state.mem[103].hh.b0 = 5;
+      state.mem[103].hh.lh = 14;
+      state.mem[103].hh.rh = 66;
+      state.mem[103].int = 1003;
     } else if (scenario === 4) {
       p = 200;
       availQueue = [900, 901];
       nodeQueue = [910, 920];
 
-      state.memB0[200] = 3;
-      state.memB1[200] = 1;
-      state.memLh[200] = 21;
-      state.memRh[200] = 0;
-      state.memInt[200] = 2000;
-      state.memB0[201] = 6;
-      state.memLh[201] = 22;
-      state.memRh[201] = 77;
-      state.memInt[201] = 2001;
-      state.memB0[202] = 7;
-      state.memLh[202] = 23;
-      state.memRh[202] = 88;
-      state.memInt[202] = 2002;
-      state.memB0[203] = 8;
-      state.memLh[203] = 24;
-      state.memRh[203] = 99;
-      state.memInt[203] = 2003;
-      state.memLh[204] = 250;
-      state.memRh[204] = 600;
-      state.memInt[204] = 2004;
-      state.memRh[600] = 5;
+      state.mem[200].hh.b0 = 3;
+      state.mem[200].hh.b1 = 1;
+      state.mem[200].hh.lh = 21;
+      state.mem[200].hh.rh = 0;
+      state.mem[200].int = 2000;
+      state.mem[201].hh.b0 = 6;
+      state.mem[201].hh.lh = 22;
+      state.mem[201].hh.rh = 77;
+      state.mem[201].int = 2001;
+      state.mem[202].hh.b0 = 7;
+      state.mem[202].hh.lh = 23;
+      state.mem[202].hh.rh = 88;
+      state.mem[202].int = 2002;
+      state.mem[203].hh.b0 = 8;
+      state.mem[203].hh.lh = 24;
+      state.mem[203].hh.rh = 99;
+      state.mem[203].int = 2003;
+      state.mem[204].hh.lh = 250;
+      state.mem[204].hh.rh = 600;
+      state.mem[204].int = 2004;
+      state.mem[600].hh.rh = 5;
 
-      state.memB0[250] = 2;
-      state.memB1[250] = 2;
-      state.memLh[250] = 31;
-      state.memRh[250] = 0;
-      state.memInt[250] = 2500;
-      state.memB0[251] = 3;
-      state.memLh[251] = 32;
-      state.memRh[251] = 11;
-      state.memInt[251] = 2501;
-      state.memB0[252] = 4;
-      state.memLh[252] = 33;
-      state.memRh[252] = 12;
-      state.memInt[252] = 2502;
-      state.memB0[253] = 5;
-      state.memLh[253] = 34;
-      state.memRh[253] = 13;
-      state.memInt[253] = 2503;
+      state.mem[250].hh.b0 = 2;
+      state.mem[250].hh.b1 = 2;
+      state.mem[250].hh.lh = 31;
+      state.mem[250].hh.rh = 0;
+      state.mem[250].int = 2500;
+      state.mem[251].hh.b0 = 3;
+      state.mem[251].hh.lh = 32;
+      state.mem[251].hh.rh = 11;
+      state.mem[251].int = 2501;
+      state.mem[252].hh.b0 = 4;
+      state.mem[252].hh.lh = 33;
+      state.mem[252].hh.rh = 12;
+      state.mem[252].int = 2502;
+      state.mem[253].hh.b0 = 5;
+      state.mem[253].hh.lh = 34;
+      state.mem[253].hh.rh = 13;
+      state.mem[253].int = 2503;
     } else if (scenario === 5) {
       p = 300;
       availQueue = [900];
       nodeQueue = [930];
-      state.memB0[300] = 8;
-      state.memB1[300] = 1;
-      state.memLh[300] = 41;
-      state.memRh[300] = 0;
-      state.memInt[300] = 3000;
-      state.memB0[301] = 9;
-      state.memLh[301] = 42;
-      state.memRh[301] = 700;
-      state.memInt[301] = 3001;
-      state.memLh[700] = 2;
+      state.mem[300].hh.b0 = 8;
+      state.mem[300].hh.b1 = 1;
+      state.mem[300].hh.lh = 41;
+      state.mem[300].hh.rh = 0;
+      state.mem[300].int = 3000;
+      state.mem[301].hh.b0 = 9;
+      state.mem[301].hh.lh = 42;
+      state.mem[301].hh.rh = 700;
+      state.mem[301].int = 3001;
+      state.mem[700].hh.lh = 2;
     } else if (scenario === 6) {
       p = 500;
       availQueue = [900];
       nodeQueue = [];
-      state.memB0[500] = 40;
-      state.memRh[500] = 0;
+      state.mem[500].hh.b0 = 40;
+      state.mem[500].hh.rh = 0;
     }
 
     const trace = [];
@@ -258,7 +264,7 @@ test("copyNodeList matches Pascal probe trace", () => {
       `T${trace.length === 0 ? "-" : trace.join(";")}`,
       `E${errToken}`,
       `R${result}`,
-      `S${state.avail},${state.memRh[900]},${state.memRh[901]},${state.memRh[910]},${state.memRh[920]},${state.memRh[930]},${state.memRh[600]},${state.memLh[700]},${state.memLh[914]},${state.memRh[914]},${state.memB0[901]},${state.memInt[901]},${state.memB0[910]},${state.memLh[910]},${state.memB0[920]},${state.memLh[920]},${state.memB0[930]},${state.memLh[930]}`,
+      `S${state.avail},${state.mem[900].hh.rh},${state.mem[901].hh.rh},${state.mem[910].hh.rh},${state.mem[920].hh.rh},${state.mem[930].hh.rh},${state.mem[600].hh.rh},${state.mem[700].hh.lh},${state.mem[914].hh.lh},${state.mem[914].hh.rh},${state.mem[901].hh.b0},${state.mem[901].int},${state.mem[910].hh.b0},${state.mem[910].hh.lh},${state.mem[920].hh.b0},${state.mem[920].hh.lh},${state.mem[930].hh.b0},${state.mem[930].hh.lh}`,
     ].join(" ");
 
     const expected = runProbeText("COPY_NODE_LIST_TRACE", [scenario]);
@@ -277,33 +283,35 @@ test("showBox matches Pascal probe trace", () => {
     const state = {
       depthThreshold: 0,
       breadthMax: 0,
-      eqtbInt: new Array(6000).fill(0),
       poolPtr: 100,
       poolSize: 1000,
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     };
     let p = 400;
 
     if (scenario === 1) {
-      state.eqtbInt[5293] = 7;
-      state.eqtbInt[5292] = 9;
+      state.eqtb[5293].int = 7;
+      state.eqtb[5292].int = 9;
       state.poolPtr = 100;
       state.poolSize = 1000;
       p = 444;
     } else if (scenario === 2) {
-      state.eqtbInt[5293] = 5;
-      state.eqtbInt[5292] = 0;
+      state.eqtb[5293].int = 5;
+      state.eqtb[5292].int = 0;
       state.poolPtr = 100;
       state.poolSize = 1000;
       p = 555;
     } else if (scenario === 3) {
-      state.eqtbInt[5293] = 50;
-      state.eqtbInt[5292] = 8;
+      state.eqtb[5293].int = 50;
+      state.eqtb[5292].int = 8;
       state.poolPtr = 980;
       state.poolSize = 1000;
       p = 666;
     } else if (scenario === 4) {
-      state.eqtbInt[5293] = 10;
-      state.eqtbInt[5292] = 2;
+      state.eqtb[5293].int = 10;
+      state.eqtb[5292].int = 2;
       state.poolPtr = 1000;
       state.poolSize = 1000;
       p = 777;
@@ -327,92 +335,136 @@ test("showActivities matches Pascal probe trace", () => {
   for (const scenario of scenarios) {
     const makeList = () => ({
       modeField: 0,
-      auxInt: 0,
-      auxLh: 0,
-      auxRh: 0,
       headField: 0,
+      tailField: 0,
+      eTeXAuxField: 0,
       mlField: 0,
       pgField: 0,
+      auxField: {
+        int: 0,
+        gr: 0,
+        hh: {
+          lh: 0,
+          rh: 0,
+          b0: 0,
+          b1: 0,
+        },
+        qqqq: {
+          b0: 0,
+          b1: 0,
+          b2: 0,
+          b3: 0,
+        },
+      },
     });
 
     const state = {
       nestPtr: 0,
-      curList: makeList(),
       nest: [makeList(), makeList(), makeList()],
       outputActive: false,
       pageTail: 29998,
       pageContents: 0,
       pageSoFar: [0],
-      eqtbInt: new Array(6000).fill(0),
-      memRh: new Array(40050).fill(0),
-      memLh: new Array(40050).fill(0),
-      memB0: new Array(40050).fill(0),
-      memB1: new Array(40050).fill(0),
-      memInt: new Array(40050).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(40050).fill(0),
+        b1: new Array(40050).fill(0),
+        int: new Array(40050).fill(0),
+        lh: new Array(40050).fill(0),
+        rh: new Array(40050).fill(0),
+        }, { minSize: 30001 }),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
+      curList: listStateRecordFromComponents({
+        modeField: 0,
+        headField: 0,
+        tailField: 0,
+        eTeXAuxField: 0,
+        pgField: 0,
+        mlField: 0,
+        auxInt: 0,
+        auxLh: 0,
+        auxRh: 0,
+        }),
     };
 
     if (scenario === 1) {
       state.nestPtr = 0;
-      state.curList = {
-        modeField: 0,
-        auxInt: 12345,
-        auxLh: 0,
-        auxRh: 0,
-        headField: 10,
-        mlField: 7,
-        pgField: 1,
-      };
-      state.memRh[10] = 111;
+      state.curList.modeField = 0;
+      state.curList.headField = 10;
+      state.curList.tailField = 10;
+      state.curList.eTeXAuxField = 0;
+      state.curList.mlField = 7;
+      state.curList.pgField = 1;
+      state.curList.auxField.int = 12345;
+      state.curList.auxField.hh.lh = 0;
+      state.curList.auxField.hh.rh = 0;
+      state.mem[10].hh.rh = 111;
     } else if (scenario === 2) {
       state.nestPtr = 0;
-      state.curList = {
-        modeField: 102,
-        auxInt: 0,
-        auxLh: 5,
-        auxRh: 6,
-        headField: 10,
-        mlField: -3,
-        pgField: 1234567,
-      };
-      state.memRh[10] = 500;
+      state.curList.modeField = 102;
+      state.curList.headField = 10;
+      state.curList.tailField = 10;
+      state.curList.eTeXAuxField = 0;
+      state.curList.mlField = -3;
+      state.curList.pgField = 1234567;
+      state.curList.auxField.int = 0;
+      state.curList.auxField.hh.lh = 5;
+      state.curList.auxField.hh.rh = 6;
+      state.mem[10].hh.rh = 500;
       state.pageTail = 1;
       state.outputActive = true;
       state.pageContents = 1;
       state.pageSoFar[0] = 1234;
-      state.memRh[29998] = 32000;
-      state.memRh[30000] = 31000;
-      state.memRh[31000] = 30000;
-      state.memB1[31000] = 2;
-      state.eqtbInt[5335] = 2000;
-      state.memInt[31003] = 5000;
-      state.memB0[31000] = 1;
-      state.memLh[31001] = 31111;
-      state.memRh[32000] = 31111;
-      state.memB0[32000] = 3;
-      state.memB1[32000] = 2;
-      state.memRh[29999] = 400;
+      state.mem[29998].hh.rh = 32000;
+      state.mem[30000].hh.rh = 31000;
+      state.mem[31000].hh.rh = 30000;
+      state.mem[31000].hh.b1 = 2;
+      state.eqtb[5335].int = 2000;
+      state.mem[31003].int = 5000;
+      state.mem[31000].hh.b0 = 1;
+      state.mem[31001].hh.lh = 31111;
+      state.mem[32000].hh.rh = 31111;
+      state.mem[32000].hh.b0 = 3;
+      state.mem[32000].hh.b1 = 2;
+      state.mem[29999].hh.rh = 400;
     } else if (scenario === 3) {
       state.nestPtr = 1;
-      state.curList = {
-        modeField: 202,
-        auxInt: 700,
-        auxLh: 0,
-        auxRh: 0,
-        headField: 20,
-        mlField: 5,
-        pgField: 0,
-      };
+      state.curList.modeField = 202;
+      state.curList.headField = 20;
+      state.curList.tailField = 20;
+      state.curList.eTeXAuxField = 0;
+      state.curList.mlField = 5;
+      state.curList.pgField = 0;
+      state.curList.auxField.int = 700;
+      state.curList.auxField.hh.lh = 0;
+      state.curList.auxField.hh.rh = 0;
       state.nest[0] = {
         modeField: -1,
-        auxInt: -70000000,
-        auxLh: 0,
-        auxRh: 0,
         headField: 30,
+        tailField: 30,
+        eTeXAuxField: 0,
         mlField: 2,
         pgField: 2,
+        auxField: {
+          int: -70000000,
+          gr: 0,
+          hh: {
+            lh: 0,
+            rh: 0,
+            b0: 0,
+            b1: 0,
+          },
+          qqqq: {
+            b0: 0,
+            b1: 0,
+            b2: 0,
+            b3: 0,
+          },
+        },
       };
-      state.memRh[20] = 210;
-      state.memRh[30] = 310;
+      state.mem[20].hh.rh = 210;
+      state.mem[30].hh.rh = 310;
     }
 
     const trace = [];
@@ -460,14 +512,16 @@ test("showNodeList matches Pascal probe trace", () => {
       hiMemMin: 1000,
       eTeXMode: 0,
       fontInShortDisplay: 0,
-      memB0: new Array(500).fill(0),
-      memB1: new Array(500).fill(0),
-      memB2: new Array(500).fill(0),
-      memB3: new Array(500).fill(0),
-      memLh: new Array(500).fill(0),
-      memRh: new Array(500).fill(0),
-      memInt: new Array(500).fill(0),
-      memGr: new Array(500).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(500).fill(0),
+        b1: new Array(500).fill(0),
+        b2: new Array(500).fill(0),
+        b3: new Array(500).fill(0),
+        int: new Array(500).fill(0),
+        lh: new Array(500).fill(0),
+        rh: new Array(500).fill(0),
+        gr: new Array(500).fill(0),
+        }, { minSize: 30001 }),
     };
 
     let p = 0;
@@ -483,51 +537,51 @@ test("showNodeList matches Pascal probe trace", () => {
       p = 10;
       state.breadthMax = 2;
       state.hiMemMin = 1;
-      state.memRh[10] = 11;
-      state.memRh[11] = 12;
-      state.memRh[12] = 0;
+      state.mem[10].hh.rh = 11;
+      state.mem[11].hh.rh = 12;
+      state.mem[12].hh.rh = 0;
     } else if (scenario === 4) {
       p = 20;
       state.hiMemMin = 10;
-      state.memRh[20] = 0;
+      state.mem[20].hh.rh = 0;
     } else if (scenario === 5) {
       p = 30;
-      state.memB0[30] = 0;
-      state.memB1[30] = 2;
-      state.memRh[30] = 0;
-      state.memInt[31] = 100;
-      state.memInt[32] = 200;
-      state.memInt[33] = 300;
-      state.memInt[34] = 40;
-      state.memB0[35] = 1;
-      state.memB1[35] = 2;
-      state.memInt[36] = 0;
-      state.memGr[36] = 1.5;
-      state.memRh[35] = 40;
-      state.memB0[40] = 2;
-      state.memInt[41] = 1;
-      state.memInt[42] = 2;
-      state.memInt[43] = 3;
-      state.memRh[40] = 0;
+      state.mem[30].hh.b0 = 0;
+      state.mem[30].hh.b1 = 2;
+      state.mem[30].hh.rh = 0;
+      state.mem[31].int = 100;
+      state.mem[32].int = 200;
+      state.mem[33].int = 300;
+      state.mem[34].int = 40;
+      state.mem[35].hh.b0 = 1;
+      state.mem[35].hh.b1 = 2;
+      state.mem[36].int = 0;
+      state.mem[36].gr = 1.5;
+      state.mem[35].hh.rh = 40;
+      state.mem[40].hh.b0 = 2;
+      state.mem[41].int = 1;
+      state.mem[42].int = 2;
+      state.mem[43].int = 3;
+      state.mem[40].hh.rh = 0;
       state.eTeXMode = 1;
     } else if (scenario === 6) {
       p = 50;
-      state.memB0[50] = 8;
-      state.memB1[50] = 4;
-      state.memRh[50] = 0;
-      state.memRh[51] = 777;
-      state.memB0[51] = 8;
-      state.memB1[51] = 9;
+      state.mem[50].hh.b0 = 8;
+      state.mem[50].hh.b1 = 4;
+      state.mem[50].hh.rh = 0;
+      state.mem[51].hh.rh = 777;
+      state.mem[51].hh.b0 = 8;
+      state.mem[51].hh.b1 = 9;
     } else if (scenario === 7) {
       p = 60;
-      state.memB0[60] = 25;
-      state.memRh[60] = 0;
-      state.memInt[61] = 1073741824;
-      state.memB0[64] = 1;
+      state.mem[60].hh.b0 = 25;
+      state.mem[60].hh.rh = 0;
+      state.mem[61].int = 1073741824;
+      state.mem[64].hh.b0 = 1;
     } else if (scenario === 8) {
       p = 70;
-      state.memB0[70] = 99;
-      state.memRh[70] = 0;
+      state.mem[70].hh.b0 = 99;
+      state.mem[70].hh.rh = 0;
     }
 
     const trace = [];

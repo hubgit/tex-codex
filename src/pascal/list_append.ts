@@ -1,9 +1,5 @@
-export interface AppendKernState {
-  curChr: number;
-  curVal: number;
-  curListTailField: number;
-  memRh: number[];
-  memB1: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface AppendKernState extends TeXStateSlice<"curChr" | "curVal" | "curList" | "mem" | "mem">{
 }
 
 export interface AppendKernOps {
@@ -17,16 +13,12 @@ export function appendKern(
 ): void {
   const s = state.curChr;
   ops.scanDimen(s === 99, false, false);
-  state.memRh[state.curListTailField] = ops.newKern(state.curVal);
-  state.curListTailField = state.memRh[state.curListTailField];
-  state.memB1[state.curListTailField] = s;
+  state.mem[state.curList.tailField].hh.rh = ops.newKern(state.curVal);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
+  state.mem[state.curList.tailField].hh.b1 = s;
 }
 
-export interface AppendPenaltyState {
-  curVal: number;
-  curListTailField: number;
-  curListModeField: number;
-  memRh: number[];
+export interface AppendPenaltyState extends TeXStateSlice<"curVal" | "curList" | "curList" | "mem">{
 }
 
 export interface AppendPenaltyOps {
@@ -40,24 +32,14 @@ export function appendPenalty(
   ops: AppendPenaltyOps,
 ): void {
   ops.scanInt();
-  state.memRh[state.curListTailField] = ops.newPenalty(state.curVal);
-  state.curListTailField = state.memRh[state.curListTailField];
-  if (state.curListModeField === 1) {
+  state.mem[state.curList.tailField].hh.rh = ops.newPenalty(state.curVal);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
+  if (state.curList.modeField === 1) {
     ops.buildPage();
   }
 }
 
-export interface AppSpaceState {
-  curListAuxField: number;
-  curListTailField: number;
-  eqtbRh: number[];
-  fontGlue: number[];
-  paramBase: number[];
-  fontInfoInt: number[];
-  memInt: number[];
-  memRh: number[];
-  mainP: number;
-  mainK: number;
+export interface AppSpaceState extends TeXStateSlice<"curList" | "curList" | "eqtb" | "fontGlue" | "paramBase" | "fontInfo" | "mem" | "mem" | "mainP" | "mainK">{
 }
 
 export interface AppSpaceOps {
@@ -73,54 +55,49 @@ export function appSpace(
 ): void {
   let q = 0;
 
-  if (state.curListAuxField >= 2000 && (state.eqtbRh[2895] ?? 0) !== 0) {
+  if (state.curList.auxField.hh.lh >= 2000 && (state.eqtb[2895].hh.rh ?? 0) !== 0) {
     q = ops.newParamGlue(13);
   } else {
-    if ((state.eqtbRh[2894] ?? 0) !== 0) {
-      state.mainP = state.eqtbRh[2894] ?? 0;
+    if ((state.eqtb[2894].hh.rh ?? 0) !== 0) {
+      state.mainP = state.eqtb[2894].hh.rh ?? 0;
     } else {
-      const f = state.eqtbRh[3939] ?? 0;
+      const f = state.eqtb[3939].hh.rh ?? 0;
       state.mainP = state.fontGlue[f] ?? 0;
       if (state.mainP === 0) {
         state.mainP = ops.newSpec(0);
         state.mainK = (state.paramBase[f] ?? 0) + 2;
-        state.memInt[state.mainP + 1] = state.fontInfoInt[state.mainK] ?? 0;
-        state.memInt[state.mainP + 2] = state.fontInfoInt[state.mainK + 1] ?? 0;
-        state.memInt[state.mainP + 3] = state.fontInfoInt[state.mainK + 2] ?? 0;
+        state.mem[state.mainP + 1].int = state.fontInfo[state.mainK].int ?? 0;
+        state.mem[state.mainP + 2].int = state.fontInfo[state.mainK + 1].int ?? 0;
+        state.mem[state.mainP + 3].int = state.fontInfo[state.mainK + 2].int ?? 0;
         state.fontGlue[f] = state.mainP;
       }
     }
 
     state.mainP = ops.newSpec(state.mainP);
-    if (state.curListAuxField >= 2000) {
-      const f = state.eqtbRh[3939] ?? 0;
-      state.memInt[state.mainP + 1] += state.fontInfoInt[7 + (state.paramBase[f] ?? 0)] ?? 0;
+    if (state.curList.auxField.hh.lh >= 2000) {
+      const f = state.eqtb[3939].hh.rh ?? 0;
+      state.mem[state.mainP + 1].int += state.fontInfo[7 + (state.paramBase[f] ?? 0)].int ?? 0;
     }
-    state.memInt[state.mainP + 2] = ops.xnOverD(
-      state.memInt[state.mainP + 2] ?? 0,
-      state.curListAuxField,
+    state.mem[state.mainP + 2].int = ops.xnOverD(
+      state.mem[state.mainP + 2].int ?? 0,
+      state.curList.auxField.hh.lh,
       1000,
     );
-    state.memInt[state.mainP + 3] = ops.xnOverD(
-      state.memInt[state.mainP + 3] ?? 0,
+    state.mem[state.mainP + 3].int = ops.xnOverD(
+      state.mem[state.mainP + 3].int ?? 0,
       1000,
-      state.curListAuxField,
+      state.curList.auxField.hh.lh,
     );
 
     q = ops.newGlue(state.mainP);
-    state.memRh[state.mainP] = 0;
+    state.mem[state.mainP].hh.rh = 0;
   }
 
-  state.memRh[state.curListTailField] = q;
-  state.curListTailField = q;
+  state.mem[state.curList.tailField].hh.rh = q;
+  state.curList.tailField = q;
 }
 
-export interface AppendGlueState {
-  curChr: number;
-  curVal: number;
-  curListTailField: number;
-  memRh: number[];
-  memB1: number[];
+export interface AppendGlueState extends TeXStateSlice<"curChr" | "curVal" | "curList" | "mem" | "mem">{
 }
 
 export interface AppendGlueOps {
@@ -156,12 +133,12 @@ export function appendGlue(
       break;
   }
 
-  state.memRh[state.curListTailField] = ops.newGlue(state.curVal);
-  state.curListTailField = state.memRh[state.curListTailField];
+  state.mem[state.curList.tailField].hh.rh = ops.newGlue(state.curVal);
+  state.curList.tailField = state.mem[state.curList.tailField].hh.rh;
   if (s >= 4) {
-    state.memRh[state.curVal] = (state.memRh[state.curVal] ?? 0) - 1;
+    state.mem[state.curVal].hh.rh = (state.mem[state.curVal].hh.rh ?? 0) - 1;
     if (s > 4) {
-      state.memB1[state.curListTailField] = 99;
+      state.mem[state.curList.tailField].hh.b1 = 99;
     }
   }
 }

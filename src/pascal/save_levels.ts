@@ -1,16 +1,5 @@
-export interface NewSaveLevelState {
-  savePtr: number;
-  maxSaveStack: number;
-  saveSize: number;
-  eTeXMode: number;
-  line: number;
-  saveStackInt: number[];
-  saveStackB0: number[];
-  saveStackB1: number[];
-  saveStackRh: number[];
-  curGroup: number;
-  curBoundary: number;
-  curLevel: number;
+import type { TeXStateSlice } from "./state_slices";
+export interface NewSaveLevelState extends TeXStateSlice<"savePtr" | "maxSaveStack" | "saveSize" | "eTeXMode" | "line" | "saveStack" | "saveStack" | "saveStack" | "saveStack" | "curGroup" | "curBoundary" | "curLevel">{
 }
 
 export interface NewSaveLevelOps {
@@ -30,13 +19,13 @@ export function newSaveLevel(
   }
 
   if (state.eTeXMode === 1) {
-    state.saveStackInt[state.savePtr] = state.line;
+    state.saveStack[state.savePtr].int = state.line;
     state.savePtr += 1;
   }
 
-  state.saveStackB0[state.savePtr] = 3;
-  state.saveStackB1[state.savePtr] = state.curGroup;
-  state.saveStackRh[state.savePtr] = state.curBoundary;
+  state.saveStack[state.savePtr].hh.b0 = 3;
+  state.saveStack[state.savePtr].hh.b1 = state.curGroup;
+  state.saveStack[state.savePtr].hh.rh = state.curBoundary;
   if (state.curLevel === 255) {
     ops.overflow(546, 255);
   }
@@ -46,14 +35,7 @@ export function newSaveLevel(
   state.savePtr += 1;
 }
 
-export interface SaveForAfterState {
-  curLevel: number;
-  savePtr: number;
-  maxSaveStack: number;
-  saveSize: number;
-  saveStackB0: number[];
-  saveStackB1: number[];
-  saveStackRh: number[];
+export interface SaveForAfterState extends TeXStateSlice<"curLevel" | "savePtr" | "maxSaveStack" | "saveSize" | "saveStack" | "saveStack" | "saveStack">{
 }
 
 export interface SaveForAfterOps {
@@ -72,9 +54,9 @@ export function saveForAfter(
         ops.overflow(545, state.saveSize);
       }
     }
-    state.saveStackB0[state.savePtr] = 2;
-    state.saveStackB1[state.savePtr] = 0;
-    state.saveStackRh[state.savePtr] = t;
+    state.saveStack[state.savePtr].hh.b0 = 2;
+    state.saveStack[state.savePtr].hh.b1 = 0;
+    state.saveStack[state.savePtr].hh.rh = t;
     state.savePtr += 1;
   }
 }

@@ -8,6 +8,15 @@ export function half(x: number): number {
   return pascalDiv(x, 2);
 }
 
+export function round(x: number): number {
+  // TeX WEB calls Pascal's builtin round(...); for Knuth-era Pascal this is
+  // ties-away-from-zero (not IEEE ties-to-even). Keep this behavior.
+  if (x >= 0) {
+    return Math.floor(x + 0.5);
+  }
+  return -Math.floor(-x + 0.5);
+}
+
 export function roundDecimals(k: number, state: ArithmeticState): number {
   let a = 0;
 

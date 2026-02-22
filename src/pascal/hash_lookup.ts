@@ -1,15 +1,5 @@
-export interface IdLookupState {
-  buffer: number[];
-  hashLh: number[];
-  hashRh: number[];
-  strStart: number[];
-  strPool: number[];
-  noNewControlSequence: boolean;
-  hashUsed: number;
-  strPtr: number;
-  poolPtr: number;
-  poolSize: number;
-  initPoolPtr: number;
+import type { TeXStateSlice } from "./state_slices";
+export interface IdLookupState extends TeXStateSlice<"buffer" | "hash" | "hash" | "strStart" | "strPool" | "noNewControlSequence" | "hashUsed" | "strPtr" | "poolPtr" | "poolSize" | "initPoolPtr">{
 }
 
 export interface IdLookupOps {
@@ -34,7 +24,7 @@ export function idLookup(
 
   let p = h + 514;
   while (true) {
-    const hashRhAtP = state.hashRh[p] ?? 0;
+    const hashRhAtP = state.hash[p].rh ?? 0;
     if (hashRhAtP > 0) {
       const len = (state.strStart[hashRhAtP + 1] ?? 0) - (state.strStart[hashRhAtP] ?? 0);
       if (len === l && ops.strEqBuf(hashRhAtP, j)) {
@@ -42,7 +32,7 @@ export function idLookup(
       }
     }
 
-    if ((state.hashLh[p] ?? 0) === 0) {
+    if ((state.hash[p].lh ?? 0) === 0) {
       if (state.noNewControlSequence) {
         p = 2881;
       } else {
@@ -52,8 +42,8 @@ export function idLookup(
               ops.overflow(506, 2100);
             }
             state.hashUsed -= 1;
-          } while ((state.hashRh[state.hashUsed] ?? 0) !== 0);
-          state.hashLh[p] = state.hashUsed;
+          } while ((state.hash[state.hashUsed].rh ?? 0) !== 0);
+          state.hash[p].lh = state.hashUsed;
           p = state.hashUsed;
         }
 
@@ -72,30 +62,18 @@ export function idLookup(
           state.poolPtr += 1;
         }
 
-        state.hashRh[p] = ops.makeString();
+        state.hash[p].rh = ops.makeString();
         state.poolPtr += d;
       }
 
       return p;
     }
 
-    p = state.hashLh[p] ?? 0;
+    p = state.hash[p].lh ?? 0;
   }
 }
 
-export interface PrimitiveState {
-  first: number;
-  curVal: number;
-  strStart: number[];
-  strPool: number[];
-  strPtr: number;
-  poolPtr: number;
-  bufSize: number;
-  buffer: number[];
-  hashRh: number[];
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
+export interface PrimitiveState extends TeXStateSlice<"first" | "curVal" | "strStart" | "strPool" | "strPtr" | "poolPtr" | "bufSize" | "buffer" | "hash" | "eqtb" | "eqtb" | "eqtb">{
 }
 
 export interface PrimitiveOps {
@@ -126,10 +104,10 @@ export function primitive(
     state.curVal = ops.idLookup(state.first, l);
     state.strPtr -= 1;
     state.poolPtr = state.strStart[state.strPtr] ?? 0;
-    state.hashRh[state.curVal] = s;
+    state.hash[state.curVal].rh = s;
   }
 
-  state.eqtbB1[state.curVal] = 1;
-  state.eqtbB0[state.curVal] = c;
-  state.eqtbRh[state.curVal] = o;
+  state.eqtb[state.curVal].hh.b1 = 1;
+  state.eqtb[state.curVal].hh.b0 = c;
+  state.eqtb[state.curVal].hh.rh = o;
 }

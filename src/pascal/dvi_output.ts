@@ -1,7 +1,17 @@
+import { round } from "./arithmetic";
 import { isOdd, pascalDiv, pascalMod } from "./runtime";
+import type {
+  TeXStateSlice,
+  MemB0Slice,
+  MemB1Slice,
+  MemIntSlice,
+  MemLhSlice,
+  MemRhSlice,
+  MemWordCoreSlice,
+  MemWordViewsSlice,
+} from "./state_slices";
 
-export interface WriteDviState {
-  dviBuf: number[];
+export interface WriteDviState extends TeXStateSlice<"dviBuf">{
 }
 
 export interface WriteDviOps {
@@ -19,13 +29,7 @@ export function writeDvi(
   }
 }
 
-export interface DviSwapState {
-  dviLimit: number;
-  dviBufSize: number;
-  halfBuf: number;
-  dviOffset: number;
-  dviPtr: number;
-  dviGone: number;
+export interface DviSwapState extends TeXStateSlice<"dviLimit" | "dviBufSize" | "halfBuf" | "dviOffset" | "dviPtr" | "dviGone">{
 }
 
 export interface DviSwapOps {
@@ -45,20 +49,14 @@ export function dviSwap(state: DviSwapState, ops: DviSwapOps): void {
   state.dviGone += state.halfBuf;
 }
 
-export interface DviFourState {
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
+export interface DviFourState extends TeXStateSlice<"dviBuf" | "dviPtr" | "dviLimit">{
 }
 
 export interface DviFourOps {
   dviSwap: () => void;
 }
 
-interface DviWriteState {
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
+interface DviWriteState extends TeXStateSlice<"dviBuf" | "dviPtr" | "dviLimit">{
 }
 
 interface DviWriteOps {
@@ -71,13 +69,6 @@ function writeDviByte(byte: number, state: DviWriteState, ops: DviWriteOps): voi
   if (state.dviPtr === state.dviLimit) {
     ops.dviSwap();
   }
-}
-
-function pascalRound(x: number): number {
-  if (x >= 0) {
-    return Math.floor(x + 0.5);
-  }
-  return -Math.floor(-x + 0.5);
 }
 
 export function dviFour(x: number, state: DviFourState, ops: DviFourOps): void {
@@ -96,11 +87,7 @@ export function dviFour(x: number, state: DviFourState, ops: DviFourOps): void {
   writeDviByte(pascalMod(x, 256), state, ops);
 }
 
-export interface DviPopState {
-  dviOffset: number;
-  dviPtr: number;
-  dviLimit: number;
-  dviBuf: number[];
+export interface DviPopState extends TeXStateSlice<"dviOffset" | "dviPtr" | "dviLimit" | "dviBuf">{
 }
 
 export interface DviPopOps {
@@ -120,20 +107,7 @@ export function dviPop(l: number, state: DviPopState, ops: DviPopOps): void {
   }
 }
 
-export interface DviFontDefState {
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
-  fontCheckB0: number[];
-  fontCheckB1: number[];
-  fontCheckB2: number[];
-  fontCheckB3: number[];
-  fontSize: number[];
-  fontDsize: number[];
-  fontArea: number[];
-  fontName: number[];
-  strStart: number[];
-  strPool: number[];
+export interface DviFontDefState extends TeXStateSlice<"dviBuf" | "dviPtr" | "dviLimit" | "fontCheck" | "fontCheck" | "fontCheck" | "fontCheck" | "fontSize" | "fontDsize" | "fontArea" | "fontName" | "strStart" | "strPool">{
 }
 
 export interface DviFontDefOps {
@@ -148,10 +122,10 @@ export function dviFontDef(
 ): void {
   writeDviByte(243, state, ops);
   writeDviByte(f - 1, state, ops);
-  writeDviByte(state.fontCheckB0[f], state, ops);
-  writeDviByte(state.fontCheckB1[f], state, ops);
-  writeDviByte(state.fontCheckB2[f], state, ops);
-  writeDviByte(state.fontCheckB3[f], state, ops);
+  writeDviByte(state.fontCheck[f].b0, state, ops);
+  writeDviByte(state.fontCheck[f].b1, state, ops);
+  writeDviByte(state.fontCheck[f].b2, state, ops);
+  writeDviByte(state.fontCheck[f].b3, state, ops);
 
   ops.dviFour(state.fontSize[f]);
   ops.dviFour(state.fontDsize[f]);
@@ -172,18 +146,7 @@ export function dviFontDef(
   }
 }
 
-export interface MovementState {
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
-  dviOffset: number;
-  dviGone: number;
-  dviBufSize: number;
-  downPtr: number;
-  rightPtr: number;
+export interface MovementState extends MemLhSlice, MemRhSlice, MemIntSlice, TeXStateSlice<"dviBuf" | "dviPtr" | "dviLimit" | "dviOffset" | "dviGone" | "dviBufSize" | "downPtr" | "rightPtr">{
 }
 
 export interface MovementOps {
@@ -199,45 +162,45 @@ export function movement(
   ops: MovementOps,
 ): void {
   let q = ops.getNode(3);
-  state.memInt[q + 1] = w;
-  state.memInt[q + 2] = state.dviOffset + state.dviPtr;
+  state.mem[q + 1].int = w;
+  state.mem[q + 2].int = state.dviOffset + state.dviPtr;
   if (o === 157) {
-    state.memRh[q] = state.downPtr;
+    state.mem[q].hh.rh = state.downPtr;
     state.downPtr = q;
   } else {
-    state.memRh[q] = state.rightPtr;
+    state.mem[q].hh.rh = state.rightPtr;
     state.rightPtr = q;
   }
 
-  let p = state.memRh[q];
+  let p = state.mem[q].hh.rh;
   let mstate = 0;
   let found = false;
   while (p !== 0) {
-    if (state.memInt[p + 1] === w) {
-      const code = mstate + state.memLh[p];
+    if (state.mem[p + 1].int === w) {
+      const code = mstate + state.mem[p].hh.lh;
       if (code === 3 || code === 4 || code === 15 || code === 16) {
-        if (state.memInt[p + 2] < state.dviGone) {
+        if (state.mem[p + 2].int < state.dviGone) {
           break;
         }
-        let k = state.memInt[p + 2] - state.dviOffset;
+        let k = state.mem[p + 2].int - state.dviOffset;
         if (k < 0) {
           k += state.dviBufSize;
         }
         state.dviBuf[k] += 5;
-        state.memLh[p] = 1;
+        state.mem[p].hh.lh = 1;
         found = true;
         break;
       }
       if (code === 5 || code === 9 || code === 11) {
-        if (state.memInt[p + 2] < state.dviGone) {
+        if (state.mem[p + 2].int < state.dviGone) {
           break;
         }
-        let k = state.memInt[p + 2] - state.dviOffset;
+        let k = state.mem[p + 2].int - state.dviOffset;
         if (k < 0) {
           k += state.dviBufSize;
         }
         state.dviBuf[k] += 10;
-        state.memLh[p] = 2;
+        state.mem[p].hh.lh = 2;
         found = true;
         break;
       }
@@ -246,7 +209,7 @@ export function movement(
         break;
       }
     } else {
-      const code = mstate + state.memLh[p];
+      const code = mstate + state.mem[p].hh.lh;
       if (code === 1) {
         mstate = 6;
       } else if (code === 2) {
@@ -255,11 +218,11 @@ export function movement(
         break;
       }
     }
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 
   if (!found) {
-    state.memLh[q] = 3;
+    state.mem[q].hh.lh = 3;
     if (Math.abs(w) >= 8_388_608) {
       writeDviByte(o + 3, state, ops);
       ops.dviFour(w);
@@ -293,36 +256,32 @@ export function movement(
     return;
   }
 
-  state.memLh[q] = state.memLh[p];
-  if (state.memLh[q] === 1) {
+  state.mem[q].hh.lh = state.mem[p].hh.lh;
+  if (state.mem[q].hh.lh === 1) {
     writeDviByte(o + 4, state, ops);
-    while (state.memRh[q] !== p) {
-      q = state.memRh[q];
-      if (state.memLh[q] === 3) {
-        state.memLh[q] = 5;
-      } else if (state.memLh[q] === 4) {
-        state.memLh[q] = 6;
+    while (state.mem[q].hh.rh !== p) {
+      q = state.mem[q].hh.rh;
+      if (state.mem[q].hh.lh === 3) {
+        state.mem[q].hh.lh = 5;
+      } else if (state.mem[q].hh.lh === 4) {
+        state.mem[q].hh.lh = 6;
       }
     }
     return;
   }
 
   writeDviByte(o + 9, state, ops);
-  while (state.memRh[q] !== p) {
-    q = state.memRh[q];
-    if (state.memLh[q] === 3) {
-      state.memLh[q] = 4;
-    } else if (state.memLh[q] === 5) {
-      state.memLh[q] = 6;
+  while (state.mem[q].hh.rh !== p) {
+    q = state.mem[q].hh.rh;
+    if (state.mem[q].hh.lh === 3) {
+      state.mem[q].hh.lh = 4;
+    } else if (state.mem[q].hh.lh === 5) {
+      state.mem[q].hh.lh = 6;
     }
   }
 }
 
-export interface PruneMovementsState {
-  downPtr: number;
-  rightPtr: number;
-  memRh: number[];
-  memInt: number[];
+export interface PruneMovementsState extends MemRhSlice, MemIntSlice, TeXStateSlice<"downPtr" | "rightPtr">{
 }
 
 export interface PruneMovementsOps {
@@ -335,40 +294,25 @@ export function pruneMovements(
   ops: PruneMovementsOps,
 ): void {
   while (state.downPtr !== 0) {
-    if (state.memInt[state.downPtr + 2] < l) {
+    if (state.mem[state.downPtr + 2].int < l) {
       break;
     }
     const p = state.downPtr;
-    state.downPtr = state.memRh[p];
+    state.downPtr = state.mem[p].hh.rh;
     ops.freeNode(p, 3);
   }
 
   while (state.rightPtr !== 0) {
-    if (state.memInt[state.rightPtr + 2] < l) {
+    if (state.mem[state.rightPtr + 2].int < l) {
       break;
     }
     const p = state.rightPtr;
-    state.rightPtr = state.memRh[p];
+    state.rightPtr = state.mem[p].hh.rh;
     ops.freeNode(p, 3);
   }
 }
 
-export interface SpecialOutState {
-  curH: number;
-  dviH: number;
-  curV: number;
-  dviV: number;
-  selector: number;
-  memRh: number[];
-  poolSize: number;
-  poolPtr: number;
-  initPoolPtr: number;
-  strStart: number[];
-  strPtr: number;
-  strPool: number[];
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
+export interface SpecialOutState extends TeXStateSlice<"curH" | "dviH" | "curV" | "dviV" | "selector" | "mem" | "poolSize" | "poolPtr" | "initPoolPtr" | "strStart" | "strPtr" | "strPool" | "dviBuf" | "dviPtr" | "dviLimit">{
 }
 
 export interface SpecialOutOps {
@@ -396,7 +340,7 @@ export function specialOut(
   const oldSetting = state.selector;
   state.selector = 21;
   ops.showTokenList(
-    state.memRh[state.memRh[p + 1]],
+    state.mem[state.mem[p + 1].hh.rh].hh.rh,
     0,
     state.poolSize - state.poolPtr,
   );
@@ -422,19 +366,7 @@ export function specialOut(
   state.poolPtr = state.strStart[state.strPtr];
 }
 
-export interface WriteOutState {
-  memLh: number[];
-  memRh: number[];
-  curListModeField: number;
-  curCs: number;
-  writeLoc: number;
-  curTok: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  selector: number;
-  writeOpen: boolean[];
-  defRef: number;
+export interface WriteOutState extends MemLhSlice, MemRhSlice, TeXStateSlice<"curList" | "curCs" | "writeLoc" | "curTok" | "interaction" | "helpPtr" | "helpLine" | "selector" | "writeOpen" | "defRef">{
 }
 
 export interface WriteOutOps {
@@ -457,23 +389,23 @@ export function writeOut(
   ops: WriteOutOps,
 ): void {
   let q = ops.getAvail();
-  state.memLh[q] = 637;
+  state.mem[q].hh.lh = 637;
   const r = ops.getAvail();
-  state.memRh[q] = r;
-  state.memLh[r] = 6717;
+  state.mem[q].hh.rh = r;
+  state.mem[r].hh.lh = 6717;
   ops.beginTokenList(q, 4);
-  ops.beginTokenList(state.memRh[p + 1], 16);
+  ops.beginTokenList(state.mem[p + 1].hh.rh, 16);
   q = ops.getAvail();
-  state.memLh[q] = 379;
+  state.mem[q].hh.lh = 379;
   ops.beginTokenList(q, 4);
-  const oldMode = state.curListModeField;
-  state.curListModeField = 0;
+  const oldMode = state.curList.modeField;
+  state.curList.modeField = 0;
   state.curCs = state.writeLoc;
   ops.scanToks(false, true);
   ops.getToken();
   if (state.curTok !== 6717) {
     if (state.interaction === 3) {
-      // Pascal no-op in this branch for sync.
+      // Pascal keeps a no-op branch here; preserve control-flow parity.
     }
     ops.printNl(263);
     ops.print(1311);
@@ -485,11 +417,11 @@ export function writeOut(
       ops.getToken();
     } while (state.curTok !== 6717);
   }
-  state.curListModeField = oldMode;
+  state.curList.modeField = oldMode;
   ops.endTokenList();
 
   const oldSetting = state.selector;
-  const j = state.memLh[p + 1];
+  const j = state.mem[p + 1].hh.lh;
   if (state.writeOpen[j]) {
     state.selector = j;
   } else {
@@ -504,15 +436,7 @@ export function writeOut(
   state.selector = oldSetting;
 }
 
-export interface OutWhatState {
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  doingLeaders: boolean;
-  writeOpen: boolean[];
-  curName: number;
-  curArea: number;
-  curExt: number;
+export interface OutWhatState extends MemB1Slice, MemLhSlice, MemRhSlice, TeXStateSlice<"doingLeaders" | "writeOpen" | "curName" | "curArea" | "curExt">{
 }
 
 export interface OutWhatOps {
@@ -530,10 +454,10 @@ export function outWhat(
   state: OutWhatState,
   ops: OutWhatOps,
 ): void {
-  const b1 = state.memB1[p];
+  const b1 = state.mem[p].hh.b1;
   if (b1 === 0 || b1 === 1 || b1 === 2) {
     if (!state.doingLeaders) {
-      const j = state.memLh[p + 1];
+      const j = state.mem[p + 1].hh.lh;
       if (b1 === 1) {
         ops.writeOut(p);
       } else {
@@ -543,9 +467,9 @@ export function outWhat(
         if (b1 === 2) {
           state.writeOpen[j] = false;
         } else if (j < 16) {
-          state.curName = state.memRh[p + 1];
-          state.curArea = state.memLh[p + 2];
-          state.curExt = state.memRh[p + 2];
+          state.curName = state.mem[p + 1].hh.rh;
+          state.curArea = state.mem[p + 2].hh.lh;
+          state.curExt = state.mem[p + 2].hh.rh;
           if (state.curExt === 339) {
             state.curExt = 802;
           }
@@ -572,11 +496,7 @@ export function outWhat(
   ops.confusion(1313);
 }
 
-export interface NewEdgeState {
-  memB0: number[];
-  memB1: number[];
-  memInt: number[];
-}
+export interface NewEdgeState extends MemB0Slice, MemB1Slice, MemIntSlice {}
 
 export interface NewEdgeOps {
   getNode: (size: number) => number;
@@ -589,30 +509,14 @@ export function newEdge(
   ops: NewEdgeOps,
 ): number {
   const p = ops.getNode(3);
-  state.memB0[p] = 14;
-  state.memB1[p] = s;
-  state.memInt[p + 1] = w;
-  state.memInt[p + 2] = 0;
+  state.mem[p].hh.b0 = 14;
+  state.mem[p].hh.b1 = s;
+  state.mem[p + 1].int = w;
+  state.mem[p + 2].int = 0;
   return p;
 }
 
-export interface ReverseState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
-  memB2?: number[];
-  memB3?: number[];
-  hiMemMin: number;
-  tempPtr: number;
-  curH: number;
-  ruleWd: number;
-  LRPtr: number;
-  LRProblems: number;
-  avail: number;
-  curDir: number;
+export interface ReverseState extends MemWordCoreSlice, MemWordViewsSlice, TeXStateSlice<"hiMemMin" | "tempPtr" | "curH" | "ruleWd" | "lrPtr" | "lrProblems" | "avail" | "curDir">{
   curG: number;
   curGlue: number;
 }
@@ -628,18 +532,14 @@ export interface ReverseOps {
 }
 
 function copyMemoryWord(from: number, to: number, state: ReverseState): void {
-  state.memB0[to] = state.memB0[from];
-  state.memB1[to] = state.memB1[from];
-  state.memLh[to] = state.memLh[from];
-  state.memRh[to] = state.memRh[from];
-  state.memInt[to] = state.memInt[from];
-  state.memGr[to] = state.memGr[from];
-  if (state.memB2 !== undefined) {
-    state.memB2[to] = state.memB2[from];
-  }
-  if (state.memB3 !== undefined) {
-    state.memB3[to] = state.memB3[from];
-  }
+  state.mem[to].hh.b0 = state.mem[from].hh.b0;
+  state.mem[to].hh.b1 = state.mem[from].hh.b1;
+  state.mem[to].hh.lh = state.mem[from].hh.lh;
+  state.mem[to].hh.rh = state.mem[from].hh.rh;
+  state.mem[to].int = state.mem[from].int;
+  state.mem[to].gr = state.mem[from].gr;
+  state.mem[to].qqqq.b2 = state.mem[from].qqqq.b2;
+  state.mem[to].qqqq.b3 = state.mem[from].qqqq.b3;
 }
 
 export function reverse(
@@ -648,8 +548,8 @@ export function reverse(
   state: ReverseState,
   ops: ReverseOps,
 ): number {
-  const gOrder = state.memB1[thisBox + 5];
-  const gSign = state.memB0[thisBox + 5];
+  const gOrder = state.mem[thisBox + 5].hh.b1;
+  const gSign = state.mem[thisBox + 5].hh.b0;
   let l = t;
   let p = state.tempPtr;
   let m = 0;
@@ -660,122 +560,122 @@ export function reverse(
       while (true) {
         if (p >= state.hiMemMin) {
           do {
-            const f = state.memB0[p];
-            const c = state.memB1[p];
+            const f = state.mem[p].hh.b0;
+            const c = state.mem[p].hh.b1;
             state.curH += ops.charWidth(f, c);
-            const q = state.memRh[p];
-            state.memRh[p] = l;
+            const q = state.mem[p].hh.rh;
+            state.mem[p].hh.rh = l;
             l = p;
             p = q;
           } while (p >= state.hiMemMin);
           break;
         }
 
-        const q = state.memRh[p];
+        const q = state.mem[p].hh.rh;
         let addRuleWidth = true;
-        switch (state.memB0[p]) {
+        switch (state.mem[p].hh.b0) {
           case 0:
           case 1:
           case 2:
           case 11:
-            state.ruleWd = state.memInt[p + 1];
+            state.ruleWd = state.mem[p + 1].int;
             break;
           case 10: {
-            let g = state.memLh[p + 1];
-            state.ruleWd = state.memInt[g + 1] - state.curG;
+            let g = state.mem[p + 1].hh.lh;
+            state.ruleWd = state.mem[g + 1].int - state.curG;
             if (gSign !== 0) {
               if (gSign === 1) {
-                if (state.memB0[g] === gOrder) {
-                  state.curGlue += state.memInt[g + 2];
-                  let glueTemp = state.memGr[thisBox + 6] * state.curGlue;
+                if (state.mem[g].hh.b0 === gOrder) {
+                  state.curGlue += state.mem[g + 2].int;
+                  let glueTemp = state.mem[thisBox + 6].gr * state.curGlue;
                   if (glueTemp > 1_000_000_000.0) {
                     glueTemp = 1_000_000_000.0;
                   } else if (glueTemp < -1_000_000_000.0) {
                     glueTemp = -1_000_000_000.0;
                   }
-                  state.curG = pascalRound(glueTemp);
+                  state.curG = round(glueTemp);
                 }
-              } else if (state.memB1[g] === gOrder) {
-                state.curGlue -= state.memInt[g + 3];
-                let glueTemp = state.memGr[thisBox + 6] * state.curGlue;
+              } else if (state.mem[g].hh.b1 === gOrder) {
+                state.curGlue -= state.mem[g + 3].int;
+                let glueTemp = state.mem[thisBox + 6].gr * state.curGlue;
                 if (glueTemp > 1_000_000_000.0) {
                   glueTemp = 1_000_000_000.0;
                 } else if (glueTemp < -1_000_000_000.0) {
                   glueTemp = -1_000_000_000.0;
                 }
-                state.curG = pascalRound(glueTemp);
+                state.curG = round(glueTemp);
               }
             }
             state.ruleWd += state.curG;
             if (
-              (gSign === 1 && state.memB0[g] === gOrder) ||
-              (gSign === 2 && state.memB1[g] === gOrder)
+              (gSign === 1 && state.mem[g].hh.b0 === gOrder) ||
+              (gSign === 2 && state.mem[g].hh.b1 === gOrder)
             ) {
-              if (state.memRh[g] === 0) {
+              if (state.mem[g].hh.rh === 0) {
                 ops.freeNode(g, 4);
               } else {
-                state.memRh[g] -= 1;
+                state.mem[g].hh.rh -= 1;
               }
-              if (state.memB1[p] < 100) {
-                state.memB0[p] = 11;
-                state.memInt[p + 1] = state.ruleWd;
+              if (state.mem[p].hh.b1 < 100) {
+                state.mem[p].hh.b0 = 11;
+                state.mem[p + 1].int = state.ruleWd;
               } else {
                 g = ops.getNode(4);
-                state.memB0[g] = 4;
-                state.memB1[g] = 4;
-                state.memInt[g + 1] = state.ruleWd;
-                state.memInt[g + 2] = 0;
-                state.memInt[g + 3] = 0;
-                state.memLh[p + 1] = g;
+                state.mem[g].hh.b0 = 4;
+                state.mem[g].hh.b1 = 4;
+                state.mem[g + 1].int = state.ruleWd;
+                state.mem[g + 2].int = 0;
+                state.mem[g + 3].int = 0;
+                state.mem[p + 1].hh.lh = g;
               }
             }
             break;
           }
           case 6:
-            ops.flushNodeList(state.memRh[p + 1]);
+            ops.flushNodeList(state.mem[p + 1].hh.rh);
             state.tempPtr = p;
             p = ops.getAvail();
             copyMemoryWord(state.tempPtr + 1, p, state);
-            state.memRh[p] = q;
+            state.mem[p].hh.rh = q;
             ops.freeNode(state.tempPtr, 2);
             continue;
           case 9:
-            state.ruleWd = state.memInt[p + 1];
-            if (isOdd(state.memB1[p])) {
-              if (state.memLh[state.LRPtr] !== 4 * pascalDiv(state.memB1[p], 4) + 3) {
-                state.memB0[p] = 11;
-                state.LRProblems += 1;
+            state.ruleWd = state.mem[p + 1].int;
+            if (isOdd(state.mem[p].hh.b1)) {
+              if (state.mem[state.lrPtr].hh.lh !== 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3) {
+                state.mem[p].hh.b0 = 11;
+                state.lrProblems += 1;
               } else {
-                state.tempPtr = state.LRPtr;
-                state.LRPtr = state.memRh[state.tempPtr];
-                state.memRh[state.tempPtr] = state.avail;
+                state.tempPtr = state.lrPtr;
+                state.lrPtr = state.mem[state.tempPtr].hh.rh;
+                state.mem[state.tempPtr].hh.rh = state.avail;
                 state.avail = state.tempPtr;
                 if (n > 0) {
                   n -= 1;
-                  state.memB1[p] -= 1;
+                  state.mem[p].hh.b1 -= 1;
                 } else {
-                  state.memB0[p] = 11;
+                  state.mem[p].hh.b0 = 11;
                   if (m > 0) {
                     m -= 1;
                   } else {
                     ops.freeNode(p, 2);
-                    state.memRh[t] = q;
-                    state.memInt[t + 1] = state.ruleWd;
-                    state.memInt[t + 2] = -state.curH - state.ruleWd;
+                    state.mem[t].hh.rh = q;
+                    state.mem[t + 1].int = state.ruleWd;
+                    state.mem[t + 2].int = -state.curH - state.ruleWd;
                     return l;
                   }
                 }
               }
             } else {
               state.tempPtr = ops.getAvail();
-              state.memLh[state.tempPtr] = 4 * pascalDiv(state.memB1[p], 4) + 3;
-              state.memRh[state.tempPtr] = state.LRPtr;
-              state.LRPtr = state.tempPtr;
-              if (n > 0 || pascalDiv(state.memB1[p], 8) !== state.curDir) {
+              state.mem[state.tempPtr].hh.lh = 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3;
+              state.mem[state.tempPtr].hh.rh = state.lrPtr;
+              state.lrPtr = state.tempPtr;
+              if (n > 0 || pascalDiv(state.mem[p].hh.b1, 8) !== state.curDir) {
                 n += 1;
-                state.memB1[p] += 1;
+                state.mem[p].hh.b1 += 1;
               } else {
-                state.memB0[p] = 11;
+                state.mem[p].hh.b0 = 11;
                 m += 1;
               }
             }
@@ -790,8 +690,8 @@ export function reverse(
         if (addRuleWidth) {
           state.curH += state.ruleWd;
         }
-        state.memRh[p] = l;
-        if (state.memB0[p] === 11) {
+        state.mem[p].hh.rh = l;
+        if (state.mem[p].hh.b0 === 11) {
           if (state.ruleWd === 0 || l === 0) {
             ops.freeNode(p, 2);
             p = l;
@@ -806,43 +706,12 @@ export function reverse(
     if (t === 0 && m === 0 && n === 0) {
       return l;
     }
-    p = ops.newMath(0, state.memLh[state.LRPtr]);
-    state.LRProblems += 10_000;
+    p = ops.newMath(0, state.mem[state.lrPtr].hh.lh);
+    state.lrProblems += 10_000;
   }
 }
 
-export interface HlistOutState {
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  memGr: number[];
-  memB2?: number[];
-  memB3?: number[];
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
-  dviOffset: number;
-  curV: number;
-  curH: number;
-  dviH: number;
-  dviV: number;
-  dviF: number;
-  curS: number;
-  maxPush: number;
-  tempPtr: number;
-  eTeXMode: number;
-  curDir: number;
-  LRPtr: number;
-  LRProblems: number;
-  avail: number;
-  doingLeaders: boolean;
-  fontUsed: boolean[];
-  hiMemMin: number;
-  ruleHt: number;
-  ruleDp: number;
-  ruleWd: number;
+export interface HlistOutState extends MemWordCoreSlice, MemWordViewsSlice, TeXStateSlice<"dviBuf" | "dviPtr" | "dviLimit" | "dviOffset" | "curV" | "curH" | "dviH" | "dviV" | "dviF" | "curS" | "maxPush" | "tempPtr" | "eTeXMode" | "curDir" | "lrPtr" | "lrProblems" | "avail" | "doingLeaders" | "fontUsed" | "hiMemMin" | "ruleHt" | "ruleDp" | "ruleWd">{
 }
 
 export interface HlistOutOps {
@@ -873,9 +742,9 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
   let curG = 0;
   let curGlue = 0.0;
   const thisBox = state.tempPtr;
-  const gOrder = state.memB1[thisBox + 5];
-  const gSign = state.memB0[thisBox + 5];
-  let p = state.memRh[thisBox + 5];
+  const gOrder = state.mem[thisBox + 5].hh.b1;
+  const gSign = state.mem[thisBox + 5].hh.b0;
+  let p = state.mem[thisBox + 5].hh.rh;
 
   state.curS += 1;
   if (state.curS > 0) {
@@ -890,33 +759,33 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
 
   if (state.eTeXMode === 1) {
     state.tempPtr = ops.getAvail();
-    state.memLh[state.tempPtr] = 0;
-    state.memRh[state.tempPtr] = state.LRPtr;
-    state.LRPtr = state.tempPtr;
+    state.mem[state.tempPtr].hh.lh = 0;
+    state.mem[state.tempPtr].hh.rh = state.lrPtr;
+    state.lrPtr = state.tempPtr;
 
-    if (state.memB1[thisBox] - 0 === 2) {
+    if (state.mem[thisBox].hh.b1 - 0 === 2) {
       if (state.curDir === 1) {
         state.curDir = 0;
-        state.curH -= state.memInt[thisBox + 1];
+        state.curH -= state.mem[thisBox + 1].int;
       }
     } else {
-      state.memB1[thisBox] = 0;
+      state.mem[thisBox].hh.b1 = 0;
     }
 
-    if (state.curDir === 1 && state.memB1[thisBox] - 0 !== 1) {
+    if (state.curDir === 1 && state.mem[thisBox].hh.b1 - 0 !== 1) {
       const saveH = state.curH;
       state.tempPtr = p;
       p = ops.newKern(0);
-      state.memRh[prevP] = p;
+      state.mem[prevP].hh.rh = p;
       state.curH = 0;
       const reversed = ops.reverse(thisBox, 0, curG, curGlue);
-      state.memRh[p] = reversed.list;
+      state.mem[p].hh.rh = reversed.list;
       curG = reversed.curG;
       curGlue = reversed.curGlue;
       state.curH = reversed.curH;
-      state.memInt[p + 1] = -state.curH;
+      state.mem[p + 1].int = -state.curH;
       state.curH = saveH;
-      state.memB1[thisBox] = 1;
+      state.mem[thisBox].hh.b1 = 1;
     }
   }
 
@@ -934,8 +803,8 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
       }
 
       do {
-        const f = state.memB0[p];
-        const c = state.memB1[p];
+        const f = state.mem[p].hh.b0;
+        const c = state.mem[p].hh.b1;
         if (f !== state.dviF) {
           if (!state.fontUsed[f]) {
             ops.dviFontDef(f);
@@ -954,8 +823,8 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
         }
         writeDviByte(c - 0, state, ops);
         state.curH += ops.charWidth(f, c);
-        prevP = state.memRh[prevP];
-        p = state.memRh[p];
+        prevP = state.mem[prevP].hh.rh;
+        p = state.mem[p].hh.rh;
       } while (p >= state.hiMemMin);
 
       state.dviH = state.curH;
@@ -968,21 +837,21 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
     let ruleHt = state.ruleHt;
     let ruleDp = state.ruleDp;
 
-    switch (state.memB0[p]) {
+    switch (state.mem[p].hh.b0) {
       case 0:
       case 1:
-        if (state.memRh[p + 5] === 0) {
-          state.curH += state.memInt[p + 1];
+        if (state.mem[p + 5].hh.rh === 0) {
+          state.curH += state.mem[p + 1].int;
         } else {
           const saveH = state.dviH;
           const saveV = state.dviV;
-          state.curV = baseLine + state.memInt[p + 4];
+          state.curV = baseLine + state.mem[p + 4].int;
           state.tempPtr = p;
-          const edge = state.curH + state.memInt[p + 1];
+          const edge = state.curH + state.mem[p + 1].int;
           if (state.curDir === 1) {
             state.curH = edge;
           }
-          if (state.memB0[p] === 1) {
+          if (state.mem[p].hh.b0 === 1) {
             ops.vlistOut();
           } else {
             ops.hlistOut();
@@ -994,77 +863,77 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
         }
         break;
       case 2:
-        ruleHt = state.memInt[p + 3];
-        ruleDp = state.memInt[p + 2];
-        state.ruleWd = state.memInt[p + 1];
+        ruleHt = state.mem[p + 3].int;
+        ruleDp = state.mem[p + 2].int;
+        state.ruleWd = state.mem[p + 1].int;
         goto14 = true;
         break;
       case 8:
         ops.outWhat(p);
         break;
       case 10: {
-        let g = state.memLh[p + 1];
-        state.ruleWd = state.memInt[g + 1] - curG;
+        let g = state.mem[p + 1].hh.lh;
+        state.ruleWd = state.mem[g + 1].int - curG;
         if (gSign !== 0) {
           if (gSign === 1) {
-            if (state.memB0[g] === gOrder) {
-              curGlue += state.memInt[g + 2];
-              let glueTemp = state.memGr[thisBox + 6] * curGlue;
+            if (state.mem[g].hh.b0 === gOrder) {
+              curGlue += state.mem[g + 2].int;
+              let glueTemp = state.mem[thisBox + 6].gr * curGlue;
               if (glueTemp > 1_000_000_000.0) {
                 glueTemp = 1_000_000_000.0;
               } else if (glueTemp < -1_000_000_000.0) {
                 glueTemp = -1_000_000_000.0;
               }
-              curG = pascalRound(glueTemp);
+              curG = round(glueTemp);
             }
-          } else if (state.memB1[g] === gOrder) {
-            curGlue -= state.memInt[g + 3];
-            let glueTemp = state.memGr[thisBox + 6] * curGlue;
+          } else if (state.mem[g].hh.b1 === gOrder) {
+            curGlue -= state.mem[g + 3].int;
+            let glueTemp = state.mem[thisBox + 6].gr * curGlue;
             if (glueTemp > 1_000_000_000.0) {
               glueTemp = 1_000_000_000.0;
             } else if (glueTemp < -1_000_000_000.0) {
               glueTemp = -1_000_000_000.0;
             }
-            curG = pascalRound(glueTemp);
+            curG = round(glueTemp);
           }
         }
         state.ruleWd += curG;
 
         if (state.eTeXMode === 1) {
           if (
-            (gSign === 1 && state.memB0[g] === gOrder) ||
-            (gSign === 2 && state.memB1[g] === gOrder)
+            (gSign === 1 && state.mem[g].hh.b0 === gOrder) ||
+            (gSign === 2 && state.mem[g].hh.b1 === gOrder)
           ) {
-            if (state.memRh[g] === 0) {
+            if (state.mem[g].hh.rh === 0) {
               ops.freeNode(g, 4);
             } else {
-              state.memRh[g] -= 1;
+              state.mem[g].hh.rh -= 1;
             }
-            if (state.memB1[p] < 100) {
-              state.memB0[p] = 11;
-              state.memInt[p + 1] = state.ruleWd;
+            if (state.mem[p].hh.b1 < 100) {
+              state.mem[p].hh.b0 = 11;
+              state.mem[p + 1].int = state.ruleWd;
             } else {
               g = ops.getNode(4);
-              state.memB0[g] = 4;
-              state.memB1[g] = 4;
-              state.memInt[g + 1] = state.ruleWd;
-              state.memInt[g + 2] = 0;
-              state.memInt[g + 3] = 0;
-              state.memLh[p + 1] = g;
+              state.mem[g].hh.b0 = 4;
+              state.mem[g].hh.b1 = 4;
+              state.mem[g + 1].int = state.ruleWd;
+              state.mem[g + 2].int = 0;
+              state.mem[g + 3].int = 0;
+              state.mem[p + 1].hh.lh = g;
             }
           }
         }
 
-        if (state.memB1[p] >= 100) {
-          const leaderBox = state.memRh[p + 1];
-          if (state.memB0[leaderBox] === 2) {
-            ruleHt = state.memInt[leaderBox + 3];
-            ruleDp = state.memInt[leaderBox + 2];
+        if (state.mem[p].hh.b1 >= 100) {
+          const leaderBox = state.mem[p + 1].hh.rh;
+          if (state.mem[leaderBox].hh.b0 === 2) {
+            ruleHt = state.mem[leaderBox + 3].int;
+            ruleDp = state.mem[leaderBox + 2].int;
             goto14 = true;
             break;
           }
 
-          const leaderWd = state.memInt[leaderBox + 1];
+          const leaderWd = state.mem[leaderBox + 1].int;
           if (leaderWd > 0 && state.ruleWd > 0) {
             state.ruleWd += 10;
             if (state.curDir === 1) {
@@ -1072,7 +941,7 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
             }
             const edge = state.curH + state.ruleWd;
             let lx = 0;
-            if (state.memB1[p] === 100) {
+            if (state.mem[p].hh.b1 === 100) {
               const saveH = state.curH;
               state.curH =
                 leftEdge + leaderWd * pascalDiv(state.curH - leftEdge, leaderWd);
@@ -1082,7 +951,7 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
             } else {
               const lq = pascalDiv(state.ruleWd, leaderWd);
               const lr = pascalMod(state.ruleWd, leaderWd);
-              if (state.memB1[p] === 101) {
+              if (state.mem[p].hh.b1 === 101) {
                 state.curH += pascalDiv(lr, 2);
               } else {
                 lx = pascalDiv(lr, lq + 1);
@@ -1091,7 +960,7 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
             }
 
             while (state.curH + leaderWd <= edge) {
-              state.curV = baseLine + state.memInt[leaderBox + 4];
+              state.curV = baseLine + state.mem[leaderBox + 4].int;
               if (state.curV !== state.dviV) {
                 ops.movement(state.curV - state.dviV, 157);
                 state.dviV = state.curV;
@@ -1108,7 +977,7 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
               }
               const outerDoingLeaders = state.doingLeaders;
               state.doingLeaders = true;
-              if (state.memB0[leaderBox] === 1) {
+              if (state.mem[leaderBox].hh.b0 === 1) {
                 ops.vlistOut();
               } else {
                 ops.hlistOut();
@@ -1133,70 +1002,68 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
         break;
       }
       case 11:
-        state.curH += state.memInt[p + 1];
+        state.curH += state.mem[p + 1].int;
         break;
       case 9:
         if (state.eTeXMode === 1) {
-          if (isOdd(state.memB1[p])) {
-            if (state.memLh[state.LRPtr] === 4 * pascalDiv(state.memB1[p], 4) + 3) {
-              state.tempPtr = state.LRPtr;
-              state.LRPtr = state.memRh[state.tempPtr];
-              state.memRh[state.tempPtr] = state.avail;
+          if (isOdd(state.mem[p].hh.b1)) {
+            if (state.mem[state.lrPtr].hh.lh === 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3) {
+              state.tempPtr = state.lrPtr;
+              state.lrPtr = state.mem[state.tempPtr].hh.rh;
+              state.mem[state.tempPtr].hh.rh = state.avail;
               state.avail = state.tempPtr;
-            } else if (state.memB1[p] > 4) {
-              state.LRProblems += 1;
+            } else if (state.mem[p].hh.b1 > 4) {
+              state.lrProblems += 1;
             }
           } else {
             state.tempPtr = ops.getAvail();
-            state.memLh[state.tempPtr] = 4 * pascalDiv(state.memB1[p], 4) + 3;
-            state.memRh[state.tempPtr] = state.LRPtr;
-            state.LRPtr = state.tempPtr;
-            if (pascalDiv(state.memB1[p], 8) !== state.curDir) {
+            state.mem[state.tempPtr].hh.lh = 4 * pascalDiv(state.mem[p].hh.b1, 4) + 3;
+            state.mem[state.tempPtr].hh.rh = state.lrPtr;
+            state.lrPtr = state.tempPtr;
+            if (pascalDiv(state.mem[p].hh.b1, 8) !== state.curDir) {
               const saveH = state.curH;
-              state.tempPtr = state.memRh[p];
-              state.ruleWd = state.memInt[p + 1];
+              state.tempPtr = state.mem[p].hh.rh;
+              state.ruleWd = state.mem[p + 1].int;
               ops.freeNode(p, 2);
               state.curDir = 1 - state.curDir;
               p = ops.newEdge(state.curDir, state.ruleWd);
-              state.memRh[prevP] = p;
+              state.mem[prevP].hh.rh = p;
               state.curH = state.curH - leftEdge + state.ruleWd;
               const t = ops.newEdge(1 - state.curDir, 0);
               const reversed = ops.reverse(thisBox, t, curG, curGlue);
-              state.memRh[p] = reversed.list;
+              state.mem[p].hh.rh = reversed.list;
               curG = reversed.curG;
               curGlue = reversed.curGlue;
               state.curH = reversed.curH;
-              state.memInt[p + 2] = state.curH;
+              state.mem[p + 2].int = state.curH;
               state.curDir = 1 - state.curDir;
               state.curH = saveH;
               goto21 = true;
               break;
             }
           }
-          state.memB0[p] = 11;
+          state.mem[p].hh.b0 = 11;
         }
-        state.curH += state.memInt[p + 1];
+        state.curH += state.mem[p + 1].int;
         break;
       case 6:
-        state.memB0[29988] = state.memB0[p + 1];
-        state.memB1[29988] = state.memB1[p + 1];
-        state.memLh[29988] = state.memLh[p + 1];
-        state.memRh[29988] = state.memRh[p];
-        state.memInt[29988] = state.memInt[p + 1];
-        state.memGr[29988] = state.memGr[p + 1];
-        if (state.memB2 !== undefined) {
-          state.memB2[29988] = state.memB2[p + 1];
-        }
-        if (state.memB3 !== undefined) {
-          state.memB3[29988] = state.memB3[p + 1];
-        }
+        // Pascal: mem[29988]:=mem[p+1]; mem[29988].hh.rh:=mem[p].hh.rh.
+        // Copy both packed and split fields explicitly (no alias sync).
+        state.mem[29988].int = state.mem[p + 1].int;
+        state.mem[29988].gr = state.mem[p + 1].gr;
+        state.mem[29988].hh.b0 = state.mem[p + 1].hh.b0;
+        state.mem[29988].hh.b1 = state.mem[p + 1].hh.b1;
+        state.mem[29988].qqqq.b2 = state.mem[p + 1].qqqq.b2;
+        state.mem[29988].qqqq.b3 = state.mem[p + 1].qqqq.b3;
+        state.mem[29988].hh.lh = state.mem[p + 1].hh.lh;
+        state.mem[29988].hh.rh = state.mem[p].hh.rh;
         p = 29988;
         goto21 = true;
         break;
       case 14:
-        state.curH += state.memInt[p + 1];
-        leftEdge = state.curH + state.memInt[p + 2];
-        state.curDir = state.memB1[p];
+        state.curH += state.mem[p + 1].int;
+        leftEdge = state.curH + state.mem[p + 2].int;
+        state.curDir = state.mem[p].hh.b1;
         break;
       default:
         break;
@@ -1208,10 +1075,10 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
 
     if (goto14) {
       if (ruleHt === -1_073_741_824) {
-        ruleHt = state.memInt[thisBox + 3];
+        ruleHt = state.mem[thisBox + 3].int;
       }
       if (ruleDp === -1_073_741_824) {
-        ruleDp = state.memInt[thisBox + 2];
+        ruleDp = state.mem[thisBox + 2].int;
       }
       ruleHt += ruleDp;
       if (ruleHt > 0 && state.ruleWd > 0) {
@@ -1240,24 +1107,24 @@ export function hlistOut(state: HlistOutState, ops: HlistOutOps): void {
     }
 
     prevP = p;
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 
   if (state.eTeXMode === 1) {
-    while (state.memLh[state.LRPtr] !== 0) {
-      if (state.memLh[state.LRPtr] > 4) {
-        state.LRProblems += 10_000;
+    while (state.mem[state.lrPtr].hh.lh !== 0) {
+      if (state.mem[state.lrPtr].hh.lh > 4) {
+        state.lrProblems += 10_000;
       }
-      state.tempPtr = state.LRPtr;
-      state.LRPtr = state.memRh[state.tempPtr];
-      state.memRh[state.tempPtr] = state.avail;
+      state.tempPtr = state.lrPtr;
+      state.lrPtr = state.mem[state.tempPtr].hh.rh;
+      state.mem[state.tempPtr].hh.rh = state.avail;
       state.avail = state.tempPtr;
     }
-    state.tempPtr = state.LRPtr;
-    state.LRPtr = state.memRh[state.tempPtr];
-    state.memRh[state.tempPtr] = state.avail;
+    state.tempPtr = state.lrPtr;
+    state.lrPtr = state.mem[state.tempPtr].hh.rh;
+    state.mem[state.tempPtr].hh.rh = state.avail;
     state.avail = state.tempPtr;
-    if (state.memB1[thisBox] - 0 === 2) {
+    if (state.mem[thisBox].hh.b1 - 0 === 2) {
       state.curDir = 1;
     }
   }
@@ -1287,9 +1154,9 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
   let curG = 0;
   let curGlue = 0.0;
   const thisBox = state.tempPtr;
-  const gOrder = state.memB1[thisBox + 5];
-  const gSign = state.memB0[thisBox + 5];
-  let p = state.memRh[thisBox + 5];
+  const gOrder = state.mem[thisBox + 5].hh.b1;
+  const gSign = state.mem[thisBox + 5].hh.b0;
+  let p = state.mem[thisBox + 5].hh.rh;
 
   state.curS += 1;
   if (state.curS > 0) {
@@ -1300,7 +1167,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
   }
   const saveLoc = state.dviOffset + state.dviPtr;
   const leftEdge = state.curH;
-  state.curV -= state.memInt[thisBox + 3];
+  state.curV -= state.mem[thisBox + 3].int;
   const topEdge = state.curV;
 
   while (p !== 0) {
@@ -1314,13 +1181,13 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
     let ruleHt = state.ruleHt;
     let ruleDp = state.ruleDp;
 
-    switch (state.memB0[p]) {
+    switch (state.mem[p].hh.b0) {
       case 0:
       case 1:
-        if (state.memRh[p + 5] === 0) {
-          state.curV += state.memInt[p + 3] + state.memInt[p + 2];
+        if (state.mem[p + 5].hh.rh === 0) {
+          state.curV += state.mem[p + 3].int + state.mem[p + 2].int;
         } else {
-          state.curV += state.memInt[p + 3];
+          state.curV += state.mem[p + 3].int;
           if (state.curV !== state.dviV) {
             ops.movement(state.curV - state.dviV, 157);
             state.dviV = state.curV;
@@ -1328,74 +1195,74 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
           const saveH = state.dviH;
           const saveV = state.dviV;
           if (state.curDir === 1) {
-            state.curH = leftEdge - state.memInt[p + 4];
+            state.curH = leftEdge - state.mem[p + 4].int;
           } else {
-            state.curH = leftEdge + state.memInt[p + 4];
+            state.curH = leftEdge + state.mem[p + 4].int;
           }
           state.tempPtr = p;
-          if (state.memB0[p] === 1) {
+          if (state.mem[p].hh.b0 === 1) {
             ops.vlistOut();
           } else {
             ops.hlistOut();
           }
           state.dviH = saveH;
           state.dviV = saveV;
-          state.curV = saveV + state.memInt[p + 2];
+          state.curV = saveV + state.mem[p + 2].int;
           state.curH = leftEdge;
         }
         break;
       case 2:
-        ruleHt = state.memInt[p + 3];
-        ruleDp = state.memInt[p + 2];
-        state.ruleWd = state.memInt[p + 1];
+        ruleHt = state.mem[p + 3].int;
+        ruleDp = state.mem[p + 2].int;
+        state.ruleWd = state.mem[p + 1].int;
         goto14 = true;
         break;
       case 8:
         ops.outWhat(p);
         break;
       case 10: {
-        const g = state.memLh[p + 1];
-        ruleHt = state.memInt[g + 1] - curG;
+        const g = state.mem[p + 1].hh.lh;
+        ruleHt = state.mem[g + 1].int - curG;
         if (gSign !== 0) {
           if (gSign === 1) {
-            if (state.memB0[g] === gOrder) {
-              curGlue += state.memInt[g + 2];
-              let glueTemp = state.memGr[thisBox + 6] * curGlue;
+            if (state.mem[g].hh.b0 === gOrder) {
+              curGlue += state.mem[g + 2].int;
+              let glueTemp = state.mem[thisBox + 6].gr * curGlue;
               if (glueTemp > 1_000_000_000.0) {
                 glueTemp = 1_000_000_000.0;
               } else if (glueTemp < -1_000_000_000.0) {
                 glueTemp = -1_000_000_000.0;
               }
-              curG = pascalRound(glueTemp);
+              curG = round(glueTemp);
             }
-          } else if (state.memB1[g] === gOrder) {
-            curGlue -= state.memInt[g + 3];
-            let glueTemp = state.memGr[thisBox + 6] * curGlue;
+          } else if (state.mem[g].hh.b1 === gOrder) {
+            curGlue -= state.mem[g + 3].int;
+            let glueTemp = state.mem[thisBox + 6].gr * curGlue;
             if (glueTemp > 1_000_000_000.0) {
               glueTemp = 1_000_000_000.0;
             } else if (glueTemp < -1_000_000_000.0) {
               glueTemp = -1_000_000_000.0;
             }
-            curG = pascalRound(glueTemp);
+            curG = round(glueTemp);
           }
         }
         ruleHt += curG;
 
-        if (state.memB1[p] >= 100) {
-          const leaderBox = state.memRh[p + 1];
-          if (state.memB0[leaderBox] === 2) {
-            state.ruleWd = state.memInt[leaderBox + 1];
+        if (state.mem[p].hh.b1 >= 100) {
+          const leaderBox = state.mem[p + 1].hh.rh;
+          if (state.mem[leaderBox].hh.b0 === 2) {
+            state.ruleWd = state.mem[leaderBox + 1].int;
             ruleDp = 0;
             goto14 = true;
             break;
           }
 
-          const leaderHt = state.memInt[leaderBox + 3] + state.memInt[leaderBox + 2];
+          const leaderHt = state.mem[leaderBox + 3].int + state.mem[leaderBox + 2].int;
           if (leaderHt > 0 && ruleHt > 0) {
             ruleHt += 10;
             const edge = state.curV + ruleHt;
             let lx = 0;
-            if (state.memB1[p] === 100) {
+            if (state.mem[p].hh.b1 === 100) {
               const saveV = state.curV;
               state.curV =
                 topEdge + leaderHt * pascalDiv(state.curV - topEdge, leaderHt);
@@ -1405,7 +1272,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
             } else {
               const lq = pascalDiv(ruleHt, leaderHt);
               const lr = pascalMod(ruleHt, leaderHt);
-              if (state.memB1[p] === 101) {
+              if (state.mem[p].hh.b1 === 101) {
                 state.curV += pascalDiv(lr, 2);
               } else {
                 lx = pascalDiv(lr, lq + 1);
@@ -1415,16 +1282,16 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
 
             while (state.curV + leaderHt <= edge) {
               if (state.curDir === 1) {
-                state.curH = leftEdge - state.memInt[leaderBox + 4];
+                state.curH = leftEdge - state.mem[leaderBox + 4].int;
               } else {
-                state.curH = leftEdge + state.memInt[leaderBox + 4];
+                state.curH = leftEdge + state.mem[leaderBox + 4].int;
               }
               if (state.curH !== state.dviH) {
                 ops.movement(state.curH - state.dviH, 143);
                 state.dviH = state.curH;
               }
               const saveH = state.dviH;
-              state.curV += state.memInt[leaderBox + 3];
+              state.curV += state.mem[leaderBox + 3].int;
               if (state.curV !== state.dviV) {
                 ops.movement(state.curV - state.dviV, 157);
                 state.dviV = state.curV;
@@ -1433,7 +1300,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
               state.tempPtr = leaderBox;
               const outerDoingLeaders = state.doingLeaders;
               state.doingLeaders = true;
-              if (state.memB0[leaderBox] === 1) {
+              if (state.mem[leaderBox].hh.b0 === 1) {
                 ops.vlistOut();
               } else {
                 ops.hlistOut();
@@ -1443,7 +1310,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
               state.dviH = saveH;
               state.curH = leftEdge;
               state.curV =
-                saveV - state.memInt[leaderBox + 3] + leaderHt + lx;
+                saveV - state.mem[leaderBox + 3].int + leaderHt + lx;
             }
 
             state.curV = edge - 10;
@@ -1455,7 +1322,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
         break;
       }
       case 11:
-        state.curV += state.memInt[p + 1];
+        state.curV += state.mem[p + 1].int;
         break;
       default:
         break;
@@ -1463,7 +1330,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
 
     if (goto14) {
       if (state.ruleWd === -1_073_741_824) {
-        state.ruleWd = state.memInt[thisBox + 1];
+        state.ruleWd = state.mem[thisBox + 1].int;
       }
       ruleHt += ruleDp;
       state.curV += ruleHt;
@@ -1488,7 +1355,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
       state.curV += ruleHt;
     }
 
-    p = state.memRh[p];
+    p = state.mem[p].hh.rh;
   }
 
   ops.pruneMovements(saveLoc);
@@ -1498,43 +1365,7 @@ export function vlistOut(state: VlistOutState, ops: VlistOutOps): void {
   state.curS -= 1;
 }
 
-export interface ShipOutState {
-  eqtbInt: number[];
-  memB0: number[];
-  memInt: number[];
-  termOffset: number;
-  maxPrintLine: number;
-  fileOffset: number;
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
-  maxV: number;
-  maxH: number;
-  dviH: number;
-  dviV: number;
-  curH: number;
-  dviF: number;
-  outputFileName: number;
-  jobName: number;
-  totalPages: number;
-  dviBuf: number[];
-  dviPtr: number;
-  dviLimit: number;
-  dviOffset: number;
-  selector: number;
-  poolPtr: number;
-  strStart: number[];
-  strPtr: number;
-  strPool: number[];
-  lastBop: number;
-  curV: number;
-  tempPtr: number;
-  curS: number;
-  eTeXMode: number;
-  LRProblems: number;
-  LRPtr: number;
-  curDir: number;
-  deadCycles: number;
+export interface ShipOutState extends MemB0Slice, MemLhSlice, MemRhSlice, MemIntSlice, TeXStateSlice<"eqtb" | "avail" | "rover" | "loMemMax" | "hiMemMin" | "memEnd" | "termOffset" | "maxPrintLine" | "fileOffset" | "interaction" | "helpPtr" | "helpLine" | "maxV" | "maxH" | "dviH" | "dviV" | "curH" | "dviF" | "outputFileName" | "jobName" | "totalPages" | "dviBuf" | "dviPtr" | "dviLimit" | "dviOffset" | "selector" | "poolPtr" | "strStart" | "strPtr" | "strPool" | "lastBop" | "curV" | "tempPtr" | "curS" | "eTeXMode" | "lrProblems" | "lrPtr" | "curDir" | "deadCycles">{
 }
 
 export interface ShipOutOps {
@@ -1564,7 +1395,29 @@ export interface ShipOutOps {
 }
 
 export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
-  if (state.eqtbInt[5302] > 0) {
+  const CANONICAL_MAIN_MEMORY = 5000000;
+  const memoryUsage = (): { varUsed: number; dynUsed: number } => {
+    let varUsed = 0;
+    let lowMemPtr = 0;
+    let rover = state.rover;
+    do {
+      varUsed += rover - lowMemPtr;
+      lowMemPtr = rover + (state.mem[rover].hh.lh ?? 0);
+      rover = state.mem[rover + 1].hh.rh ?? 0;
+    } while (rover !== state.rover);
+    varUsed += state.loMemMax - lowMemPtr;
+
+    let dynUsed = state.memEnd + 1 - state.hiMemMin;
+    let avail = state.avail;
+    while (avail !== 0) {
+      dynUsed -= 1;
+      avail = state.mem[avail].hh.rh ?? 0;
+    }
+
+    return { varUsed, dynUsed };
+  };
+
+  if (state.eqtb[5302].int > 0) {
     ops.printNl(339);
     ops.printLn();
     ops.print(840);
@@ -1577,18 +1430,18 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
   ops.printChar(91);
 
   let j = 9;
-  while (state.eqtbInt[5333 + j] === 0 && j > 0) {
+  while (state.eqtb[5333 + j].int === 0 && j > 0) {
     j -= 1;
   }
   for (let k = 0; k <= j; k += 1) {
-    ops.printInt(state.eqtbInt[5333 + k]);
+    ops.printInt(state.eqtb[5333 + k].int);
     if (k < j) {
       ops.printChar(46);
     }
   }
   ops.breakTermOut();
 
-  if (state.eqtbInt[5302] > 0) {
+  if (state.eqtb[5302].int > 0) {
     ops.printChar(93);
     ops.beginDiagnostic();
     ops.showBox(p);
@@ -1597,14 +1450,14 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
 
   let doShip = true;
   if (
-    state.memInt[p + 3] > 1_073_741_823 ||
-    state.memInt[p + 2] > 1_073_741_823 ||
-    state.memInt[p + 3] + state.memInt[p + 2] + state.eqtbInt[5864] >
+    state.mem[p + 3].int > 1_073_741_823 ||
+    state.mem[p + 2].int > 1_073_741_823 ||
+    state.mem[p + 3].int + state.mem[p + 2].int + state.eqtb[5864].int >
       1_073_741_823 ||
-    state.memInt[p + 1] + state.eqtbInt[5863] > 1_073_741_823
+    state.mem[p + 1].int + state.eqtb[5863].int > 1_073_741_823
   ) {
     if (state.interaction === 3) {
-      // Pascal no-op for sync.
+      // Pascal keeps a no-op branch here; preserve control-flow parity.
     }
     ops.printNl(263);
     ops.print(844);
@@ -1612,7 +1465,7 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
     state.helpLine[1] = 845;
     state.helpLine[0] = 846;
     ops.error();
-    if (state.eqtbInt[5302] <= 0) {
+    if (state.eqtb[5302].int <= 0) {
       ops.beginDiagnostic();
       ops.printNl(847);
       ops.showBox(p);
@@ -1622,18 +1475,18 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
   }
 
   if (doShip) {
-    const v = state.memInt[p + 3] + state.memInt[p + 2] + state.eqtbInt[5864];
+    const v = state.mem[p + 3].int + state.mem[p + 2].int + state.eqtb[5864].int;
     if (v > state.maxV) {
       state.maxV = v;
     }
-    const h = state.memInt[p + 1] + state.eqtbInt[5863];
+    const h = state.mem[p + 1].int + state.eqtb[5863].int;
     if (h > state.maxH) {
       state.maxH = h;
     }
 
     state.dviH = 0;
     state.dviV = 0;
-    state.curH = state.eqtbInt[5863];
+    state.curH = state.eqtb[5863].int;
     state.dviF = 0;
     if (state.outputFileName === 0) {
       if (state.jobName === 0) {
@@ -1652,18 +1505,18 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
       ops.dviFour(25_400_000);
       ops.dviFour(473_628_672);
       ops.prepareMag();
-      ops.dviFour(state.eqtbInt[5285]);
+      ops.dviFour(state.eqtb[5285].int);
       const oldSetting = state.selector;
       state.selector = 21;
       ops.print(838);
-      ops.printInt(state.eqtbInt[5291]);
+      ops.printInt(state.eqtb[5291].int);
       ops.printChar(46);
-      ops.printTwo(state.eqtbInt[5290]);
+      ops.printTwo(state.eqtb[5290].int);
       ops.printChar(46);
-      ops.printTwo(state.eqtbInt[5289]);
+      ops.printTwo(state.eqtb[5289].int);
       ops.printChar(58);
-      ops.printTwo(pascalDiv(state.eqtbInt[5288], 60));
-      ops.printTwo(pascalMod(state.eqtbInt[5288], 60));
+      ops.printTwo(pascalDiv(state.eqtb[5288].int, 60));
+      ops.printTwo(pascalMod(state.eqtb[5288].int, 60));
       state.selector = oldSetting;
       writeDviByte(state.poolPtr - state.strStart[state.strPtr], state, ops);
       for (let s = state.strStart[state.strPtr]; s <= state.poolPtr - 1; s += 1) {
@@ -1675,13 +1528,13 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
     const pageLoc = state.dviOffset + state.dviPtr;
     writeDviByte(139, state, ops);
     for (let k = 0; k <= 9; k += 1) {
-      ops.dviFour(state.eqtbInt[5333 + k]);
+      ops.dviFour(state.eqtb[5333 + k].int);
     }
     ops.dviFour(state.lastBop);
     state.lastBop = pageLoc;
-    state.curV = state.memInt[p + 3] + state.eqtbInt[5864];
+    state.curV = state.mem[p + 3].int + state.eqtb[5864].int;
     state.tempPtr = p;
-    if (state.memB0[p] === 1) {
+    if (state.mem[p].hh.b0 === 1) {
       ops.vlistOut();
     } else {
       ops.hlistOut();
@@ -1692,26 +1545,47 @@ export function shipOut(p: number, state: ShipOutState, ops: ShipOutOps): void {
   }
 
   if (state.eTeXMode === 1) {
-    if (state.LRProblems > 0) {
+    if (state.lrProblems > 0) {
       ops.printLn();
       ops.printNl(1373);
-      ops.printInt(pascalDiv(state.LRProblems, 10_000));
+      ops.printInt(pascalDiv(state.lrProblems, 10_000));
       ops.print(1374);
-      ops.printInt(pascalMod(state.LRProblems, 10_000));
+      ops.printInt(pascalMod(state.lrProblems, 10_000));
       ops.print(1375);
-      state.LRProblems = 0;
+      state.lrProblems = 0;
       ops.printChar(41);
       ops.printLn();
     }
-    if (state.LRPtr !== 0 || state.curDir !== 0) {
+    if (state.lrPtr !== 0 || state.curDir !== 0) {
       ops.confusion(1377);
     }
   }
 
-  if (state.eqtbInt[5302] <= 0) {
+  if (state.eqtb[5302].int <= 0) {
     ops.printChar(93);
   }
   state.deadCycles = 0;
   ops.breakTermOut();
+  if ((state.eqtb[5299].int ?? 0) > 1) {
+    const before = memoryUsage();
+    ops.printNl(841);
+    ops.printInt(before.varUsed);
+    ops.printChar(38);
+    ops.printInt(before.dynUsed);
+    ops.printChar(59);
+  }
   ops.flushNodeList(p);
+  if ((state.eqtb[5299].int ?? 0) > 1) {
+    const after = memoryUsage();
+    const stillUntouched =
+      (state.hiMemMin - state.loMemMax - 1) +
+      (CANONICAL_MAIN_MEMORY - (state.memEnd + 1));
+    ops.print(842);
+    ops.printInt(after.varUsed);
+    ops.printChar(38);
+    ops.printInt(after.dynUsed);
+    ops.print(843);
+    ops.printInt(stillUntouched);
+    ops.printLn();
+  }
 }

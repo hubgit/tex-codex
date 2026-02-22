@@ -1,3 +1,4 @@
+import type { TeXStateSlice } from "./state_slices";
 export function printFileName(
   n: number,
   a: number,
@@ -19,8 +20,7 @@ export function printSize(s: number, printEsc: (s: number) => void): void {
   }
 }
 
-export interface WriteWhatsitState {
-  memLh: number[];
+export interface WriteWhatsitState extends TeXStateSlice<"mem">{
 }
 
 export function printWriteWhatsit(
@@ -32,19 +32,16 @@ export function printWriteWhatsit(
   printChar: (c: number) => void,
 ): void {
   printEsc(s);
-  if (state.memLh[p + 1] < 16) {
-    printInt(state.memLh[p + 1]);
-  } else if (state.memLh[p + 1] === 16) {
+  if (state.mem[p + 1].hh.lh < 16) {
+    printInt(state.mem[p + 1].hh.lh);
+  } else if (state.mem[p + 1].hh.lh === 16) {
     printChar(42);
   } else {
     printChar(45);
   }
 }
 
-export interface SANumState {
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
+export interface SANumState extends TeXStateSlice<"mem" | "mem" | "mem">{
 }
 
 export function printSANum(
@@ -54,18 +51,18 @@ export function printSANum(
   printInt: (n: number) => void,
 ): void {
   let n: number;
-  if (state.memB0[q] < 32) {
-    n = state.memRh[q + 1];
+  if (state.mem[q].hh.b0 < 32) {
+    n = state.mem[q + 1].hh.rh;
   } else {
-    n = state.memB0[q] % 16;
-    q = state.memRh[q];
-    n = n + 16 * state.memB0[q];
+    n = state.mem[q].hh.b0 % 16;
+    q = state.mem[q].hh.rh;
+    n = n + 16 * state.mem[q].hh.b0;
   }
   printChar(37);
   printInt(n);
-  if (state.memB1[q] === 1) {
-    q = state.memRh[q + 1];
+  if (state.mem[q].hh.b1 === 1) {
+    q = state.mem[q + 1].hh.rh;
     printChar(46);
-    printInt(state.memB0[q]);
+    printInt(state.mem[q].hh.b0);
   }
 }

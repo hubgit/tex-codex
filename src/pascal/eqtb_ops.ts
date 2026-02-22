@@ -1,10 +1,11 @@
+import type { TeXStateSlice, EqtbIntSlice, SaveStackIntSlice } from "./state_slices";
+
 export interface EqDestroyWord {
   b0: number;
   rh: number;
 }
 
-export interface EqDestroyState {
-  memLh: number[];
+export interface EqDestroyState extends TeXStateSlice<"mem">{
 }
 
 export interface EqDestroyOps {
@@ -28,7 +29,7 @@ export function eqDestroy(
     ops.deleteGlueRef(q);
   } else if (tag === 118) {
     if (q !== 0) {
-      ops.freeNode(q, state.memLh[q] + state.memLh[q] + 1);
+      ops.freeNode(q, state.mem[q].hh.lh + state.mem[q].hh.lh + 1);
     }
   } else if (tag === 119) {
     ops.flushNodeList(q);
@@ -39,16 +40,7 @@ export function eqDestroy(
   }
 }
 
-export interface EqSaveState {
-  savePtr: number;
-  maxSaveStack: number;
-  saveSize: number;
-  saveStackB0: number[];
-  saveStackB1: number[];
-  saveStackRh: number[];
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
+export interface EqSaveState extends EqtbIntSlice, SaveStackIntSlice, TeXStateSlice<"maxSaveStack" | "saveSize" | "saveStack" | "saveStack" | "saveStack" | "eqtb" | "eqtb" | "eqtb">{
 }
 
 export interface EqSaveOps {
@@ -61,6 +53,7 @@ export function eqSave(
   state: EqSaveState,
   ops: EqSaveOps,
 ): void {
+  const { saveStack, eqtb } = state;
   if (state.savePtr > state.maxSaveStack) {
     state.maxSaveStack = state.savePtr;
     if (state.maxSaveStack > state.saveSize - 7) {
@@ -68,25 +61,21 @@ export function eqSave(
     }
   }
   if (l === 0) {
-    state.saveStackB0[state.savePtr] = 1;
+    state.saveStack[state.savePtr].hh.b0 = 1;
   } else {
-    state.saveStackB0[state.savePtr] = state.eqtbB0[p];
-    state.saveStackB1[state.savePtr] = state.eqtbB1[p];
-    state.saveStackRh[state.savePtr] = state.eqtbRh[p];
+    saveStack[state.savePtr].int = eqtb[p].int ?? 0;
+    state.saveStack[state.savePtr].hh.b0 = state.eqtb[p].hh.b0;
+    state.saveStack[state.savePtr].hh.b1 = state.eqtb[p].hh.b1;
+    state.saveStack[state.savePtr].hh.rh = state.eqtb[p].hh.rh;
     state.savePtr += 1;
-    state.saveStackB0[state.savePtr] = 0;
+    state.saveStack[state.savePtr].hh.b0 = 0;
   }
-  state.saveStackB1[state.savePtr] = l;
-  state.saveStackRh[state.savePtr] = p;
+  state.saveStack[state.savePtr].hh.b1 = l;
+  state.saveStack[state.savePtr].hh.rh = p;
   state.savePtr += 1;
 }
 
-export interface EqDefineState {
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
-  eTeXMode: number;
-  curLevel: number;
+export interface EqDefineState extends TeXStateSlice<"eqtb" | "eqtb" | "eqtb" | "eTeXMode" | "curLevel">{
 }
 
 export interface EqDefineOps {
@@ -102,10 +91,10 @@ export function eqDefine(
   ops: EqDefineOps,
 ): void {
   const oldWord = {
-    b0: state.eqtbB0[p],
-    rh: state.eqtbRh[p],
+    b0: state.eqtb[p].hh.b0,
+    rh: state.eqtb[p].hh.rh,
   };
-  const oldLevel = state.eqtbB1[p];
+  const oldLevel = state.eqtb[p].hh.b1;
   if (state.eTeXMode === 1 && oldWord.b0 === t && oldWord.rh === e) {
     ops.eqDestroy(oldWord);
     return;
@@ -117,16 +106,12 @@ export function eqDefine(
     ops.eqSave(p, oldLevel);
   }
 
-  state.eqtbB1[p] = state.curLevel;
-  state.eqtbB0[p] = t;
-  state.eqtbRh[p] = e;
+  state.eqtb[p].hh.b1 = state.curLevel;
+  state.eqtb[p].hh.b0 = t;
+  state.eqtb[p].hh.rh = e;
 }
 
-export interface EqWordDefineState {
-  eqtbInt: number[];
-  xeqLevel: number[];
-  eTeXMode: number;
-  curLevel: number;
+export interface EqWordDefineState extends TeXStateSlice<"eqtb" | "xeqLevel" | "eTeXMode" | "curLevel">{
 }
 
 export interface EqWordDefineOps {
@@ -139,20 +124,17 @@ export function eqWordDefine(
   state: EqWordDefineState,
   ops: EqWordDefineOps,
 ): void {
-  if (state.eTeXMode === 1 && state.eqtbInt[p] === w) {
+  if (state.eTeXMode === 1 && state.eqtb[p].int === w) {
     return;
   }
   if (state.xeqLevel[p] !== state.curLevel) {
     ops.eqSave(p, state.xeqLevel[p]);
     state.xeqLevel[p] = state.curLevel;
   }
-  state.eqtbInt[p] = w;
+  state.eqtb[p].int = w;
 }
 
-export interface GeqDefineState {
-  eqtbB0: number[];
-  eqtbB1: number[];
-  eqtbRh: number[];
+export interface GeqDefineState extends TeXStateSlice<"eqtb" | "eqtb" | "eqtb">{
 }
 
 export interface GeqDefineOps {
@@ -167,17 +149,15 @@ export function geqDefine(
   ops: GeqDefineOps,
 ): void {
   ops.eqDestroy({
-    b0: state.eqtbB0[p],
-    rh: state.eqtbRh[p],
+    b0: state.eqtb[p].hh.b0,
+    rh: state.eqtb[p].hh.rh,
   });
-  state.eqtbB1[p] = 1;
-  state.eqtbB0[p] = t;
-  state.eqtbRh[p] = e;
+  state.eqtb[p].hh.b1 = 1;
+  state.eqtb[p].hh.b0 = t;
+  state.eqtb[p].hh.rh = e;
 }
 
-export interface GeqWordDefineState {
-  eqtbInt: number[];
-  xeqLevel: number[];
+export interface GeqWordDefineState extends TeXStateSlice<"eqtb" | "xeqLevel">{
 }
 
 export function geqWordDefine(
@@ -185,6 +165,6 @@ export function geqWordDefine(
   w: number,
   state: GeqWordDefineState,
 ): void {
-  state.eqtbInt[p] = w;
+  state.eqtb[p].int = w;
   state.xeqLevel[p] = 1;
 }

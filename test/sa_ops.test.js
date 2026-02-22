@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -27,44 +28,44 @@ function runProbeText(name, args) {
 function setupScenario(scenario, state) {
   if (scenario === 1) {
     const q = 100;
-    state.memLh[101] = 2;
-    state.memB0[100] = 0;
-    state.memInt[102] = 0;
-    state.memRh[100] = 0;
+    state.mem[101].hh.lh = 2;
+    state.mem[100].hh.b0 = 0;
+    state.mem[102].int = 0;
+    state.mem[100].hh.rh = 0;
     return q;
   }
   if (scenario === 2) {
     const q = 110;
-    state.memLh[111] = 1;
-    state.memB0[110] = 5;
-    state.memInt[112] = 9;
-    state.memRh[110] = 0;
+    state.mem[111].hh.lh = 1;
+    state.mem[110].hh.b0 = 5;
+    state.mem[112].int = 9;
+    state.mem[110].hh.rh = 0;
     return q;
   }
   if (scenario === 3) {
     const q = 120;
-    state.memLh[121] = 1;
-    state.memB0[120] = 18;
-    state.memInt[122] = 0;
-    state.memRh[120] = 200;
-    state.memB1[200] = 2;
-    state.memLh[202] = 7;
+    state.mem[121].hh.lh = 1;
+    state.mem[120].hh.b0 = 18;
+    state.mem[122].int = 0;
+    state.mem[120].hh.rh = 200;
+    state.mem[200].hh.b1 = 2;
+    state.mem[202].hh.lh = 7;
     state.saRoot[2] = 777;
     return q;
   }
   if (scenario === 4) {
     const q = 130;
-    state.memLh[131] = 1;
-    state.memB0[130] = 33;
-    state.memRh[130] = 0;
-    state.memRh[131] = 0;
+    state.mem[131].hh.lh = 1;
+    state.mem[130].hh.b0 = 33;
+    state.mem[130].hh.rh = 0;
+    state.mem[131].hh.rh = 0;
     state.saRoot[1] = 999;
     return q;
   }
   const q = 140;
-  state.memLh[141] = 1;
-  state.memB0[140] = 65;
-  state.memRh[141] = 5;
+  state.mem[141].hh.lh = 1;
+  state.mem[140].hh.b0 = 65;
+  state.mem[141].hh.rh = 5;
   return q;
 }
 
@@ -73,12 +74,14 @@ test("deleteSaRef matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      memB0: new Array(5000).fill(0),
-      memB1: new Array(5000).fill(0),
-      memLh: new Array(5000).fill(0),
-      memRh: new Array(5000).fill(0),
-      memInt: new Array(5000).fill(0),
       saRoot: new Array(5000).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(5000).fill(0),
+        b1: new Array(5000).fill(0),
+        int: new Array(5000).fill(0),
+        lh: new Array(5000).fill(0),
+        rh: new Array(5000).fill(0),
+        }, { minSize: 30001 }),
     };
     const q = setupScenario(scenario, state);
     const calls = [];
@@ -92,7 +95,7 @@ test("deleteSaRef matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `${calls.join("")} L101=${state.memLh[101]} L111=${state.memLh[111]} L121=${state.memLh[121]} L131=${state.memLh[131]} L141=${state.memLh[141]} B1200=${state.memB1[200]} LH202=${state.memLh[202]} SAR1=${state.saRoot[1]} SAR2=${state.saRoot[2]}`;
+    const actual = `${calls.join("")} L101=${state.mem[101].hh.lh} L111=${state.mem[111].hh.lh} L121=${state.mem[121].hh.lh} L131=${state.mem[131].hh.lh} L141=${state.mem[141].hh.lh} B1200=${state.mem[200].hh.b1} LH202=${state.mem[202].hh.lh} SAR1=${state.saRoot[1]} SAR2=${state.saRoot[2]}`;
     const expected = runProbeText("DELETE_SA_REF_TRACE", [scenario]);
     assert.equal(actual, expected, `DELETE_SA_REF_TRACE mismatch for ${scenario}`);
   }
@@ -109,11 +112,13 @@ test("saDestroy matches Pascal probe trace", () => {
   for (const c of cases) {
     const [b0, rh] = c;
     const state = {
-      memB0: new Array(100).fill(0),
-      memRh: new Array(100).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(100).fill(0),
+        rh: new Array(100).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memB0[10] = b0;
-    state.memRh[11] = rh;
+    state.mem[10].hh.b0 = b0;
+    state.mem[11].hh.rh = rh;
     const calls = [];
     saDestroy(10, state, {
       deleteGlueRef: (p) => calls.push(`DG${p}`),
@@ -136,14 +141,16 @@ test("saDef matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initLh, initRh, b1, curLevel, e] = c;
     const state = {
-      memB1: new Array(200).fill(0),
-      memLh: new Array(200).fill(0),
-      memRh: new Array(200).fill(0),
       curLevel,
+      mem: memoryWordsFromComponents({
+        b1: new Array(200).fill(0),
+        lh: new Array(200).fill(0),
+        rh: new Array(200).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[101] = initLh;
-    state.memRh[101] = initRh;
-    state.memB1[100] = b1;
+    state.mem[101].hh.lh = initLh;
+    state.mem[101].hh.rh = initRh;
+    state.mem[100].hh.b1 = b1;
     const trace = [];
 
     saDef(100, e, state, {
@@ -152,7 +159,7 @@ test("saDef matches Pascal probe trace", () => {
       deleteSaRef: () => trace.push("DS;"),
     });
 
-    const actual = `${trace.join("")} LH${state.memLh[101]} RH${state.memRh[101]} B1${state.memB1[100]}`;
+    const actual = `${trace.join("")} LH${state.mem[101].hh.lh} RH${state.mem[101].hh.rh} B1${state.mem[100].hh.b1}`;
     const expected = runProbeText("SA_DEF_TRACE", c);
     assert.equal(actual, expected, `SA_DEF_TRACE mismatch for ${c.join(",")}`);
   }
@@ -169,14 +176,18 @@ test("saSave matches Pascal probe trace", () => {
       maxSaveStack: 10,
       saveSize: 20,
       saChain: 0,
-      memB0: new Array(1000).fill(0),
-      memB1: new Array(1000).fill(0),
-      memLh: new Array(1000).fill(0),
-      memRh: new Array(1000).fill(0),
-      memInt: new Array(1000).fill(0),
-      saveStackB0: new Array(1000).fill(-1),
-      saveStackB1: new Array(1000).fill(-1),
-      saveStackRh: new Array(1000).fill(-1),
+      mem: memoryWordsFromComponents({
+        b0: new Array(1000).fill(0),
+        b1: new Array(1000).fill(0),
+        int: new Array(1000).fill(0),
+        lh: new Array(1000).fill(0),
+        rh: new Array(1000).fill(0),
+        }, { minSize: 30001 }),
+      saveStack: memoryWordsFromComponents({
+        b0: new Array(1000).fill(-1),
+        b1: new Array(1000).fill(-1),
+        rh: new Array(1000).fill(-1),
+        }),
     };
     let p;
     let q;
@@ -189,10 +200,10 @@ test("saSave matches Pascal probe trace", () => {
       state.saChain = 400;
       p = 100;
       q = 500;
-      state.memB0[p] = 5;
-      state.memB1[p] = 7;
-      state.memInt[p + 2] = 0;
-      state.memLh[p + 1] = 2;
+      state.mem[p].hh.b0 = 5;
+      state.mem[p].hh.b1 = 7;
+      state.mem[p + 2].int = 0;
+      state.mem[p + 1].hh.lh = 2;
     } else if (scenario === 2) {
       state.curLevel = 5;
       state.saLevel = 5;
@@ -202,10 +213,10 @@ test("saSave matches Pascal probe trace", () => {
       state.saChain = 401;
       p = 110;
       q = 600;
-      state.memB0[p] = 10;
-      state.memB1[p] = 8;
-      state.memInt[p + 2] = 999;
-      state.memLh[p + 1] = 1;
+      state.mem[p].hh.b0 = 10;
+      state.mem[p].hh.b1 = 8;
+      state.mem[p + 2].int = 999;
+      state.mem[p + 1].hh.lh = 1;
     } else {
       state.curLevel = 2;
       state.saLevel = 2;
@@ -215,10 +226,10 @@ test("saSave matches Pascal probe trace", () => {
       state.saChain = 402;
       p = 120;
       q = 700;
-      state.memB0[p] = 40;
-      state.memB1[p] = 9;
-      state.memRh[p + 1] = 777;
-      state.memLh[p + 1] = 4;
+      state.mem[p].hh.b0 = 40;
+      state.mem[p].hh.b1 = 9;
+      state.mem[p + 1].hh.rh = 777;
+      state.mem[p + 1].hh.lh = 4;
     }
 
     const trace = [];
@@ -232,7 +243,7 @@ test("saSave matches Pascal probe trace", () => {
       },
     });
 
-    const actual = `${trace.join("")} SP${state.savePtr} MS${state.maxSaveStack} SL${state.saLevel} SC${state.saChain} SS${state.saveStackB0[10]},${state.saveStackB1[10]},${state.saveStackRh[10]} QB0${state.memB0[q]} QB1${state.memB1[q]} QLH${state.memLh[q + 1]} QRH${state.memRh[q + 1]} QI2${state.memInt[q + 2]} PLH${state.memLh[p + 1]}`;
+    const actual = `${trace.join("")} SP${state.savePtr} MS${state.maxSaveStack} SL${state.saLevel} SC${state.saChain} SS${state.saveStack[10].hh.b0},${state.saveStack[10].hh.b1},${state.saveStack[10].hh.rh} QB0${state.mem[q].hh.b0} QB1${state.mem[q].hh.b1} QLH${state.mem[q + 1].hh.lh} QRH${state.mem[q + 1].hh.rh} QI2${state.mem[q + 2].int} PLH${state.mem[p + 1].hh.lh}`;
     const expected = runProbeText("SA_SAVE_TRACE", [scenario]);
     assert.equal(actual, expected, `SA_SAVE_TRACE mismatch for ${scenario}`);
   }
@@ -248,14 +259,16 @@ test("saWDef matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initLh, initInt, b1, curLevel, w] = c;
     const state = {
-      memB1: new Array(200).fill(0),
-      memLh: new Array(200).fill(0),
-      memInt: new Array(200).fill(0),
       curLevel,
+      mem: memoryWordsFromComponents({
+        b1: new Array(200).fill(0),
+        int: new Array(200).fill(0),
+        lh: new Array(200).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[101] = initLh;
-    state.memInt[102] = initInt;
-    state.memB1[100] = b1;
+    state.mem[101].hh.lh = initLh;
+    state.mem[102].int = initInt;
+    state.mem[100].hh.b1 = b1;
     const trace = [];
 
     saWDef(100, w, state, {
@@ -263,7 +276,7 @@ test("saWDef matches Pascal probe trace", () => {
       deleteSaRef: () => trace.push("DS;"),
     });
 
-    const actual = `${trace.join("")} LH${state.memLh[101]} INT${state.memInt[102]} B1${state.memB1[100]}`;
+    const actual = `${trace.join("")} LH${state.mem[101].hh.lh} INT${state.mem[102].int} B1${state.mem[100].hh.b1}`;
     const expected = runProbeText("SA_W_DEF_TRACE", c);
     assert.equal(actual, expected, `SA_W_DEF_TRACE mismatch for ${c.join(",")}`);
   }
@@ -278,13 +291,15 @@ test("gsaDef matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initLh, initRh, b1, e] = c;
     const state = {
-      memB1: new Array(200).fill(0),
-      memLh: new Array(200).fill(0),
-      memRh: new Array(200).fill(0),
+      mem: memoryWordsFromComponents({
+        b1: new Array(200).fill(0),
+        lh: new Array(200).fill(0),
+        rh: new Array(200).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[101] = initLh;
-    state.memRh[101] = initRh;
-    state.memB1[100] = b1;
+    state.mem[101].hh.lh = initLh;
+    state.mem[101].hh.rh = initRh;
+    state.mem[100].hh.b1 = b1;
     const trace = [];
 
     gsaDef(100, e, state, {
@@ -292,7 +307,7 @@ test("gsaDef matches Pascal probe trace", () => {
       deleteSaRef: () => trace.push("DS;"),
     });
 
-    const actual = `${trace.join("")} LH${state.memLh[101]} RH${state.memRh[101]} B1${state.memB1[100]}`;
+    const actual = `${trace.join("")} LH${state.mem[101].hh.lh} RH${state.mem[101].hh.rh} B1${state.mem[100].hh.b1}`;
     const expected = runProbeText("GSA_DEF_TRACE", c);
     assert.equal(actual, expected, `GSA_DEF_TRACE mismatch for ${c.join(",")}`);
   }
@@ -307,20 +322,22 @@ test("gsaWDef matches Pascal probe trace", () => {
   for (const c of cases) {
     const [initLh, b1, initInt, w] = c;
     const state = {
-      memB1: new Array(200).fill(0),
-      memLh: new Array(200).fill(0),
-      memInt: new Array(200).fill(0),
+      mem: memoryWordsFromComponents({
+        b1: new Array(200).fill(0),
+        int: new Array(200).fill(0),
+        lh: new Array(200).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memLh[101] = initLh;
-    state.memB1[100] = b1;
-    state.memInt[102] = initInt;
+    state.mem[101].hh.lh = initLh;
+    state.mem[100].hh.b1 = b1;
+    state.mem[102].int = initInt;
     const trace = [];
 
     gsaWDef(100, w, state, {
       deleteSaRef: () => trace.push("DS;"),
     });
 
-    const actual = `${trace.join("")} LH${state.memLh[101]} INT${state.memInt[102]} B1${state.memB1[100]}`;
+    const actual = `${trace.join("")} LH${state.mem[101].hh.lh} INT${state.mem[102].int} B1${state.mem[100].hh.b1}`;
     const expected = runProbeText("GSA_W_DEF_TRACE", c);
     assert.equal(actual, expected, `GSA_W_DEF_TRACE mismatch for ${c.join(",")}`);
   }
@@ -331,38 +348,40 @@ test("saRestore matches Pascal probe trace", () => {
 
   for (const scenario of scenarios) {
     const state = {
-      memB0: new Array(1000).fill(0),
-      memB1: new Array(1000).fill(0),
-      memLh: new Array(1000).fill(0),
-      memRh: new Array(1000).fill(0),
-      memInt: new Array(1000).fill(0),
       saChain: 0,
+      mem: memoryWordsFromComponents({
+        b0: new Array(1000).fill(0),
+        b1: new Array(1000).fill(0),
+        int: new Array(1000).fill(0),
+        lh: new Array(1000).fill(0),
+        rh: new Array(1000).fill(0),
+        }, { minSize: 30001 }),
     };
     if (scenario === 1) {
       state.saChain = 500;
-      state.memLh[501] = 100;
-      state.memB1[100] = 1;
-      state.memB0[100] = 40;
-      state.memRh[500] = 0;
-      state.memB0[500] = 50;
+      state.mem[501].hh.lh = 100;
+      state.mem[100].hh.b1 = 1;
+      state.mem[100].hh.b0 = 40;
+      state.mem[500].hh.rh = 0;
+      state.mem[500].hh.b0 = 50;
     } else if (scenario === 2) {
       state.saChain = 510;
-      state.memLh[511] = 110;
-      state.memB1[110] = 2;
-      state.memB0[110] = 10;
-      state.memB0[510] = 20;
-      state.memInt[512] = 777;
-      state.memB1[510] = 9;
-      state.memRh[510] = 0;
+      state.mem[511].hh.lh = 110;
+      state.mem[110].hh.b1 = 2;
+      state.mem[110].hh.b0 = 10;
+      state.mem[510].hh.b0 = 20;
+      state.mem[512].int = 777;
+      state.mem[510].hh.b1 = 9;
+      state.mem[510].hh.rh = 0;
     } else {
       state.saChain = 520;
-      state.memLh[521] = 120;
-      state.memB1[120] = 2;
-      state.memB0[120] = 40;
-      state.memB0[520] = 50;
-      state.memRh[521] = 888;
-      state.memB1[520] = 7;
-      state.memRh[520] = 0;
+      state.mem[521].hh.lh = 120;
+      state.mem[120].hh.b1 = 2;
+      state.mem[120].hh.b0 = 40;
+      state.mem[520].hh.b0 = 50;
+      state.mem[521].hh.rh = 888;
+      state.mem[520].hh.b1 = 7;
+      state.mem[520].hh.rh = 0;
     }
     const trace = [];
 
@@ -372,7 +391,7 @@ test("saRestore matches Pascal probe trace", () => {
       freeNode: (p, size) => trace.push(`FN(${p},${size});`),
     });
 
-    const actual = `${trace.join("")} SC${state.saChain} I112=${state.memInt[112]} B110=${state.memB1[110]} RH121=${state.memRh[121]}`;
+    const actual = `${trace.join("")} SC${state.saChain} I112=${state.mem[112].int} B110=${state.mem[110].hh.b1} RH121=${state.mem[121].hh.rh}`;
     const expected = runProbeText("SA_RESTORE_TRACE", [scenario]);
     assert.equal(actual, expected, `SA_RESTORE_TRACE mismatch for ${scenario}`);
   }
@@ -381,16 +400,19 @@ test("saRestore matches Pascal probe trace", () => {
 test("newIndex matches Pascal probe trace", () => {
   const state = {
     curPtr: 0,
-    memB0: new Array(200).fill(-1),
-    memB1: new Array(200).fill(-1),
-    memLh: new Array(200).fill(-1),
-    memRh: new Array(200).fill(-1),
-    memInt: new Array(200).fill(-1),
-    saNullB0: 90,
-    saNullB1: 91,
-    saNullLh: 92,
-    saNullRh: 93,
-    saNullInt: 94,
+    saNull: {
+      int: 94,
+      gr: 0,
+      hh: { b0: 90, b1: 91, lh: 92, rh: 93 },
+      qqqq: { b0: 90, b1: 91, b2: 0, b3: 0 },
+    },
+    mem: memoryWordsFromComponents({
+      b0: new Array(200).fill(-1),
+      b1: new Array(200).fill(-1),
+      int: new Array(200).fill(-1),
+      lh: new Array(200).fill(-1),
+      rh: new Array(200).fill(-1),
+      }, { minSize: 30001 }),
   };
   const trace = [];
 
@@ -404,9 +426,9 @@ test("newIndex matches Pascal probe trace", () => {
   const parts = [
     ...trace,
     `CP${state.curPtr}`,
-    `H${state.memB0[100]},${state.memB1[100]},${state.memRh[100]}`,
-    `N1${state.memB0[101]},${state.memB1[101]},${state.memLh[101]},${state.memRh[101]},${state.memInt[101]}`,
-    `N8${state.memB0[108]},${state.memB1[108]},${state.memLh[108]},${state.memRh[108]},${state.memInt[108]}`,
+    `H${state.mem[100].hh.b0},${state.mem[100].hh.b1},${state.mem[100].hh.rh}`,
+    `N1${state.mem[101].hh.b0},${state.mem[101].hh.b1},${state.mem[101].hh.lh},${state.mem[101].hh.rh},${state.mem[101].int}`,
+    `N8${state.mem[108].hh.b0},${state.mem[108].hh.b1},${state.mem[108].hh.lh},${state.mem[108].hh.rh},${state.mem[108].int}`,
   ];
   const actual = parts.join(" ");
   const expected = runProbeText("NEW_INDEX_TRACE", []);
@@ -416,9 +438,9 @@ test("newIndex matches Pascal probe trace", () => {
 function putChild(state, q, i, child) {
   const slot = q + Math.trunc(i / 2) + 1;
   if (i % 2 === 0) {
-    state.memLh[slot] = child;
+    state.mem[slot].hh.lh = child;
   } else {
-    state.memRh[slot] = child;
+    state.mem[slot].hh.rh = child;
   }
 }
 
@@ -482,19 +504,22 @@ test("findSaElement matches Pascal probe trace", () => {
   for (const scenario of scenarios) {
     const state = {
       curPtr: 0,
-      memB0: new Array(2000).fill(0),
-      memB1: new Array(2000).fill(0),
-      memLh: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
-      memInt: new Array(2000).fill(0),
-      saNullB0: 90,
-      saNullB1: 91,
-      saNullLh: 92,
-      saNullRh: 93,
-      saNullInt: 94,
+      saNull: {
+        int: 94,
+        gr: 0,
+        hh: { b0: 90, b1: 91, lh: 92, rh: 93 },
+        qqqq: { b0: 90, b1: 91, b2: 0, b3: 0 },
+      },
       saRoot: new Array(64).fill(0),
+      mem: memoryWordsFromComponents({
+        b0: new Array(2000).fill(0),
+        b1: new Array(2000).fill(0),
+        int: new Array(2000).fill(0),
+        lh: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memRh[0] = 10;
+    state.mem[0].hh.rh = 10;
     const { t, n, w } = setupFindSaScenario(scenario, state);
 
     const trace = [];
@@ -512,33 +537,33 @@ test("findSaElement matches Pascal probe trace", () => {
       ...trace,
       `CP${state.curPtr}`,
       `R${state.saRoot[t]}`,
-      `RH0${state.memRh[0]}`,
-      `B1R${state.saRoot[t] !== 0 ? state.memB1[state.saRoot[t]] : 0}`,
-      `M100${state.memB0[100]},${state.memB1[100]},${state.memRh[100]}`,
-      `M120${state.memB0[120]},${state.memB1[120]},${state.memRh[120]}`,
-      `M140${state.memB0[140]},${state.memB1[140]},${state.memRh[140]}`,
-      `M160${state.memB0[160]},${state.memB1[160]},${state.memRh[160]}`,
-      `M180${state.memB0[180]},${state.memB1[180]},${state.memLh[181]},${state.memRh[181]},${state.memInt[182]}`,
-      `M200${state.memB0[200]},${state.memB1[200]},${state.memRh[200]}`,
-      `M220${state.memB0[220]},${state.memB1[220]},${state.memRh[220]}`,
-      `M240${state.memB0[240]},${state.memB1[240]},${state.memRh[240]}`,
-      `M260${state.memB0[260]},${state.memB1[260]},${state.memB0[261]},${state.memB1[261]},${state.memLh[261]},${state.memRh[261]},${state.memInt[261]},${state.memB0[262]},${state.memB1[262]},${state.memLh[262]},${state.memRh[262]},${state.memInt[262]},${state.memB0[263]},${state.memB1[263]},${state.memLh[263]},${state.memRh[263]},${state.memInt[263]}`,
-      `M280${state.memB0[280]},${state.memB1[280]},${state.memLh[281]},${state.memRh[281]},${state.memInt[282]}`,
-      `M300${state.memB0[300]},${state.memB1[300]},${state.memRh[300]}`,
-      `M320${state.memB0[320]},${state.memB1[320]},${state.memRh[320]}`,
-      `M340${state.memB0[340]},${state.memB1[340]},${state.memRh[340]}`,
-      `M360${state.memB0[360]},${state.memB1[360]},${state.memRh[360]}`,
-      `M380${state.memB0[380]},${state.memB1[380]},${state.memLh[381]},${state.memRh[381]},${state.memInt[382]}`,
-      `M400${state.memB0[400]},${state.memB1[400]},${state.memRh[400]}`,
-      `M420${state.memB0[420]},${state.memB1[420]},${state.memRh[420]}`,
-      `M440${state.memB0[440]},${state.memB1[440]},${state.memRh[440]}`,
-      `M460${state.memB0[460]},${state.memB1[460]},${state.memRh[460]}`,
-      `M480${state.memB0[480]},${state.memB1[480]},${state.memLh[481]},${state.memRh[481]},${state.memInt[482]}`,
-      `M500${state.memB0[500]},${state.memB1[500]},${state.memRh[500]}`,
-      `M520${state.memB0[520]},${state.memB1[520]},${state.memRh[520]}`,
-      `M540${state.memB0[540]},${state.memB1[540]},${state.memRh[540]}`,
-      `M560${state.memB0[560]},${state.memB1[560]},${state.memRh[560]}`,
-      `M580${state.memB0[580]},${state.memB1[580]},${state.memLh[581]},${state.memRh[581]},${state.memInt[582]}`,
+      `RH0${state.mem[0].hh.rh}`,
+      `B1R${state.saRoot[t] !== 0 ? state.mem[state.saRoot[t]].hh.b1 : 0}`,
+      `M100${state.mem[100].hh.b0},${state.mem[100].hh.b1},${state.mem[100].hh.rh}`,
+      `M120${state.mem[120].hh.b0},${state.mem[120].hh.b1},${state.mem[120].hh.rh}`,
+      `M140${state.mem[140].hh.b0},${state.mem[140].hh.b1},${state.mem[140].hh.rh}`,
+      `M160${state.mem[160].hh.b0},${state.mem[160].hh.b1},${state.mem[160].hh.rh}`,
+      `M180${state.mem[180].hh.b0},${state.mem[180].hh.b1},${state.mem[181].hh.lh},${state.mem[181].hh.rh},${state.mem[182].int}`,
+      `M200${state.mem[200].hh.b0},${state.mem[200].hh.b1},${state.mem[200].hh.rh}`,
+      `M220${state.mem[220].hh.b0},${state.mem[220].hh.b1},${state.mem[220].hh.rh}`,
+      `M240${state.mem[240].hh.b0},${state.mem[240].hh.b1},${state.mem[240].hh.rh}`,
+      `M260${state.mem[260].hh.b0},${state.mem[260].hh.b1},${state.mem[261].hh.b0},${state.mem[261].hh.b1},${state.mem[261].hh.lh},${state.mem[261].hh.rh},${state.mem[261].int},${state.mem[262].hh.b0},${state.mem[262].hh.b1},${state.mem[262].hh.lh},${state.mem[262].hh.rh},${state.mem[262].int},${state.mem[263].hh.b0},${state.mem[263].hh.b1},${state.mem[263].hh.lh},${state.mem[263].hh.rh},${state.mem[263].int}`,
+      `M280${state.mem[280].hh.b0},${state.mem[280].hh.b1},${state.mem[281].hh.lh},${state.mem[281].hh.rh},${state.mem[282].int}`,
+      `M300${state.mem[300].hh.b0},${state.mem[300].hh.b1},${state.mem[300].hh.rh}`,
+      `M320${state.mem[320].hh.b0},${state.mem[320].hh.b1},${state.mem[320].hh.rh}`,
+      `M340${state.mem[340].hh.b0},${state.mem[340].hh.b1},${state.mem[340].hh.rh}`,
+      `M360${state.mem[360].hh.b0},${state.mem[360].hh.b1},${state.mem[360].hh.rh}`,
+      `M380${state.mem[380].hh.b0},${state.mem[380].hh.b1},${state.mem[381].hh.lh},${state.mem[381].hh.rh},${state.mem[382].int}`,
+      `M400${state.mem[400].hh.b0},${state.mem[400].hh.b1},${state.mem[400].hh.rh}`,
+      `M420${state.mem[420].hh.b0},${state.mem[420].hh.b1},${state.mem[420].hh.rh}`,
+      `M440${state.mem[440].hh.b0},${state.mem[440].hh.b1},${state.mem[440].hh.rh}`,
+      `M460${state.mem[460].hh.b0},${state.mem[460].hh.b1},${state.mem[460].hh.rh}`,
+      `M480${state.mem[480].hh.b0},${state.mem[480].hh.b1},${state.mem[481].hh.lh},${state.mem[481].hh.rh},${state.mem[482].int}`,
+      `M500${state.mem[500].hh.b0},${state.mem[500].hh.b1},${state.mem[500].hh.rh}`,
+      `M520${state.mem[520].hh.b0},${state.mem[520].hh.b1},${state.mem[520].hh.rh}`,
+      `M540${state.mem[540].hh.b0},${state.mem[540].hh.b1},${state.mem[540].hh.rh}`,
+      `M560${state.mem[560].hh.b0},${state.mem[560].hh.b1},${state.mem[560].hh.rh}`,
+      `M580${state.mem[580].hh.b0},${state.mem[580].hh.b1},${state.mem[581].hh.lh},${state.mem[581].hh.rh},${state.mem[582].int}`,
     ];
     const actual = parts.join(" ");
     const expected = runProbeText("FIND_SA_ELEMENT_TRACE", [scenario]);

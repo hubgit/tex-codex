@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TeX in TypeScript</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace-grid">
+        <section class="panel column project-files-panel">
+            <h3>Plain TeX source</h3>
+          <div class="actions pane-actions">
+            <button id="compile-btn" disabled>Compile</button>
+            <span id="status-pill" class="status status-pending">Loading worker…</span>
+          </div>
+          <div class="row source-row">
+            <!--<label for="source-text">Plain TeX source</label>-->
+            <textarea id="source-text" spellcheck="false">\tracingonline=1
+\hsize=330pt
+\vsize=520pt
+\parindent=18pt
+\baselineskip=13pt
+
+\centerline{\bf Plain TeX Browser Demo}
+\smallskip
+\centerline{e-TeX compile + dvisvgm conversion}
+\bigskip
+
+This document is intentionally longer than a minimal hello world sample.
+It exercises several Plain TeX primitives and macros so you can validate
+line breaking, math layout, and page breaks in one run.\par
+
+\bigskip
+\noindent{\bf 1. Paragraph shaping}\par
+Plain TeX gives low-level control over spacing and line breaks.
+You can tune paragraph settings such as {\tt\string\hsize}, {\tt\string\parindent},
+and {\tt\string\baselineskip}, then rely on TeX to choose breakpoints.\par
+To show justification behavior, this sentence is deliberately wordy and
+contains enough material to wrap across multiple lines in the current measure.\par
+
+\bigskip
+\noindent{\bf 2. Inline and display math}\par
+Inline math works naturally, for example $E = mc^2$ and
+$\sqrt{a^2+b^2}$. Displayed formulas can be centered:
+$$
+\int_0^1 x^2\,dx = {1\over 3}
+\qquad
+\sum_{n=1}^{8} n = 36
+\qquad
+(a+b)^2 = a^2 + 2ab + b^2
+$$
+
+\bigskip
+\noindent{\bf 3. Simple list items}\par
+\item{(a)} Input source text is editable in the left pane.
+\item{(b)} Transcript and log streams appear in the middle pane.
+\item{(c)} Binary outputs and SVG previews are shown in the right pane.
+
+\bigskip
+\noindent{\bf 4. Alignment with {\tt\string\halign}}\par
+\halign{\hfil#\hfil\quad&\hfil#\hfil\quad&\hfil#\hfil\cr
+Symbol&Meaning&Value\cr
+\noalign{\hrule}
+$\pi$&circle ratio&3.14159\cr
+$e$&natural base&2.71828\cr
+$\phi$&golden ratio&1.61803\cr
+}
+
+\bigskip
+\noindent{\bf 5. Rules and boxed material}\par
+\hrule
+\smallskip
+\centerline{\vbox{
+  \hrule
+  \hbox{
+    \vrule
+    \kern8pt
+    \vbox{
+      \kern8pt
+      \hbox{Framed text built from rules, {\tt\string\hbox}, and {\tt\string\vbox} primitives.}
+      \hbox{This is useful for debugging output geometry in SVG previews.}
+      \kern8pt
+    }
+    \kern8pt
+    \vrule
+  }
+  \hrule
+}}
+\smallskip
+\hrule
+
+\vfill
+\centerline{Page 1 complete}
+\eject
+
+\centerline{\bf Page 2: Additional Content}
+\bigskip
+\noindent{\bf 6. A small macro}\par
+\def\Term#1#2{\noindent{\it #1:} #2\par}
+\Term{Engine}{A browser worker runs the TeX-compatible runtime.}
+\Term{Artifacts}{DVI output is converted to SVG pages by dvisvgm.}
+\Term{Inspection}{Generated files remain downloadable from the UI.}
+
+\bigskip
+\noindent{\bf 7. Verse block}\par
+{\obeylines
+Roses are red,
+vectors have length,
+TeX packs each box
+with measurable strength.
+}
+
+\vfill
+\centerline{End of sample}
+\bye
+</textarea>
+          </div>
+        </section>
+
+        <section class="panel column middle-column">
+            <h3>Output</h3>
+          <article class="stream-panel">
+            <pre id="transcript"></pre>
+          </article>
+          <article class="stream-panel">
+            <pre id="log-output"></pre>
+          </article>
+
+          <div class="output-head">
+            <ul id="file-list"></ul>
+          </div>
+        </section>
+
+        <section class="panel column output-column">
+          <h3>DVI &rarr; SVG</h3>
+          <div class="svg-output-wrap">
+            <div id="svg-output"></div>
+          </div>
+
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

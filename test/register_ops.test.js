@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -23,20 +24,22 @@ test("trapZeroGlue matches Pascal probe trace", () => {
     const [curVal, w1, w2, w3, mem0rh] = c;
     const state = {
       curVal,
-      memInt: new Array(2000).fill(0),
-      memRh: new Array(2000).fill(0),
+      mem: memoryWordsFromComponents({
+        int: new Array(2000).fill(0),
+        rh: new Array(2000).fill(0),
+        }, { minSize: 30001 }),
     };
-    state.memInt[curVal + 1] = w1;
-    state.memInt[curVal + 2] = w2;
-    state.memInt[curVal + 3] = w3;
-    state.memRh[0] = mem0rh;
+    state.mem[curVal + 1].int = w1;
+    state.mem[curVal + 2].int = w2;
+    state.mem[curVal + 3].int = w3;
+    state.mem[0].hh.rh = mem0rh;
     let deleted = -1;
     trapZeroGlue(state, {
       deleteGlueRef: (p) => {
         deleted = p;
       },
     });
-    const actual = `${state.curVal} ${state.memRh[0]} ${deleted}`;
+    const actual = `${state.curVal} ${state.mem[0].hh.rh} ${deleted}`;
     const expected = runProbeText("TRAP_ZERO_GLUE_TRACE", c);
     assert.equal(actual, expected, `TRAP_ZERO_GLUE_TRACE mismatch for ${c.join(",")}`);
   }

@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { memoryWordsFromComponents } = require("./state_fixture.js");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const test = require("node:test");
@@ -458,10 +459,12 @@ test("openLogFile matches Pascal probe trace", () => {
       curInput: scenario === 3
         ? { stateField: 7, indexField: 8, startField: 9, locField: 10, limitField: 11, nameField: 12 }
         : { stateField: 4, indexField: 5, startField: 6, locField: 7, limitField: 8, nameField: 9 },
-      eqtbInt: new Array(6000).fill(0),
       buffer: new Array(5000).fill(0),
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     });
-    state.eqtbInt[5316] = 13;
+    state.eqtb[5316].int = 13;
     state.buffer[1] = 65;
     state.buffer[2] = 66;
     state.buffer[3] = scenario === 1 ? 13 : 67;
@@ -525,22 +528,24 @@ test("startInput matches Pascal probe trace", () => {
       openParens: 2,
       line: 99,
       first: 0,
-      eqtbInt: new Array(6000).fill(0),
       buffer: new Array(5000).fill(0),
       strPtr: scenario === 1 ? 101 : 200,
       poolPtr: 123,
+      eqtb: memoryWordsFromComponents({
+        int: new Array(6000).fill(0),
+        }),
     });
 
     if (scenario === 1) {
-      state.eqtbInt[5316] = -1;
+      state.eqtb[5316].int = -1;
       state.strStart[100] = 0;
       state.strStart[101] = 20;
     } else if (scenario === 2) {
-      state.eqtbInt[5316] = 35;
+      state.eqtb[5316].int = 35;
       state.strStart[110] = 10;
       state.strStart[111] = 13;
     } else {
-      state.eqtbInt[5316] = 255;
+      state.eqtb[5316].int = 255;
       state.strStart[120] = 20;
       state.strStart[121] = 22;
     }

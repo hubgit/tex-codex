@@ -1,7 +1,5 @@
-export interface TrapZeroGlueState {
-  curVal: number;
-  memInt: number[];
-  memRh: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface TrapZeroGlueState extends TeXStateSlice<"curVal" | "mem" | "mem">{
 }
 
 export interface TrapZeroGlueOps {
@@ -13,11 +11,11 @@ export function trapZeroGlue(
   ops: TrapZeroGlueOps,
 ): void {
   if (
-    state.memInt[state.curVal + 1] === 0 &&
-    state.memInt[state.curVal + 2] === 0 &&
-    state.memInt[state.curVal + 3] === 0
+    state.mem[state.curVal + 1].int === 0 &&
+    state.mem[state.curVal + 2].int === 0 &&
+    state.mem[state.curVal + 3].int === 0
   ) {
-    state.memRh[0] += 1;
+    state.mem[0].hh.rh += 1;
     ops.deleteGlueRef(state.curVal);
     state.curVal = 0;
   }

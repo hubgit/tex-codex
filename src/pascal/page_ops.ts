@@ -1,5 +1,5 @@
-export interface BoxErrorState {
-  eqtbRh: number[];
+import type { TeXStateSlice } from "./state_slices";
+export interface BoxErrorState extends TeXStateSlice<"eqtb">{
 }
 
 export interface BoxErrorOps {
@@ -16,22 +16,17 @@ export function boxError(
   state: BoxErrorState,
   ops: BoxErrorOps,
 ): void {
-  const p = state.eqtbRh[3683 + n];
+  const p = state.eqtb[3683 + n].hh.rh;
   ops.error();
   ops.beginDiagnostic();
   ops.printNl(847);
   ops.showBox(p);
   ops.endDiagnostic(true);
   ops.flushNodeList(p);
-  state.eqtbRh[3683 + n] = 0;
+  state.eqtb[3683 + n].hh.rh = 0;
 }
 
-export interface EnsureVBoxState {
-  interaction: number;
-  eqtbRh: number[];
-  memB0: number[];
-  helpPtr: number;
-  helpLine: number[];
+export interface EnsureVBoxState extends TeXStateSlice<"interaction" | "eqtb" | "mem" | "helpPtr" | "helpLine">{
 }
 
 export interface EnsureVBoxOps {
@@ -45,8 +40,8 @@ export function ensureVBox(
   state: EnsureVBoxState,
   ops: EnsureVBoxOps,
 ): void {
-  const p = state.eqtbRh[3683 + n];
-  if (p !== 0 && state.memB0[p] === 0) {
+  const p = state.eqtb[3683 + n].hh.rh;
+  if (p !== 0 && state.mem[p].hh.b0 === 0) {
     ops.printNl(263);
     ops.print(1001);
     state.helpPtr = 3;
@@ -57,20 +52,7 @@ export function ensureVBox(
   }
 }
 
-export interface VSplitState {
-  curVal: number;
-  curPtr: number;
-  eqtbRh: number[];
-  eqtbInt: number[];
-  memB0: number[];
-  memLh: number[];
-  memRh: number[];
-  saRoot: number[];
-  discPtr: number[];
-  curMark: number[];
-  interaction: number;
-  helpPtr: number;
-  helpLine: number[];
+export interface VSplitState extends TeXStateSlice<"curVal" | "curPtr" | "eqtb" | "eqtb" | "mem" | "mem" | "mem" | "saRoot" | "discPtr" | "curMark" | "interaction" | "helpPtr" | "helpLine">{
 }
 
 export interface VSplitOps {
@@ -99,10 +81,10 @@ export function vsplit(
 
   let v = 0;
   if (state.curVal < 256) {
-    v = state.eqtbRh[3683 + state.curVal] ?? 0;
+    v = state.eqtb[3683 + state.curVal].hh.rh ?? 0;
   } else {
     ops.findSaElement(4, state.curVal, false);
-    v = state.curPtr === 0 ? 0 : (state.memRh[state.curPtr + 1] ?? 0);
+    v = state.curPtr === 0 ? 0 : (state.mem[state.curPtr + 1].hh.rh ?? 0);
   }
 
   ops.flushNodeList(state.discPtr[3] ?? 0);
@@ -122,7 +104,7 @@ export function vsplit(
     return 0;
   }
 
-  if ((state.memB0[v] ?? 0) !== 1) {
+  if ((state.mem[v].hh.b0 ?? 0) !== 1) {
     ops.printNl(263);
     ops.print(339);
     ops.printEsc(977);
@@ -135,65 +117,64 @@ export function vsplit(
     return 0;
   }
 
-  let q = ops.vertBreak(state.memRh[v + 5] ?? 0, h, state.eqtbInt[5851] ?? 0);
-  let p = state.memRh[v + 5] ?? 0;
+  let q = ops.vertBreak(state.mem[v + 5].hh.rh ?? 0, h, state.eqtb[5851].int ?? 0);
+  let p = state.mem[v + 5].hh.rh ?? 0;
   if (p === q) {
-    state.memRh[v + 5] = 0;
+    state.mem[v + 5].hh.rh = 0;
   } else {
     while (true) {
-      if ((state.memB0[p] ?? 0) === 4) {
-        if ((state.memLh[p + 1] ?? 0) !== 0) {
-          ops.findSaElement(6, state.memLh[p + 1] ?? 0, true);
-          if ((state.memRh[state.curPtr + 2] ?? 0) === 0) {
-            state.memRh[state.curPtr + 2] = state.memRh[p + 1] ?? 0;
-            state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+      if ((state.mem[p].hh.b0 ?? 0) === 4) {
+        if ((state.mem[p + 1].hh.lh ?? 0) !== 0) {
+          ops.findSaElement(6, state.mem[p + 1].hh.lh ?? 0, true);
+          if ((state.mem[state.curPtr + 2].hh.rh ?? 0) === 0) {
+            state.mem[state.curPtr + 2].hh.rh = state.mem[p + 1].hh.rh ?? 0;
+            state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
           } else {
-            ops.deleteTokenRef(state.memLh[state.curPtr + 3] ?? 0);
+            ops.deleteTokenRef(state.mem[state.curPtr + 3].hh.lh ?? 0);
           }
-          state.memLh[state.curPtr + 3] = state.memRh[p + 1] ?? 0;
-          state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+          state.mem[state.curPtr + 3].hh.lh = state.mem[p + 1].hh.rh ?? 0;
+          state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
+        } else if ((state.curMark[3] ?? 0) === 0) {
+          state.curMark[3] = state.mem[p + 1].hh.rh ?? 0;
+          state.curMark[4] = state.curMark[3];
+          state.mem[state.curMark[3]].hh.lh = (state.mem[state.curMark[3]].hh.lh ?? 0) + 2;
+        } else {
+          ops.deleteTokenRef(state.curMark[4] ?? 0);
+          state.curMark[4] = state.mem[p + 1].hh.rh ?? 0;
+          state.mem[state.curMark[4]].hh.lh = (state.mem[state.curMark[4]].hh.lh ?? 0) + 1;
         }
-      } else if ((state.curMark[3] ?? 0) === 0) {
-        state.curMark[3] = state.memRh[p + 1] ?? 0;
-        state.curMark[4] = state.curMark[3];
-        state.memLh[state.curMark[3]] = (state.memLh[state.curMark[3]] ?? 0) + 2;
-      } else {
-        ops.deleteTokenRef(state.curMark[4] ?? 0);
-        state.curMark[4] = state.memRh[p + 1] ?? 0;
-        state.memLh[state.curMark[4]] = (state.memLh[state.curMark[4]] ?? 0) + 1;
       }
 
-      if ((state.memRh[p] ?? 0) === q) {
-        state.memRh[p] = 0;
+      if ((state.mem[p].hh.rh ?? 0) === q) {
+        state.mem[p].hh.rh = 0;
         break;
       }
-      p = state.memRh[p] ?? 0;
+      p = state.mem[p].hh.rh ?? 0;
     }
   }
 
-  q = ops.prunePageTop(q, (state.eqtbInt[5330] ?? 0) > 0);
-  p = state.memRh[v + 5] ?? 0;
+  q = ops.prunePageTop(q, (state.eqtb[5330].int ?? 0) > 0);
+  p = state.mem[v + 5].hh.rh ?? 0;
   ops.freeNode(v, 7);
   if (q !== 0) {
     q = ops.vpackage(q, 0, 1, 1073741823);
   }
 
   if (state.curVal < 256) {
-    state.eqtbRh[3683 + state.curVal] = q;
+    state.eqtb[3683 + state.curVal].hh.rh = q;
   } else {
     ops.findSaElement(4, state.curVal, false);
     if (state.curPtr !== 0) {
-      state.memRh[state.curPtr + 1] = q;
-      state.memLh[state.curPtr + 1] = (state.memLh[state.curPtr + 1] ?? 0) + 1;
+      state.mem[state.curPtr + 1].hh.rh = q;
+      state.mem[state.curPtr + 1].hh.lh = (state.mem[state.curPtr + 1].hh.lh ?? 0) + 1;
       ops.deleteSaRef(state.curPtr);
     }
   }
 
-  return ops.vpackage(p, h, 0, state.eqtbInt[5851] ?? 0);
+  return ops.vpackage(p, h, 0, state.eqtb[5851].int ?? 0);
 }
 
-export interface PrintTotalsState {
-  pageSoFar: number[];
+export interface PrintTotalsState extends TeXStateSlice<"pageSoFar">{
 }
 
 export interface PrintTotalsOps {
@@ -232,12 +213,7 @@ export function printTotals(
   }
 }
 
-export interface FreezePageSpecsState {
-  pageContents: number;
-  pageSoFar: number[];
-  pageMaxDepth: number;
-  leastPageCost: number;
-  eqtbInt: number[];
+export interface FreezePageSpecsState extends TeXStateSlice<"pageContents" | "pageSoFar" | "pageMaxDepth" | "leastPageCost" | "eqtb">{
 }
 
 export function freezePageSpecs(
@@ -245,8 +221,8 @@ export function freezePageSpecs(
   state: FreezePageSpecsState,
 ): void {
   state.pageContents = s;
-  state.pageSoFar[0] = state.eqtbInt[5849] ?? 0;
-  state.pageMaxDepth = state.eqtbInt[5850] ?? 0;
+  state.pageSoFar[0] = state.eqtb[5849].int ?? 0;
+  state.pageMaxDepth = state.eqtb[5850].int ?? 0;
   state.pageSoFar[7] = 0;
   state.pageSoFar[1] = 0;
   state.pageSoFar[2] = 0;
@@ -257,42 +233,7 @@ export function freezePageSpecs(
   state.leastPageCost = 1073741823;
 }
 
-export interface FireUpState {
-  bestPageBreak: number;
-  bestSize: number;
-  pageMaxDepth: number;
-  leastPageCost: number;
-  insertPenalties: number;
-  outputActive: boolean;
-  deadCycles: number;
-  line: number;
-  pageContents: number;
-  pageTail: number;
-  lastGlue: number;
-  lastPenalty: number;
-  lastKern: number;
-  lastNodeType: number;
-  tempPtr: number;
-  curPtr: number;
-  nestPtr: number;
-  curListTailField: number;
-  curListModeField: number;
-  curListAuxInt: number;
-  curListMlField: number;
-  helpPtr: number;
-  helpLine: number[];
-  pageSoFar: number[];
-  saRoot: number[];
-  curMark: number[];
-  discPtr: number[];
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  nestTailField: number[];
+export interface FireUpState extends TeXStateSlice<"bestPageBreak" | "bestSize" | "pageMaxDepth" | "leastPageCost" | "insertPenalties" | "outputActive" | "deadCycles" | "line" | "pageContents" | "pageTail" | "lastGlue" | "lastPenalty" | "lastKern" | "lastNodeType" | "tempPtr" | "curPtr" | "nestPtr" | "curList" | "curList" | "curList" | "curList" | "helpPtr" | "helpLine" | "pageSoFar" | "saRoot" | "curMark" | "discPtr" | "mem" | "mem" | "mem" | "mem" | "mem" | "eqtb" | "eqtb" | "nest">{
 }
 
 export interface FireUpOps {
@@ -328,9 +269,9 @@ export function fireUp(
 ): void {
   const infBad = 1073741823;
 
-  if ((state.memB0[state.bestPageBreak] ?? 0) === 12) {
-    ops.geqWordDefine(5307, state.memInt[state.bestPageBreak + 1] ?? 0);
-    state.memInt[state.bestPageBreak + 1] = 10000;
+  if ((state.mem[state.bestPageBreak].hh.b0 ?? 0) === 12) {
+    ops.geqWordDefine(5307, state.mem[state.bestPageBreak + 1].int ?? 0);
+    state.mem[state.bestPageBreak + 1].int = 10000;
   } else {
     ops.geqWordDefine(5307, 10000);
   }
@@ -344,7 +285,7 @@ export function fireUp(
       ops.deleteTokenRef(state.curMark[0] ?? 0);
     }
     state.curMark[0] = state.curMark[2] ?? 0;
-    state.memLh[state.curMark[0] ?? 0] = (state.memLh[state.curMark[0] ?? 0] ?? 0) + 1;
+    state.mem[state.curMark[0] ?? 0].hh.lh = (state.mem[state.curMark[0] ?? 0].hh.lh ?? 0) + 1;
     ops.deleteTokenRef(state.curMark[1] ?? 0);
     state.curMark[1] = 0;
   }
@@ -353,7 +294,7 @@ export function fireUp(
     state.bestPageBreak = 0;
   }
 
-  if ((state.eqtbRh[3938] ?? 0) !== 0) {
+  if ((state.eqtb[3938].hh.rh ?? 0) !== 0) {
     ops.printNl(263);
     ops.print(339);
     ops.printEsc(412);
@@ -365,143 +306,143 @@ export function fireUp(
   }
 
   state.insertPenalties = 0;
-  const saveSplitTopSkip = state.eqtbRh[2892] ?? 0;
+  const saveSplitTopSkip = state.eqtb[2892].hh.rh ?? 0;
 
-  if ((state.eqtbInt[5321] ?? 0) <= 0) {
-    let r = state.memRh[30000] ?? 0;
+  if ((state.eqtb[5321].int ?? 0) <= 0) {
+    let r = state.mem[30000].hh.rh ?? 0;
     while (r !== 30000) {
-      if ((state.memLh[r + 2] ?? 0) !== 0) {
-        const n = (state.memB1[r] ?? 0) - 0;
+      if ((state.mem[r + 2].hh.lh ?? 0) !== 0) {
+        const n = (state.mem[r].hh.b1 ?? 0) - 0;
         ops.ensureVBox(n);
-        if ((state.eqtbRh[3683 + n] ?? 0) === 0) {
-          state.eqtbRh[3683 + n] = ops.newNullBox();
+        if ((state.eqtb[3683 + n].hh.rh ?? 0) === 0) {
+          state.eqtb[3683 + n].hh.rh = ops.newNullBox();
         }
-        let p = (state.eqtbRh[3683 + n] ?? 0) + 5;
-        while ((state.memRh[p] ?? 0) !== 0) {
-          p = state.memRh[p] ?? 0;
+        let p = (state.eqtb[3683 + n].hh.rh ?? 0) + 5;
+        while ((state.mem[p].hh.rh ?? 0) !== 0) {
+          p = state.mem[p].hh.rh ?? 0;
         }
-        state.memRh[r + 2] = p;
+        state.mem[r + 2].hh.rh = p;
       }
-      r = state.memRh[r] ?? 0;
+      r = state.mem[r].hh.rh ?? 0;
     }
   }
 
   let q = 29996;
-  state.memRh[q] = 0;
+  state.mem[q].hh.rh = 0;
   let prevP = 29998;
-  let p = state.memRh[prevP] ?? 0;
+  let p = state.mem[prevP].hh.rh ?? 0;
   while (p !== state.bestPageBreak) {
-    if ((state.memB0[p] ?? 0) === 3) {
-      if ((state.eqtbInt[5321] ?? 0) <= 0) {
-        let r = state.memRh[30000] ?? 0;
-        while ((state.memB1[r] ?? 0) !== (state.memB1[p] ?? 0)) {
-          r = state.memRh[r] ?? 0;
+    if ((state.mem[p].hh.b0 ?? 0) === 3) {
+      if ((state.eqtb[5321].int ?? 0) <= 0) {
+        let r = state.mem[30000].hh.rh ?? 0;
+        while ((state.mem[r].hh.b1 ?? 0) !== (state.mem[p].hh.b1 ?? 0)) {
+          r = state.mem[r].hh.rh ?? 0;
         }
 
         let wait = false;
-        if ((state.memLh[r + 2] ?? 0) === 0) {
+        if ((state.mem[r + 2].hh.lh ?? 0) === 0) {
           wait = true;
         } else {
           wait = false;
-          let s = state.memRh[r + 2] ?? 0;
-          state.memRh[s] = state.memLh[p + 4] ?? 0;
+          let s = state.mem[r + 2].hh.rh ?? 0;
+          state.mem[s].hh.rh = state.mem[p + 4].hh.lh ?? 0;
 
-          if ((state.memLh[r + 2] ?? 0) === p) {
+          if ((state.mem[r + 2].hh.lh ?? 0) === p) {
             if (
-              (state.memB0[r] ?? 0) === 1
-              && (state.memLh[r + 1] ?? 0) === p
-              && (state.memRh[r + 1] ?? 0) !== 0
+              (state.mem[r].hh.b0 ?? 0) === 1
+              && (state.mem[r + 1].hh.lh ?? 0) === p
+              && (state.mem[r + 1].hh.rh ?? 0) !== 0
             ) {
-              while ((state.memRh[s] ?? 0) !== (state.memRh[r + 1] ?? 0)) {
-                s = state.memRh[s] ?? 0;
+              while ((state.mem[s].hh.rh ?? 0) !== (state.mem[r + 1].hh.rh ?? 0)) {
+                s = state.mem[s].hh.rh ?? 0;
               }
-              state.memRh[s] = 0;
-              state.eqtbRh[2892] = state.memRh[p + 4] ?? 0;
-              state.memLh[p + 4] = ops.prunePageTop(state.memRh[r + 1] ?? 0, false);
-              if ((state.memLh[p + 4] ?? 0) !== 0) {
-                state.tempPtr = ops.vpackage(state.memLh[p + 4] ?? 0, 0, 1, infBad);
-                state.memInt[p + 3] = (state.memInt[state.tempPtr + 3] ?? 0) + (state.memInt[state.tempPtr + 2] ?? 0);
+              state.mem[s].hh.rh = 0;
+              state.eqtb[2892].hh.rh = state.mem[p + 4].hh.rh ?? 0;
+              state.mem[p + 4].hh.lh = ops.prunePageTop(state.mem[r + 1].hh.rh ?? 0, false);
+              if ((state.mem[p + 4].hh.lh ?? 0) !== 0) {
+                state.tempPtr = ops.vpackage(state.mem[p + 4].hh.lh ?? 0, 0, 1, infBad);
+                state.mem[p + 3].int = (state.mem[state.tempPtr + 3].int ?? 0) + (state.mem[state.tempPtr + 2].int ?? 0);
                 ops.freeNode(state.tempPtr, 7);
                 wait = true;
               }
             }
 
-            state.memLh[r + 2] = 0;
-            const n = (state.memB1[r] ?? 0) - 0;
-            state.tempPtr = state.memRh[(state.eqtbRh[3683 + n] ?? 0) + 5] ?? 0;
-            ops.freeNode(state.eqtbRh[3683 + n] ?? 0, 7);
-            state.eqtbRh[3683 + n] = ops.vpackage(state.tempPtr, 0, 1, infBad);
+            state.mem[r + 2].hh.lh = 0;
+            const n = (state.mem[r].hh.b1 ?? 0) - 0;
+            state.tempPtr = state.mem[(state.eqtb[3683 + n].hh.rh ?? 0) + 5].hh.rh ?? 0;
+            ops.freeNode(state.eqtb[3683 + n].hh.rh ?? 0, 7);
+            state.eqtb[3683 + n].hh.rh = ops.vpackage(state.tempPtr, 0, 1, infBad);
           } else {
-            while ((state.memRh[s] ?? 0) !== 0) {
-              s = state.memRh[s] ?? 0;
+            while ((state.mem[s].hh.rh ?? 0) !== 0) {
+              s = state.mem[s].hh.rh ?? 0;
             }
-            state.memRh[r + 2] = s;
+            state.mem[r + 2].hh.rh = s;
           }
         }
 
-        state.memRh[prevP] = state.memRh[p] ?? 0;
-        state.memRh[p] = 0;
+        state.mem[prevP].hh.rh = state.mem[p].hh.rh ?? 0;
+        state.mem[p].hh.rh = 0;
         if (wait) {
-          state.memRh[q] = p;
+          state.mem[q].hh.rh = p;
           q = p;
           state.insertPenalties = (state.insertPenalties ?? 0) + 1;
         } else {
-          ops.deleteGlueRef(state.memRh[p + 4] ?? 0);
+          ops.deleteGlueRef(state.mem[p + 4].hh.rh ?? 0);
           ops.freeNode(p, 5);
         }
         p = prevP;
       }
-    } else if ((state.memB0[p] ?? 0) === 4) {
-      if ((state.memLh[p + 1] ?? 0) !== 0) {
-        ops.findSaElement(6, state.memLh[p + 1] ?? 0, true);
-        if ((state.memRh[state.curPtr + 1] ?? 0) === 0) {
-          state.memRh[state.curPtr + 1] = state.memRh[p + 1] ?? 0;
-          state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+    } else if ((state.mem[p].hh.b0 ?? 0) === 4) {
+      if ((state.mem[p + 1].hh.lh ?? 0) !== 0) {
+        ops.findSaElement(6, state.mem[p + 1].hh.lh ?? 0, true);
+        if ((state.mem[state.curPtr + 1].hh.rh ?? 0) === 0) {
+          state.mem[state.curPtr + 1].hh.rh = state.mem[p + 1].hh.rh ?? 0;
+          state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
         }
-        if ((state.memLh[state.curPtr + 2] ?? 0) !== 0) {
-          ops.deleteTokenRef(state.memLh[state.curPtr + 2] ?? 0);
+        if ((state.mem[state.curPtr + 2].hh.lh ?? 0) !== 0) {
+          ops.deleteTokenRef(state.mem[state.curPtr + 2].hh.lh ?? 0);
         }
-        state.memLh[state.curPtr + 2] = state.memRh[p + 1] ?? 0;
-        state.memLh[state.memRh[p + 1] ?? 0] = (state.memLh[state.memRh[p + 1] ?? 0] ?? 0) + 1;
+        state.mem[state.curPtr + 2].hh.lh = state.mem[p + 1].hh.rh ?? 0;
+        state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh = (state.mem[state.mem[p + 1].hh.rh ?? 0].hh.lh ?? 0) + 1;
+      } else {
+        if ((state.curMark[1] ?? 0) === 0) {
+          state.curMark[1] = state.mem[p + 1].hh.rh ?? 0;
+          state.mem[state.curMark[1] ?? 0].hh.lh = (state.mem[state.curMark[1] ?? 0].hh.lh ?? 0) + 1;
+        }
+        if ((state.curMark[2] ?? 0) !== 0) {
+          ops.deleteTokenRef(state.curMark[2] ?? 0);
+        }
+        state.curMark[2] = state.mem[p + 1].hh.rh ?? 0;
+        state.mem[state.curMark[2] ?? 0].hh.lh = (state.mem[state.curMark[2] ?? 0].hh.lh ?? 0) + 1;
       }
-    } else {
-      if ((state.curMark[1] ?? 0) === 0) {
-        state.curMark[1] = state.memRh[p + 1] ?? 0;
-        state.memLh[state.curMark[1] ?? 0] = (state.memLh[state.curMark[1] ?? 0] ?? 0) + 1;
-      }
-      if ((state.curMark[2] ?? 0) !== 0) {
-        ops.deleteTokenRef(state.curMark[2] ?? 0);
-      }
-      state.curMark[2] = state.memRh[p + 1] ?? 0;
-      state.memLh[state.curMark[2] ?? 0] = (state.memLh[state.curMark[2] ?? 0] ?? 0) + 1;
     }
 
     prevP = p;
-    p = state.memRh[prevP] ?? 0;
+    p = state.mem[prevP].hh.rh ?? 0;
   }
 
-  state.eqtbRh[2892] = saveSplitTopSkip;
+  state.eqtb[2892].hh.rh = saveSplitTopSkip;
 
   if (p !== 0) {
-    if ((state.memRh[29999] ?? 0) === 0) {
+    if ((state.mem[29999].hh.rh ?? 0) === 0) {
       if (state.nestPtr === 0) {
-        state.curListTailField = state.pageTail;
+        state.curList.tailField = state.pageTail;
       } else {
-        state.nestTailField[0] = state.pageTail;
+        state.nest[0].tailField = state.pageTail;
       }
     }
-    state.memRh[state.pageTail] = state.memRh[29999] ?? 0;
-    state.memRh[29999] = p;
-    state.memRh[prevP] = 0;
+    state.mem[state.pageTail].hh.rh = state.mem[29999].hh.rh ?? 0;
+    state.mem[29999].hh.rh = p;
+    state.mem[prevP].hh.rh = 0;
   }
 
-  const saveVbadness = state.eqtbInt[5295] ?? 0;
-  state.eqtbInt[5295] = 10000;
-  const saveVfuzz = state.eqtbInt[5854] ?? 0;
-  state.eqtbInt[5854] = infBad;
-  state.eqtbRh[3938] = ops.vpackage(state.memRh[29998] ?? 0, state.bestSize, 0, state.pageMaxDepth);
-  state.eqtbInt[5295] = saveVbadness;
-  state.eqtbInt[5854] = saveVfuzz;
+  const saveVbadness = state.eqtb[5295].int ?? 0;
+  state.eqtb[5295].int = 10000;
+  const saveVfuzz = state.eqtb[5854].int ?? 0;
+  state.eqtb[5854].int = infBad;
+  state.eqtb[3938].hh.rh = ops.vpackage(state.mem[29998].hh.rh ?? 0, state.bestSize, 0, state.pageMaxDepth);
+  state.eqtb[5295].int = saveVbadness;
+  state.eqtb[5854].int = saveVfuzz;
 
   if (state.lastGlue !== 65535) {
     ops.deleteGlueRef(state.lastGlue);
@@ -509,7 +450,7 @@ export function fireUp(
 
   state.pageContents = 0;
   state.pageTail = 29998;
-  state.memRh[29998] = 0;
+  state.mem[29998].hh.rh = 0;
   state.lastGlue = 65535;
   state.lastPenalty = 0;
   state.lastKern = 0;
@@ -518,18 +459,18 @@ export function fireUp(
   state.pageMaxDepth = 0;
 
   if (q !== 29996) {
-    state.memRh[29998] = state.memRh[29996] ?? 0;
+    state.mem[29998].hh.rh = state.mem[29996].hh.rh ?? 0;
     state.pageTail = q;
   }
 
   {
-    let r = state.memRh[30000] ?? 0;
+    let r = state.mem[30000].hh.rh ?? 0;
     while (r !== 30000) {
-      q = state.memRh[r] ?? 0;
+      q = state.mem[r].hh.rh ?? 0;
       ops.freeNode(r, 4);
       r = q;
     }
-    state.memRh[30000] = 30000;
+    state.mem[30000].hh.rh = 30000;
   }
 
   if ((state.saRoot[6] ?? 0) !== 0 && ops.doMarks(2, 0, state.saRoot[6] ?? 0)) {
@@ -538,11 +479,11 @@ export function fireUp(
 
   if ((state.curMark[0] ?? 0) !== 0 && (state.curMark[1] ?? 0) === 0) {
     state.curMark[1] = state.curMark[0] ?? 0;
-    state.memLh[state.curMark[0] ?? 0] = (state.memLh[state.curMark[0] ?? 0] ?? 0) + 1;
+    state.mem[state.curMark[0] ?? 0].hh.lh = (state.mem[state.curMark[0] ?? 0].hh.lh ?? 0) + 1;
   }
 
-  if ((state.eqtbRh[3413] ?? 0) !== 0) {
-    if (state.deadCycles >= (state.eqtbInt[5308] ?? 0)) {
+  if ((state.eqtb[3413].hh.rh ?? 0) !== 0) {
+    if (state.deadCycles >= (state.eqtb[5308].int ?? 0)) {
       ops.printNl(263);
       ops.print(1017);
       ops.printInt(state.deadCycles);
@@ -556,10 +497,10 @@ export function fireUp(
       state.outputActive = true;
       state.deadCycles = (state.deadCycles ?? 0) + 1;
       ops.pushNest();
-      state.curListModeField = -1;
-      state.curListAuxInt = -65536000;
-      state.curListMlField = -(state.line ?? 0);
-      ops.beginTokenList(state.eqtbRh[3413] ?? 0, 6);
+      state.curList.modeField = -1;
+      state.curList.auxField.int = -65536000;
+      state.curList.mlField = -(state.line ?? 0);
+      ops.beginTokenList(state.eqtb[3413].hh.rh ?? 0, 6);
       ops.newSaveLevel(8);
       ops.normalParagraph();
       ops.scanLeftBrace();
@@ -567,54 +508,28 @@ export function fireUp(
     }
   }
 
-  if ((state.memRh[29998] ?? 0) !== 0) {
-    if ((state.memRh[29999] ?? 0) === 0) {
+  if ((state.mem[29998].hh.rh ?? 0) !== 0) {
+    if ((state.mem[29999].hh.rh ?? 0) === 0) {
       if (state.nestPtr === 0) {
-        state.curListTailField = state.pageTail;
+        state.curList.tailField = state.pageTail;
       } else {
-        state.nestTailField[0] = state.pageTail;
+        state.nest[0].tailField = state.pageTail;
       }
     } else {
-      state.memRh[state.pageTail] = state.memRh[29999] ?? 0;
+      state.mem[state.pageTail].hh.rh = state.mem[29999].hh.rh ?? 0;
     }
-    state.memRh[29999] = state.memRh[29998] ?? 0;
-    state.memRh[29998] = 0;
+    state.mem[29999].hh.rh = state.mem[29998].hh.rh ?? 0;
+    state.mem[29998].hh.rh = 0;
     state.pageTail = 29998;
   }
 
   ops.flushNodeList(state.discPtr[2] ?? 0);
   state.discPtr[2] = 0;
-  ops.shipOut(state.eqtbRh[3938] ?? 0);
-  state.eqtbRh[3938] = 0;
+  ops.shipOut(state.eqtb[3938].hh.rh ?? 0);
+  state.eqtb[3938].hh.rh = 0;
 }
 
-export interface BuildPageState {
-  outputActive: boolean;
-  lastGlue: number;
-  lastPenalty: number;
-  lastKern: number;
-  lastNodeType: number;
-  pageContents: number;
-  pageTail: number;
-  pageMaxDepth: number;
-  bestPageBreak: number;
-  bestSize: number;
-  leastPageCost: number;
-  insertPenalties: number;
-  bestHeightPlusDepth: number;
-  tempPtr: number;
-  nestPtr: number;
-  curListTailField: number;
-  memB0: number[];
-  memB1: number[];
-  memLh: number[];
-  memRh: number[];
-  memInt: number[];
-  eqtbRh: number[];
-  eqtbInt: number[];
-  pageSoFar: number[];
-  discPtr: number[];
-  nestTailField: number[];
+export interface BuildPageState extends TeXStateSlice<"outputActive" | "lastGlue" | "lastPenalty" | "lastKern" | "lastNodeType" | "pageContents" | "pageTail" | "pageMaxDepth" | "bestPageBreak" | "bestSize" | "leastPageCost" | "insertPenalties" | "bestHeightPlusDepth" | "tempPtr" | "nestPtr" | "curList" | "helpPtr" | "helpLine" | "mem" | "mem" | "mem" | "mem" | "mem" | "eqtb" | "eqtb" | "pageSoFar" | "discPtr" | "nest">{
 }
 
 export interface BuildPageOps {
@@ -629,6 +544,10 @@ export interface BuildPageOps {
   print: (s: number) => void;
   printEsc: (s: number) => void;
   printInt: (n: number) => void;
+  printScaled?: (s: number) => void;
+  printChar?: (c: number) => void;
+  beginDiagnostic?: () => void;
+  endDiagnostic?: (blankLine: boolean) => void;
   error: () => void;
   vertBreak: (p: number, h: number, d: number) => number;
   badness: (t: number, s: number) => number;
@@ -642,29 +561,48 @@ export function buildPage(
   ops: BuildPageOps,
 ): void {
   const infBad = 1073741823;
+  const tracingPages = (state.eqtb[5301].int ?? 0) > 0;
+  const canTracePages =
+    tracingPages &&
+    ops.beginDiagnostic !== undefined &&
+    ops.endDiagnostic !== undefined &&
+    ops.printScaled !== undefined &&
+    ops.printChar !== undefined;
 
-  if ((state.memRh[29999] ?? 0) === 0 || state.outputActive) {
+  const traceFreezePageSpecs = (): void => {
+    if (!canTracePages) {
+      return;
+    }
+    ops.beginDiagnostic!();
+    ops.printNl(999);
+    ops.printScaled!(state.pageSoFar[0] ?? 0);
+    ops.print(1000);
+    ops.printScaled!(state.pageMaxDepth ?? 0);
+    ops.endDiagnostic!(false);
+  };
+
+  if ((state.mem[29999].hh.rh ?? 0) === 0 || state.outputActive) {
     return;
   }
 
-  while ((state.memRh[29999] ?? 0) !== 0) {
-    let p = state.memRh[29999] ?? 0;
+  while ((state.mem[29999].hh.rh ?? 0) !== 0) {
+    let p = state.mem[29999].hh.rh ?? 0;
 
     if (state.lastGlue !== 65535) {
       ops.deleteGlueRef(state.lastGlue);
     }
     state.lastPenalty = 0;
     state.lastKern = 0;
-    state.lastNodeType = (state.memB0[p] ?? 0) + 1;
-    if ((state.memB0[p] ?? 0) === 10) {
-      state.lastGlue = state.memLh[p + 1] ?? 0;
-      state.memRh[state.lastGlue] = (state.memRh[state.lastGlue] ?? 0) + 1;
+    state.lastNodeType = (state.mem[p].hh.b0 ?? 0) + 1;
+    if ((state.mem[p].hh.b0 ?? 0) === 10) {
+      state.lastGlue = state.mem[p + 1].hh.lh ?? 0;
+      state.mem[state.lastGlue].hh.rh = (state.mem[state.lastGlue].hh.rh ?? 0) + 1;
     } else {
       state.lastGlue = 65535;
-      if ((state.memB0[p] ?? 0) === 12) {
-        state.lastPenalty = state.memInt[p + 1] ?? 0;
-      } else if ((state.memB0[p] ?? 0) === 11) {
-        state.lastKern = state.memInt[p + 1] ?? 0;
+      if ((state.mem[p].hh.b0 ?? 0) === 12) {
+        state.lastPenalty = state.mem[p + 1].int ?? 0;
+      } else if ((state.mem[p].hh.b0 ?? 0) === 11) {
+        state.lastKern = state.mem[p + 1].int ?? 0;
       }
     }
 
@@ -673,28 +611,29 @@ export function buildPage(
     let goto80 = false;
     let goto90 = false;
 
-    switch (state.memB0[p] ?? 0) {
+    switch (state.mem[p].hh.b0 ?? 0) {
       case 0:
       case 1:
       case 2:
         if (state.pageContents < 2) {
           if (state.pageContents === 0) {
             ops.freezePageSpecs(2);
+            traceFreezePageSpecs();
           } else {
             state.pageContents = 2;
           }
           const q = ops.newSkipParam(9);
-          if ((state.memInt[state.tempPtr + 1] ?? 0) > (state.memInt[p + 3] ?? 0)) {
-            state.memInt[state.tempPtr + 1] = (state.memInt[state.tempPtr + 1] ?? 0) - (state.memInt[p + 3] ?? 0);
+          if ((state.mem[state.tempPtr + 1].int ?? 0) > (state.mem[p + 3].int ?? 0)) {
+            state.mem[state.tempPtr + 1].int = (state.mem[state.tempPtr + 1].int ?? 0) - (state.mem[p + 3].int ?? 0);
           } else {
-            state.memInt[state.tempPtr + 1] = 0;
+            state.mem[state.tempPtr + 1].int = 0;
           }
-          state.memRh[q] = p;
-          state.memRh[29999] = q;
+          state.mem[q].hh.rh = p;
+          state.mem[29999].hh.rh = q;
           continue;
         }
-        state.pageSoFar[1] = (state.pageSoFar[1] ?? 0) + (state.pageSoFar[7] ?? 0) + (state.memInt[p + 3] ?? 0);
-        state.pageSoFar[7] = state.memInt[p + 2] ?? 0;
+        state.pageSoFar[1] = (state.pageSoFar[1] ?? 0) + (state.pageSoFar[7] ?? 0) + (state.mem[p + 3].int ?? 0);
+        state.pageSoFar[7] = state.mem[p + 2].int ?? 0;
         goto80 = true;
         break;
 
@@ -705,7 +644,7 @@ export function buildPage(
       case 10:
         if (state.pageContents < 2) {
           goto31 = true;
-        } else if ((state.memB0[state.pageTail] ?? 0) < 9) {
+        } else if ((state.mem[state.pageTail].hh.b0 ?? 0) < 9) {
           pi = 0;
         } else {
           goto90 = true;
@@ -715,9 +654,9 @@ export function buildPage(
       case 11:
         if (state.pageContents < 2) {
           goto31 = true;
-        } else if ((state.memRh[p] ?? 0) === 0) {
+        } else if ((state.mem[p].hh.rh ?? 0) === 0) {
           return;
-        } else if ((state.memB0[state.memRh[p] ?? 0] ?? 0) === 10) {
+        } else if ((state.mem[state.mem[p].hh.rh ?? 0].hh.b0 ?? 0) === 10) {
           pi = 0;
         } else {
           goto90 = true;
@@ -728,7 +667,7 @@ export function buildPage(
         if (state.pageContents < 2) {
           goto31 = true;
         } else {
-          pi = state.memInt[p + 1] ?? 0;
+          pi = state.mem[p + 1].int ?? 0;
         }
         break;
 
@@ -739,90 +678,113 @@ export function buildPage(
       case 3: {
         if (state.pageContents === 0) {
           ops.freezePageSpecs(1);
+          traceFreezePageSpecs();
         }
-        let n = state.memB1[p] ?? 0;
+        let n = state.mem[p].hh.b1 ?? 0;
         let r = 30000;
-        while (n >= (state.memB1[state.memRh[r] ?? 0] ?? 0)) {
-          r = state.memRh[r] ?? 0;
+        while (n >= (state.mem[state.mem[r].hh.rh ?? 0].hh.b1 ?? 0)) {
+          r = state.mem[r].hh.rh ?? 0;
         }
         n = n - 0;
-        if ((state.memB1[r] ?? 0) !== n + 0) {
+        if ((state.mem[r].hh.b1 ?? 0) !== n + 0) {
           let q = ops.getNode(4);
-          state.memRh[q] = state.memRh[r] ?? 0;
-          state.memRh[r] = q;
+          state.mem[q].hh.rh = state.mem[r].hh.rh ?? 0;
+          state.mem[r].hh.rh = q;
           r = q;
-          state.memB1[r] = n + 0;
-          state.memB0[r] = 0;
+          state.mem[r].hh.b1 = n + 0;
+          state.mem[r].hh.b0 = 0;
           ops.ensureVBox(n);
-          if ((state.eqtbRh[3683 + n] ?? 0) === 0) {
-            state.memInt[r + 3] = 0;
+          if ((state.eqtb[3683 + n].hh.rh ?? 0) === 0) {
+            state.mem[r + 3].int = 0;
           } else {
-            state.memInt[r + 3] = (state.memInt[(state.eqtbRh[3683 + n] ?? 0) + 3] ?? 0)
-              + (state.memInt[(state.eqtbRh[3683 + n] ?? 0) + 2] ?? 0);
+            state.mem[r + 3].int = (state.mem[(state.eqtb[3683 + n].hh.rh ?? 0) + 3].int ?? 0)
+              + (state.mem[(state.eqtb[3683 + n].hh.rh ?? 0) + 2].int ?? 0);
           }
-          state.memLh[r + 2] = 0;
-          q = state.eqtbRh[2900 + n] ?? 0;
+          state.mem[r + 2].hh.lh = 0;
+          q = state.eqtb[2900 + n].hh.rh ?? 0;
           let h = 0;
-          if ((state.eqtbInt[5333 + n] ?? 0) === 1000) {
-            h = state.memInt[r + 3] ?? 0;
+          if ((state.eqtb[5333 + n].int ?? 0) === 1000) {
+            h = state.mem[r + 3].int ?? 0;
           } else {
-            h = ops.xOverN(state.memInt[r + 3] ?? 0, 1000) * (state.eqtbInt[5333 + n] ?? 0);
+            h = ops.xOverN(state.mem[r + 3].int ?? 0, 1000) * (state.eqtb[5333 + n].int ?? 0);
           }
-          state.pageSoFar[0] = (state.pageSoFar[0] ?? 0) - h - (state.memInt[q + 1] ?? 0);
-          state.pageSoFar[2 + (state.memB0[q] ?? 0)] = (state.pageSoFar[2 + (state.memB0[q] ?? 0)] ?? 0)
-            + (state.memInt[q + 2] ?? 0);
-          state.pageSoFar[6] = (state.pageSoFar[6] ?? 0) + (state.memInt[q + 3] ?? 0);
-          if ((state.memB1[q] ?? 0) !== 0 && (state.memInt[q + 3] ?? 0) !== 0) {
+          state.pageSoFar[0] = (state.pageSoFar[0] ?? 0) - h - (state.mem[q + 1].int ?? 0);
+          state.pageSoFar[2 + (state.mem[q].hh.b0 ?? 0)] = (state.pageSoFar[2 + (state.mem[q].hh.b0 ?? 0)] ?? 0)
+            + (state.mem[q + 2].int ?? 0);
+          state.pageSoFar[6] = (state.pageSoFar[6] ?? 0) + (state.mem[q + 3].int ?? 0);
+          if ((state.mem[q].hh.b1 ?? 0) !== 0 && (state.mem[q + 3].int ?? 0) !== 0) {
             ops.printNl(263);
             ops.print(1010);
             ops.printEsc(398);
             ops.printInt(n);
+            state.helpPtr = 3;
+            state.helpLine[2] = 1011;
+            state.helpLine[1] = 1012;
+            state.helpLine[0] = 934;
             ops.error();
           }
         }
-        if ((state.memB0[r] ?? 0) === 1) {
-          state.insertPenalties = (state.insertPenalties ?? 0) + (state.memInt[p + 1] ?? 0);
+        if ((state.mem[r].hh.b0 ?? 0) === 1) {
+          state.insertPenalties = (state.insertPenalties ?? 0) + (state.mem[p + 1].int ?? 0);
         } else {
-          state.memRh[r + 2] = p;
+          state.mem[r + 2].hh.rh = p;
           const delta = (state.pageSoFar[0] ?? 0) - (state.pageSoFar[1] ?? 0) - (state.pageSoFar[7] ?? 0) + (state.pageSoFar[6] ?? 0);
           let h = 0;
-          if ((state.eqtbInt[5333 + n] ?? 0) === 1000) {
-            h = state.memInt[p + 3] ?? 0;
+          if ((state.eqtb[5333 + n].int ?? 0) === 1000) {
+            h = state.mem[p + 3].int ?? 0;
           } else {
-            h = ops.xOverN(state.memInt[p + 3] ?? 0, 1000) * (state.eqtbInt[5333 + n] ?? 0);
+            h = ops.xOverN(state.mem[p + 3].int ?? 0, 1000) * (state.eqtb[5333 + n].int ?? 0);
           }
           if (
             (h <= 0 || h <= delta)
-            && (state.memInt[p + 3] ?? 0) + (state.memInt[r + 3] ?? 0) <= (state.eqtbInt[5866 + n] ?? 0)
+            && (state.mem[p + 3].int ?? 0) + (state.mem[r + 3].int ?? 0) <= (state.eqtb[5866 + n].int ?? 0)
           ) {
             state.pageSoFar[0] = (state.pageSoFar[0] ?? 0) - h;
-            state.memInt[r + 3] = (state.memInt[r + 3] ?? 0) + (state.memInt[p + 3] ?? 0);
+            state.mem[r + 3].int = (state.mem[r + 3].int ?? 0) + (state.mem[p + 3].int ?? 0);
           } else {
             let w = 0;
-            if ((state.eqtbInt[5333 + n] ?? 0) <= 0) {
+            if ((state.eqtb[5333 + n].int ?? 0) <= 0) {
               w = infBad;
             } else {
               w = (state.pageSoFar[0] ?? 0) - (state.pageSoFar[1] ?? 0) - (state.pageSoFar[7] ?? 0);
-              if ((state.eqtbInt[5333 + n] ?? 0) !== 1000) {
-                w = ops.xOverN(w, state.eqtbInt[5333 + n] ?? 0) * 1000;
+              if ((state.eqtb[5333 + n].int ?? 0) !== 1000) {
+                w = ops.xOverN(w, state.eqtb[5333 + n].int ?? 0) * 1000;
               }
             }
-            if (w > (state.eqtbInt[5866 + n] ?? 0) - (state.memInt[r + 3] ?? 0)) {
-              w = (state.eqtbInt[5866 + n] ?? 0) - (state.memInt[r + 3] ?? 0);
+            if (w > (state.eqtb[5866 + n].int ?? 0) - (state.mem[r + 3].int ?? 0)) {
+              w = (state.eqtb[5866 + n].int ?? 0) - (state.mem[r + 3].int ?? 0);
             }
-            const q = ops.vertBreak(state.memLh[p + 4] ?? 0, w, state.memInt[p + 2] ?? 0);
-            state.memInt[r + 3] = (state.memInt[r + 3] ?? 0) + (state.bestHeightPlusDepth ?? 0);
-            if ((state.eqtbInt[5333 + n] ?? 0) !== 1000) {
-              state.bestHeightPlusDepth = ops.xOverN(state.bestHeightPlusDepth ?? 0, 1000) * (state.eqtbInt[5333 + n] ?? 0);
+            const q = ops.vertBreak(state.mem[p + 4].hh.lh ?? 0, w, state.mem[p + 2].int ?? 0);
+            state.mem[r + 3].int = (state.mem[r + 3].int ?? 0) + (state.bestHeightPlusDepth ?? 0);
+            if (canTracePages) {
+              ops.beginDiagnostic!();
+              ops.printNl(1013);
+              ops.printInt(n);
+              ops.print(1014);
+              ops.printScaled!(w);
+              ops.printChar!(44);
+              ops.printScaled!(state.bestHeightPlusDepth ?? 0);
+              ops.print(943);
+              if (q === 0) {
+                ops.printInt(-10000);
+              } else if ((state.mem[q].hh.b0 ?? 0) === 12) {
+                ops.printInt(state.mem[q + 1].int ?? 0);
+              } else {
+                ops.printChar!(48);
+              }
+              ops.endDiagnostic!(false);
+            }
+            if ((state.eqtb[5333 + n].int ?? 0) !== 1000) {
+              state.bestHeightPlusDepth = ops.xOverN(state.bestHeightPlusDepth ?? 0, 1000) * (state.eqtb[5333 + n].int ?? 0);
             }
             state.pageSoFar[0] = (state.pageSoFar[0] ?? 0) - (state.bestHeightPlusDepth ?? 0);
-            state.memB0[r] = 1;
-            state.memRh[r + 1] = q;
-            state.memLh[r + 1] = p;
+            state.mem[r].hh.b0 = 1;
+            state.mem[r + 1].hh.rh = q;
+            state.mem[r + 1].hh.lh = p;
             if (q === 0) {
               state.insertPenalties = (state.insertPenalties ?? 0) - 10000;
-            } else if ((state.memB0[q] ?? 0) === 12) {
-              state.insertPenalties = (state.insertPenalties ?? 0) + (state.memInt[q + 1] ?? 0);
+            } else if ((state.mem[q].hh.b0 ?? 0) === 12) {
+              state.insertPenalties = (state.insertPenalties ?? 0) + (state.mem[q + 1].int ?? 0);
             }
           }
         }
@@ -866,14 +828,44 @@ export function buildPage(
           c = infBad;
         }
 
+        if (canTracePages) {
+          ops.beginDiagnostic!();
+          ops.printNl(37);
+          ops.print(939);
+          printTotals(state, {
+            printScaled: ops.printScaled!,
+            print: ops.print,
+          });
+          ops.print(1008);
+          ops.printScaled!(state.pageSoFar[0] ?? 0);
+          ops.print(942);
+          if (b === infBad) {
+            ops.printChar!(42);
+          } else {
+            ops.printInt(b);
+          }
+          ops.print(943);
+          ops.printInt(pi);
+          ops.print(1009);
+          if (c === infBad) {
+            ops.printChar!(42);
+          } else {
+            ops.printInt(c);
+          }
+          if (c <= state.leastPageCost) {
+            ops.printChar!(35);
+          }
+          ops.endDiagnostic!(false);
+        }
+
         if (c <= state.leastPageCost) {
           state.bestPageBreak = p;
           state.bestSize = state.pageSoFar[0] ?? 0;
           state.leastPageCost = c;
-          let r = state.memRh[30000] ?? 0;
+          let r = state.mem[30000].hh.rh ?? 0;
           while (r !== 30000) {
-            state.memLh[r + 2] = state.memRh[r + 2] ?? 0;
-            r = state.memRh[r] ?? 0;
+            state.mem[r + 2].hh.lh = state.mem[r + 2].hh.rh ?? 0;
+            r = state.mem[r].hh.rh ?? 0;
           }
         }
 
@@ -886,7 +878,7 @@ export function buildPage(
         }
       }
 
-      if ((state.memB0[p] ?? 0) < 10 || (state.memB0[p] ?? 0) > 11) {
+      if ((state.mem[p].hh.b0 ?? 0) < 10 || (state.mem[p].hh.b0 ?? 0) > 11) {
         goto80 = true;
       } else {
         goto90 = true;
@@ -895,24 +887,29 @@ export function buildPage(
 
     if (goto90) {
       let q = 0;
-      if ((state.memB0[p] ?? 0) === 11) {
+      if ((state.mem[p].hh.b0 ?? 0) === 11) {
         q = p;
       } else {
-        q = state.memLh[p + 1] ?? 0;
-        state.pageSoFar[2 + (state.memB0[q] ?? 0)] = (state.pageSoFar[2 + (state.memB0[q] ?? 0)] ?? 0) + (state.memInt[q + 2] ?? 0);
-        state.pageSoFar[6] = (state.pageSoFar[6] ?? 0) + (state.memInt[q + 3] ?? 0);
-        if ((state.memB1[q] ?? 0) !== 0 && (state.memInt[q + 3] ?? 0) !== 0) {
+        q = state.mem[p + 1].hh.lh ?? 0;
+        state.pageSoFar[2 + (state.mem[q].hh.b0 ?? 0)] = (state.pageSoFar[2 + (state.mem[q].hh.b0 ?? 0)] ?? 0) + (state.mem[q + 2].int ?? 0);
+        state.pageSoFar[6] = (state.pageSoFar[6] ?? 0) + (state.mem[q + 3].int ?? 0);
+        if ((state.mem[q].hh.b1 ?? 0) !== 0 && (state.mem[q + 3].int ?? 0) !== 0) {
           ops.printNl(263);
           ops.print(1006);
+          state.helpPtr = 4;
+          state.helpLine[3] = 1007;
+          state.helpLine[2] = 975;
+          state.helpLine[1] = 976;
+          state.helpLine[0] = 934;
           ops.error();
           const r = ops.newSpec(q);
-          state.memB1[r] = 0;
+          state.mem[r].hh.b1 = 0;
           ops.deleteGlueRef(q);
-          state.memLh[p + 1] = r;
+          state.mem[p + 1].hh.lh = r;
           q = r;
         }
       }
-      state.pageSoFar[1] = (state.pageSoFar[1] ?? 0) + (state.pageSoFar[7] ?? 0) + (state.memInt[q + 1] ?? 0);
+      state.pageSoFar[1] = (state.pageSoFar[1] ?? 0) + (state.pageSoFar[7] ?? 0) + (state.mem[q + 1].int ?? 0);
       state.pageSoFar[7] = 0;
       goto80 = true;
     }
@@ -923,21 +920,21 @@ export function buildPage(
         state.pageSoFar[7] = state.pageMaxDepth;
       }
 
-      state.memRh[state.pageTail] = p;
+      state.mem[state.pageTail].hh.rh = p;
       state.pageTail = p;
-      state.memRh[29999] = state.memRh[p] ?? 0;
-      state.memRh[p] = 0;
+      state.mem[29999].hh.rh = state.mem[p].hh.rh ?? 0;
+      state.mem[p].hh.rh = 0;
       continue;
     }
 
     if (goto31) {
-      state.memRh[29999] = state.memRh[p] ?? 0;
-      state.memRh[p] = 0;
-      if ((state.eqtbInt[5330] ?? 0) > 0) {
+      state.mem[29999].hh.rh = state.mem[p].hh.rh ?? 0;
+      state.mem[p].hh.rh = 0;
+      if ((state.eqtb[5330].int ?? 0) > 0) {
         if ((state.discPtr[2] ?? 0) === 0) {
           state.discPtr[2] = p;
         } else {
-          state.memRh[state.discPtr[1] ?? 0] = p;
+          state.mem[state.discPtr[1] ?? 0].hh.rh = p;
         }
         state.discPtr[1] = p;
       } else {
@@ -947,8 +944,8 @@ export function buildPage(
   }
 
   if (state.nestPtr === 0) {
-    state.curListTailField = 29999;
+    state.curList.tailField = 29999;
   } else {
-    state.nestTailField[0] = 29999;
+    state.nest[0].tailField = 29999;
   }
 }

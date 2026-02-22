@@ -1,24 +1,8 @@
 import { InStateRecord } from "./input_state";
 import { copyInStateRecord } from "./input_state";
+import type { TeXStateSlice } from "./state_slices";
 
-export interface CheckOuterValidityState {
-  scannerStatus: number;
-  deletionsAllowed: boolean;
-  curCs: number;
-  curInput: InStateRecord;
-  curCmd: number;
-  curChr: number;
-  curIf: number;
-  skipLine: number;
-  helpPtr: number;
-  helpLine: number[];
-  curTok: number;
-  warningIndex: number;
-  parToken: number;
-  longState: number;
-  alignState: number;
-  memLh: number[];
-  memRh: number[];
+export interface CheckOuterValidityState extends TeXStateSlice<"scannerStatus" | "deletionsAllowed" | "curCs" | "curInput" | "curCmd" | "curChr" | "curIf" | "skipLine" | "helpPtr" | "helpLine" | "curTok" | "warningIndex" | "parToken" | "longState" | "alignState" | "mem" | "mem">{
 }
 
 export interface CheckOuterValidityOps {
@@ -48,7 +32,7 @@ export function checkOuterValidity(
         state.curInput.nameField > 17
       ) {
         const p = ops.getAvail();
-        state.memLh[p] = 4095 + state.curCs;
+        state.mem[p].hh.lh = 4095 + state.curCs;
         ops.beginTokenList(p, 3);
       }
       state.curCmd = 10;
@@ -70,22 +54,22 @@ export function checkOuterValidity(
       let p = ops.getAvail();
       if (state.scannerStatus === 2) {
         ops.print(578);
-        state.memLh[p] = 637;
+        state.mem[p].hh.lh = 637;
       } else if (state.scannerStatus === 3) {
         ops.print(621);
-        state.memLh[p] = state.parToken;
+        state.mem[p].hh.lh = state.parToken;
         state.longState = 113;
       } else if (state.scannerStatus === 4) {
         ops.print(580);
-        state.memLh[p] = 637;
+        state.mem[p].hh.lh = 637;
         const q = p;
         p = ops.getAvail();
-        state.memRh[p] = q;
-        state.memLh[p] = 6710;
+        state.mem[p].hh.rh = q;
+        state.mem[p].hh.lh = 6710;
         state.alignState = -1000000;
       } else if (state.scannerStatus === 5) {
         ops.print(581);
-        state.memLh[p] = 637;
+        state.mem[p].hh.lh = 637;
       }
 
       ops.beginTokenList(p, 4);
@@ -120,13 +104,7 @@ export function checkOuterValidity(
   }
 }
 
-export interface FirmUpTheLineState {
-  curInput: InStateRecord;
-  last: number;
-  eqtbInt: number[];
-  interaction: number;
-  first: number;
-  buffer: number[];
+export interface FirmUpTheLineState extends TeXStateSlice<"curInput" | "last" | "eqtb" | "interaction" | "first" | "buffer">{
 }
 
 export interface FirmUpTheLineOps {
@@ -140,7 +118,7 @@ export function firmUpTheLine(
   ops: FirmUpTheLineOps,
 ): void {
   state.curInput.limitField = state.last;
-  if (state.eqtbInt[5296] > 0 && state.interaction > 1) {
+  if (state.eqtb[5296].int > 0 && state.interaction > 1) {
     ops.printLn();
     if (state.curInput.startField < state.curInput.limitField) {
       for (
@@ -164,11 +142,7 @@ export function firmUpTheLine(
   }
 }
 
-export interface RunawayState {
-  scannerStatus: number;
-  defRef: number;
-  errorLine: number;
-  memRh: number[];
+export interface RunawayState extends TeXStateSlice<"scannerStatus" | "defRef" | "errorLine" | "mem">{
 }
 
 export interface RunawayOps {
@@ -205,22 +179,11 @@ export function runaway(state: RunawayState, ops: RunawayOps): void {
     }
     ops.printChar(63);
     ops.printLn();
-    ops.showTokenList(state.memRh[p] ?? 0, 0, state.errorLine - 10);
+    ops.showTokenList(state.mem[p].hh.rh ?? 0, 0, state.errorLine - 10);
   }
 }
 
-export interface GroupWarningState {
-  basePtr: number;
-  inputPtr: number;
-  inOpen: number;
-  curBoundary: number;
-  savePtr: number;
-  history: number;
-  curInput: InStateRecord;
-  inputStack: InStateRecord[];
-  grpStack: number[];
-  saveStackRh: number[];
-  eqtbInt: number[];
+export interface GroupWarningState extends TeXStateSlice<"basePtr" | "inputPtr" | "inOpen" | "curBoundary" | "savePtr" | "history" | "curInput" | "inputStack" | "grpStack" | "saveStack" | "eqtb">{
 }
 
 export interface GroupWarningOps {
@@ -241,7 +204,7 @@ export function groupWarning(
   let i = state.inOpen;
   let w = false;
   while ((state.grpStack[i] ?? 0) === state.curBoundary && i > 0) {
-    if ((state.eqtbInt[5327] ?? 0) > 0) {
+    if ((state.eqtb[5327].int ?? 0) > 0) {
       while (
         (state.inputStack[state.basePtr]?.stateField ?? 0) === 0 ||
         (state.inputStack[state.basePtr]?.indexField ?? 0) > i
@@ -253,7 +216,7 @@ export function groupWarning(
       }
     }
 
-    state.grpStack[i] = state.saveStackRh[state.savePtr] ?? 0;
+    state.grpStack[i] = state.saveStack[state.savePtr].hh.rh ?? 0;
     i -= 1;
   }
 
@@ -262,7 +225,7 @@ export function groupWarning(
     ops.printGroup(true);
     ops.print(1387);
     ops.printLn();
-    if ((state.eqtbInt[5327] ?? 0) > 1) {
+    if ((state.eqtb[5327].int ?? 0) > 1) {
       ops.showContext();
     }
     if (state.history === 0) {
@@ -271,19 +234,7 @@ export function groupWarning(
   }
 }
 
-export interface IfWarningState {
-  basePtr: number;
-  inputPtr: number;
-  inOpen: number;
-  condPtr: number;
-  curIf: number;
-  ifLine: number;
-  history: number;
-  curInput: InStateRecord;
-  inputStack: InStateRecord[];
-  ifStack: number[];
-  memRh: number[];
-  eqtbInt: number[];
+export interface IfWarningState extends TeXStateSlice<"basePtr" | "inputPtr" | "inOpen" | "condPtr" | "curIf" | "ifLine" | "history" | "curInput" | "inputStack" | "ifStack" | "mem" | "eqtb">{
 }
 
 export interface IfWarningOps {
@@ -305,7 +256,7 @@ export function ifWarning(
   let i = state.inOpen;
   let w = false;
   while ((state.ifStack[i] ?? 0) === state.condPtr) {
-    if ((state.eqtbInt[5327] ?? 0) > 0) {
+    if ((state.eqtb[5327].int ?? 0) > 0) {
       while (
         (state.inputStack[state.basePtr]?.stateField ?? 0) === 0 ||
         (state.inputStack[state.basePtr]?.indexField ?? 0) > i
@@ -317,7 +268,7 @@ export function ifWarning(
       }
     }
 
-    state.ifStack[i] = state.memRh[state.condPtr] ?? 0;
+    state.ifStack[i] = state.mem[state.condPtr].hh.rh ?? 0;
     i -= 1;
   }
 
@@ -330,7 +281,7 @@ export function ifWarning(
     }
     ops.print(1387);
     ops.printLn();
-    if ((state.eqtbInt[5327] ?? 0) > 1) {
+    if ((state.eqtb[5327].int ?? 0) > 1) {
       ops.showContext();
     }
     if (state.history === 0) {
@@ -339,26 +290,7 @@ export function ifWarning(
   }
 }
 
-export interface FileWarningState {
-  savePtr: number;
-  curLevel: number;
-  curGroup: number;
-  curBoundary: number;
-  inOpen: number;
-  grpStack: number[];
-  saveStackB1: number[];
-  saveStackRh: number[];
-  condPtr: number;
-  ifLimit: number;
-  curIf: number;
-  ifLine: number;
-  ifStack: number[];
-  memInt: number[];
-  memB0: number[];
-  memB1: number[];
-  memRh: number[];
-  eqtbInt: number[];
-  history: number;
+export interface FileWarningState extends TeXStateSlice<"savePtr" | "curLevel" | "curGroup" | "curBoundary" | "inOpen" | "grpStack" | "saveStack" | "saveStack" | "condPtr" | "ifLimit" | "curIf" | "ifLine" | "ifStack" | "mem" | "mem" | "mem" | "mem" | "eqtb" | "history">{
 }
 
 export interface FileWarningOps {
@@ -386,8 +318,8 @@ export function fileWarning(
     ops.printNl(1388);
     ops.printGroup(true);
     ops.print(1389);
-    state.curGroup = state.saveStackB1[state.savePtr] ?? 0;
-    state.savePtr = state.saveStackRh[state.savePtr] ?? 0;
+    state.curGroup = state.saveStack[state.savePtr].hh.b1 ?? 0;
+    state.savePtr = state.saveStack[state.savePtr].hh.rh ?? 0;
   }
 
   state.savePtr = p;
@@ -411,10 +343,10 @@ export function fileWarning(
     }
     ops.print(1389);
 
-    state.ifLine = state.memInt[state.condPtr + 1] ?? 0;
-    state.curIf = state.memB1[state.condPtr] ?? 0;
-    state.ifLimit = state.memB0[state.condPtr] ?? 0;
-    state.condPtr = state.memRh[state.condPtr] ?? 0;
+    state.ifLine = state.mem[state.condPtr + 1].int ?? 0;
+    state.curIf = state.mem[state.condPtr].hh.b1 ?? 0;
+    state.ifLimit = state.mem[state.condPtr].hh.b0 ?? 0;
+    state.condPtr = state.mem[state.condPtr].hh.rh ?? 0;
   }
 
   state.condPtr = p2;
@@ -423,7 +355,7 @@ export function fileWarning(
   state.ifLine = i2;
 
   ops.printLn();
-  if ((state.eqtbInt[5327] ?? 0) > 1) {
+  if ((state.eqtb[5327].int ?? 0) > 1) {
     ops.showContext();
   }
   if (state.history === 0) {
